@@ -8,6 +8,7 @@ RUN npm install --production
 COPY server.js .
 COPY index.html ./public/
 COPY issues.html ./public/
+COPY about.html ./public/
 COPY css/ ./public/css/
 COPY js/ ./public/js/
 COPY assets/ ./public/assets/

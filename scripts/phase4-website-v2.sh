@@ -31,6 +31,7 @@ $SCP_CMD "${PROJECT_DIR}/website/package.json" "${SSH_USER}@${VM_IP}:~/showcase-
 $SCP_CMD "${PROJECT_DIR}/website/server.js" "${SSH_USER}@${VM_IP}:~/showcase-website/"
 $SCP_CMD "${PROJECT_DIR}/website/index.html" "${SSH_USER}@${VM_IP}:~/showcase-website/"
 $SCP_CMD "${PROJECT_DIR}/website/issues.html" "${SSH_USER}@${VM_IP}:~/showcase-website/"
+$SCP_CMD "${PROJECT_DIR}/website/about.html" "${SSH_USER}@${VM_IP}:~/showcase-website/"
 $SCP_CMD "${PROJECT_DIR}/website/css/style.css" "${SSH_USER}@${VM_IP}:~/showcase-website/css/"
 $SCP_CMD "${PROJECT_DIR}/website/js/particles.js" "${SSH_USER}@${VM_IP}:~/showcase-website/js/"
 $SCP_CMD "${PROJECT_DIR}/website/js/app.js" "${SSH_USER}@${VM_IP}:~/showcase-website/js/"
