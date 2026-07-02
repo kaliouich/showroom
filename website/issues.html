@@ -176,7 +176,7 @@
   <section class="issues-hero">
     <span class="hero__badge">Deep Dive Post-Mortem</span>
     <h1 class="hero__title" style="margin-top: 1rem;">Technical <span class="gradient-text">Issues Resolved</span></h1>
-    <p class="hero__desc" style="max-width: 800px;">
+    <p class="hero__desc" style="max-width: 800px; margin: 0 auto 2.5rem;">
       An in-depth look at the engineering challenges faced while deploying the microservices architecture on Oracle Cloud (ARM64). Discover the root causes, the exact error logs, and the terminal commands used to fix them.
     </p>
   </section>
@@ -199,7 +199,7 @@
             <h4><span class="badge-error">Issue</span> Connection Refused / Network Unreachable</h4>
             <p>The CI/CD pipeline steps (using Docker containers via <code>act-runner</code>) were failing to execute <code>git clone</code> or push Docker images. The standard Docker bridge network created by <code>act-runner</code> suffered from MTU fragmentation and NAT translation issues when communicating with K3s Pod IPs and Services on this specific Oracle Cloud virtualized network.</p>
             <pre><code>remote: Invalid username or password.
-fatal: Authentication failed for 'http://git.<YOUR_VM_IP>.nip.io/...'
+fatal: Authentication failed for 'http://git.88.96.58.76.nip.io/...'
 curl: (7) Failed to connect to gitea-http.gitea.svc.cluster.local port 3000</code></pre>
           </div>
           <div class="issue-section">
@@ -259,7 +259,7 @@ kubectl delete pods --all -n argocd</code></pre>
             <h4><span class="badge-success">Resolution</span> OAuth Token Injection</h4>
             <p>We modified the <code>.gitea/workflows/deploy.yaml</code> to inject a dedicated access token directly into the remote URL before executing the push.</p>
             <pre><code># Inside the CI/CD Pipeline step:
-git remote set-url origin "http://oauth2:${{ secrets.GITEA_TOKEN }}@git.<YOUR_VM_IP>.nip.io/khalil/tamagotchi-service.git"
+git remote set-url origin "http://oauth2:${{ secrets.GITEA_TOKEN }}@git.88.96.58.76.nip.io/khalil/tamagotchi-service.git"
 git push origin HEAD:main</code></pre>
           </div>
         </div>
@@ -288,7 +288,7 @@ git push origin HEAD:main</code></pre>
 spec:
   containers:
     - name: api
-      image: git.<YOUR_VM_IP>.nip.io/khalil/tamagotchi-api:v2
+      image: git.88.96.58.76.nip.io/khalil/tamagotchi-api:v2
       imagePullPolicy: Always</code></pre>
           </div>
         </div>
@@ -308,12 +308,12 @@ spec:
         <div class="accordion-content">
           <div class="issue-section">
             <h4><span class="badge-error">Issue</span> Rejected Login</h4>
-            <p>The showcase website advertised `guest` / `<YOUR_GUEST_PASSWORD>` as the credentials for ArgoCD, but ArgoCD rejected the login despite proper RBAC mapping in the ConfigMap.</p>
+            <p>The showcase website advertised `guest` / `visitor2026` as the credentials for ArgoCD, but ArgoCD rejected the login despite proper RBAC mapping in the ConfigMap.</p>
           </div>
           <div class="issue-section">
             <h4><span class="badge-success">Resolution</span> Bcrypt Secret Patching</h4>
             <p>We generated a raw bcrypt hash manually via Python and directly patched the <code>argocd-secret</code> to inject the guest password securely.</p>
-            <pre><code>BCRYPT_HASH=$(python3 -c "import bcrypt; print(bcrypt.hashpw(b'<YOUR_GUEST_PASSWORD>', bcrypt.gensalt()).decode())")
+            <pre><code>BCRYPT_HASH=$(python3 -c "import bcrypt; print(bcrypt.hashpw(b'visitor2026', bcrypt.gensalt()).decode())")
 BASE64_HASH=$(echo -n "$BCRYPT_HASH" | base64 -w 0)
 
 kubectl patch secret argocd-secret -n argocd -p '{"data": {"accounts.guest.password": "'$BASE64_HASH'"}}'</code></pre>
