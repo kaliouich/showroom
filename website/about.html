@@ -202,14 +202,20 @@
       <span>DevOps Showcase</span>
     </div>
     <div class="nav__links">
-      <a href="index.html" class="nav__link">← Back to Home</a>
+      <a href="index.html" class="nav__link" data-i18n="nav_back">← Back to Home</a>
+    </div>
+    <div class="nav__actions">
+      <div class="lang-switcher">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="fr">FR</button>
+      </div>
     </div>
   </nav>
 
   <!-- Hero -->
   <section class="about-hero">
-    <span class="hero__badge">Curious mind? Welcome.</span>
-    <h1 class="hero__title" style="margin-top: 1rem;">Behind the <span class="gradient-text">Architecture</span></h1>
+    <span class="hero__badge" data-i18n="about_hero_badge">Curious mind? Welcome.</span>
+    <h1 class="hero__title" style="margin-top: 1rem;" data-i18n="about_hero_title">Behind the <span class="gradient-text">Architecture</span></h1>
   </section>
 
   <!-- Main Content -->
@@ -219,23 +225,23 @@
     <aside class="profile-sidebar">
       <h2>Khalil Aliouich</h2>
       <h3>Senior DevOps & Platform Engineer</h3>
-      <p style="color: var(--text-secondary); line-height: 1.6; font-size: 0.95rem;">
+      <p style="color: var(--text-secondary); line-height: 1.6; font-size: 0.95rem;" data-i18n="about_desc">
         12+ years of experience across Telecom, IoT, Cloud-Native, and Edge Computing. Specializing in highly resilient hybrid-cloud platforms.
       </p>
 
       <div class="social-links">
         <a href="https://linkedin.com/in/khalil-aliouich-90b53798" target="_blank" class="social-btn">
-          🔗 LinkedIn Profile
+          <span data-i18n="about_linkedin">🔗 LinkedIn Profile</span>
         </a>
         <a href="https://github.com/kaliouich" target="_blank" class="social-btn">
-          🐙 GitHub Repositories
+          <span data-i18n="about_github">🐙 GitHub Repositories</span>
         </a>
       </div>
       
       <div style="margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 2rem;">
         <div style="font-size: 1.8rem; margin-bottom: 0.5rem;">🏆</div>
         <div style="font-weight: 600;">CKA Certified</div>
-        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.3rem;">Score 85/100 | CNCF / Linux Foundation</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.3rem;" data-i18n="about_cert_cka">Score 85/100 | CNCF / Linux Foundation</div>
       </div>
     </aside>
 
@@ -244,39 +250,39 @@
       
       <!-- Summary Card -->
       <div class="card">
-        <h2><span class="icon">🚀</span> Professional Summary</h2>
+        <h2><span class="icon">🚀</span> <span data-i18n="about_summary_title">Professional Summary</span></h2>
         <p>
           I am a Senior DevOps & Platform Engineer with a unique profile: I am capable of tracing incidents all the way from an ARM Cortex firmware level up to a Kubernetes Pod. This full-stack mastery serves as a decisive differentiator in on-call and Edge/Hybrid architectures.
         </p>
-        <p>
+        <p data-i18n="about_summary_2">
           Currently, I lead Platform Engineering for product teams of 50+ developers, designing Internal Developer Platforms (IDP), Golden Paths, and end-to-end GitOps/DevSecOps pipelines on multi-cloud Kubernetes clusters (AWS, Azure, OpenStack).
         </p>
       </div>
 
       <!-- Experience Card -->
       <div class="card">
-        <h2><span class="icon">💼</span> Key Experience</h2>
+        <h2><span class="icon">💼</span> <span data-i18n="about_exp_title">Key Experience</span></h2>
         
         <div class="timeline-item">
-          <div class="timeline-title">Platform Engineer / Senior DevOps</div>
+          <div class="timeline-title" data-i18n="about_exfo_title">Platform Engineer / Senior DevOps</div>
           <div class="timeline-company">EXFO | 2021 – Present</div>
-          <div class="timeline-desc">
+          <div class="timeline-desc" data-i18n="about_exfo_desc">
             Designed an IDP for 50+ developers across 11 K8s clusters. Reduced release cycles by 40% using ArgoCD App of Apps and GitLab CI. Implemented end-to-end DevSecOps pipelines with Trivy/SBOM security scans and automated smoke tests. Managed multi-cloud Infrastructure as Code via Terraform and Crossplane.
           </div>
         </div>
 
         <div class="timeline-item">
-          <div class="timeline-title">Ingénieur DevOps / Cloud Tech Lead</div>
+          <div class="timeline-title" data-i18n="about_delta_title">Ingénieur DevOps / Cloud Tech Lead</div>
           <div class="timeline-company">Delta Dore | 2016 – 2021</div>
-          <div class="timeline-desc">
-            Led DevOps and FinOps initiatives for Europe's IoT Smart Home leader. Managed Azure AKS topologies with Terraform, maintained 99.9% SLA for REST APIs, and mentored development teams on GitOps and DevSecOps best practices.
+          <div class="timeline-desc" data-i18n="about_delta_desc">
+            Led DevOps and FinOps initiatives for Europe\'s IoT Smart Home leader. Managed Azure AKS topologies with Terraform, maintained 99.9% SLA for REST APIs, and mentored development teams on GitOps and DevSecOps best practices.
           </div>
         </div>
 
         <div class="timeline-item">
           <div class="timeline-title">Firmware & Embedded Systems Engineer</div>
           <div class="timeline-company">R&D Multi-entreprises | 2011 – 2016</div>
-          <div class="timeline-desc">
+          <div class="timeline-desc" data-i18n="about_rd_desc">
             Hardware-level programming and debugging for ARM Cortex/Linux systems at companies like NXP, Hill-Rom, Ekinops, and Itron. Pioneered early Edge architectures with Zigbee/WSN gateways.
           </div>
         </div>
@@ -284,7 +290,7 @@
 
       <!-- Skills Card -->
       <div class="card">
-        <h2><span class="icon">🛠️</span> Technical Stack</h2>
+        <h2><span class="icon">🛠️</span> <span data-i18n="about_skills_title">Technical Stack</span></h2>
         <div class="skills-grid">
           <div class="skill-tag">Kubernetes / K3s / AKS</div>
           <div class="skill-tag">ArgoCD / GitOps</div>
@@ -302,5 +308,6 @@
 
   <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
   <script src="js/particles.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
