@@ -1,0 +1,50 @@
+---
+# RBAC: Read-only visitor ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: visitor-readonly
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "nodes", "namespaces", "endpoints", "configmaps"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets", "daemonsets", "replicasets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs", "cronjobs"]
+    verbs: ["get", "list", "watch"]
+---
+# ServiceAccount for the web terminal
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: showcase-visitor
+  namespace: default
+---
+# Bind the visitor ClusterRole to the ServiceAccount
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: visitor-readonly-binding
+subjects:
+  - kind: ServiceAccount
+    name: showcase-visitor
+    namespace: default
+roleRef:
+  kind: ClusterRole
+  name: visitor-readonly
+  apiGroup: rbac.authorization.k8s.io
+---
+# Token for the visitor ServiceAccount (long-lived)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: showcase-visitor-token
+  namespace: default
+  annotations:
+    kubernetes.io/service-account.name: showcase-visitor
+type: kubernetes.io/service-account-token

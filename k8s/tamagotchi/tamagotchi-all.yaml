@@ -1,0 +1,224 @@
+---
+# Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tamagotchi
+---
+# PostgreSQL PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: tamagotchi
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+# PostgreSQL Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: tamagotchi
+  labels:
+    app: postgres
+    tier: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+        tier: database
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: tamagotchi
+            - name: POSTGRES_USER
+              value: tamagotchi
+            - name: POSTGRES_PASSWORD
+              value: <YOUR_DB_PASSWORD>
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+---
+# PostgreSQL Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: tamagotchi
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+# Tamagotchi API Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tamagotchi-api
+  namespace: tamagotchi
+  labels:
+    app: tamagotchi-api
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tamagotchi-api
+  template:
+    metadata:
+      labels:
+        app: tamagotchi-api
+        tier: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: api
+          image: tamagotchi-api:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_HOST
+              value: postgres
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              value: tamagotchi
+            - name: DB_USER
+              value: tamagotchi
+            - name: DB_PASSWORD
+              value: <YOUR_DB_PASSWORD>
+            - name: DECAY_INTERVAL_MS
+              value: "15000"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+# Tamagotchi API Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: tamagotchi-api
+  namespace: tamagotchi
+  labels:
+    app: tamagotchi-api
+spec:
+  selector:
+    app: tamagotchi-api
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+# Tamagotchi Frontend Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tamagotchi-frontend
+  namespace: tamagotchi
+  labels:
+    app: tamagotchi-frontend
+    tier: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tamagotchi-frontend
+  template:
+    metadata:
+      labels:
+        app: tamagotchi-frontend
+        tier: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: tamagotchi-frontend:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+# Tamagotchi Frontend Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: tamagotchi-frontend
+  namespace: tamagotchi
+spec:
+  selector:
+    app: tamagotchi-frontend
+  ports:
+    - port: 80
+      targetPort: 80
+---
+# Prometheus ServiceMonitor for Tamagotchi API
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: tamagotchi-api-monitor
+  namespace: tamagotchi
+  labels:
+    release: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app: tamagotchi-api
+  endpoints:
+    - port: "8080"
+      path: /metrics
+      interval: 15s
+  namespaceSelector:
+    matchNames:
+      - tamagotchi

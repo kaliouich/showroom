@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🐣 Tamagotchi as a Service</title>
+  <meta name="description" content="Adopt and care for virtual creatures running as Kubernetes pods. A fun DevOps demo!">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header__logo">
+        <span class="header__emoji">🐣</span>
+        <h1>Tamagotchi <span class="header__accent">as a Service</span></h1>
+      </div>
+      <div class="header__stats" id="globalStats">
+        <div class="stat-chip alive"><span id="aliveCount">-</span> Alive</div>
+        <div class="stat-chip dead"><span id="deadCount">-</span> Dead</div>
+        <div class="stat-chip starving"><span id="starvingCount">-</span> Starving</div>
+      </div>
+      <div class="header__lang">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="fr">FR</button>
+      </div>
+    </header>
+
+    <!-- Creature Grid -->
+    <main class="creatures-grid" id="creaturesGrid">
+      <!-- Creatures will be rendered here by JS -->
+    </main>
+
+    <!-- Adopt Modal -->
+    <div class="modal-overlay" id="adoptModal">
+      <div class="modal">
+        <h2 class="modal__title">🥚 <span data-i18n="adopt_title">Adopt a Creature</span></h2>
+        <form id="adoptForm">
+          <div class="form-group">
+            <label data-i18n="name_label">Name</label>
+            <input type="text" id="creatureName" placeholder="Pixel, Nimbus, Byte..." required maxlength="50">
+          </div>
+          <div class="form-group">
+            <label data-i18n="type_label">Type</label>
+            <div class="type-selector" id="typeSelector">
+              <button type="button" class="type-btn selected" data-type="dragon">🐉 Dragon</button>
+              <button type="button" class="type-btn" data-type="cat">🐱 Cat</button>
+              <button type="button" class="type-btn" data-type="robot">🤖 Robot</button>
+              <button type="button" class="type-btn" data-type="plant">🌱 Plant</button>
+              <button type="button" class="type-btn" data-type="alien">👽 Alien</button>
+            </div>
+          </div>
+          <div class="modal__actions">
+            <button type="button" class="btn btn--ghost" id="cancelAdopt" data-i18n="cancel">Cancel</button>
+            <button type="submit" class="btn btn--primary" data-i18n="adopt_btn">Adopt! 🎉</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Floating Adopt Button -->
+    <button class="fab" id="adoptBtn" title="Adopt a new creature">
+      <span>+</span>
+    </button>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

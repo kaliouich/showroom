@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Khalil Aliouich — DevOps Engineer | Live Infrastructure Showcase</title>
+  <meta name="description" content="Explore a live Kubernetes cluster, ArgoCD GitOps pipeline, Prometheus monitoring, and a Tamagotchi demo — all running on Oracle Cloud Always Free.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Particles Background -->
+  <canvas id="particlesCanvas"></canvas>
+
+  <!-- Navigation -->
+  <nav class="nav" id="nav">
+    <div class="nav__logo">
+      <span class="nav__icon">⚡</span>
+      <span class="nav__brand">KA<span class="accent">DevOps</span></span>
+    </div>
+    <div class="nav__links">
+      <a href="#hero" class="nav__link active" data-i18n="nav_home">Home</a>
+      <a href="#architecture" class="nav__link" data-i18n="nav_architecture">Architecture</a>
+      <a href="#infrastructure" class="nav__link" data-i18n="nav_infra">Live Infra</a>
+      <a href="#demo" class="nav__link" data-i18n="nav_demo">Demo App</a>
+      <a href="#tools" class="nav__link" data-i18n="nav_tools">Tools</a>
+    </div>
+    <div class="nav__actions">
+      <div class="lang-switcher">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="fr">FR</button>
+      </div>
+      <button class="nav__cta" id="adminBtn" data-i18n="nav_admin">🔐 Admin</button>
+    </div>
+  </nav>
+
+  <!-- ============================================================ -->
+  <!-- HERO SECTION -->
+  <!-- ============================================================ -->
+  <section class="hero" id="hero">
+    <div class="hero__content">
+      <div class="hero__badge">
+        <span class="pulse-dot"></span>
+        <span data-i18n="hero_badge">Live Infrastructure — Oracle Cloud Always Free</span>
+      </div>
+      <h1 class="hero__title">
+        <span data-i18n="hero_title_1">Hi, I'm</span> <span class="gradient-text">Khalil Aliouich</span>
+      </h1>
+      <p class="hero__subtitle">
+        <span class="typewriter" id="typewriter"></span><span class="cursor">|</span>
+      </p>
+      <p class="hero__desc" data-i18n="hero_desc">
+        This entire infrastructure — Kubernetes cluster, GitOps pipeline, monitoring stack, and demo app — is running live on a single ARM server provisioned for free on Oracle Cloud.
+      </p>
+      <div class="hero__actions">
+        <a href="#infrastructure" class="btn btn--primary" data-i18n="hero_cta_explore">🚀 Explore Live Infrastructure</a>
+        <a href="#demo" class="btn btn--ghost" data-i18n="hero_cta_demo">🐣 See Demo App</a>
+      </div>
+    </div>
+    <div class="hero__terminal">
+      <div class="terminal">
+        <div class="terminal__header">
+          <div class="terminal__dots">
+            <span class="dot dot--red"></span>
+            <span class="dot dot--yellow"></span>
+            <span class="dot dot--green"></span>
+          </div>
+          <span class="terminal__title">kubectl — k3s-argocd-server</span>
+        </div>
+        <div class="terminal__body" id="terminalBody">
+          <div class="terminal__line"><span class="terminal__prompt">$</span> <span class="terminal__cmd" id="termCmd"></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- ARCHITECTURE SECTION -->
+  <!-- ============================================================ -->
+  <section class="section" id="architecture">
+    <div class="section__header">
+      <span class="section__badge" data-i18n="arch_badge">System Design</span>
+      <h2 class="section__title" data-i18n="arch_title">Architecture Overview</h2>
+      <p class="section__subtitle" data-i18n="arch_subtitle">A complete DevOps ecosystem running on a single ARM instance</p>
+    </div>
+    <div class="arch-diagram">
+      <div class="arch-layer arch-layer--infra">
+        <h3 class="arch-layer__title">☁️ <span data-i18n="arch_infra">Infrastructure</span></h3>
+        <div class="arch-nodes">
+          <div class="arch-node" data-tooltip="Oracle Cloud VM.Standard.A1.Flex">
+            <span class="arch-node__icon">🖥️</span>
+            <span class="arch-node__label">OCI ARM</span>
+            <span class="arch-node__detail">4 OCPUs • 24GB</span>
+          </div>
+          <div class="arch-node" data-tooltip="K3s Lightweight Kubernetes">
+            <span class="arch-node__icon">☸️</span>
+            <span class="arch-node__label">K3s</span>
+            <span class="arch-node__detail">v1.36</span>
+          </div>
+          <div class="arch-node" data-tooltip="Envoy Gateway">
+            <span class="arch-node__icon">🌐</span>
+            <span class="arch-node__label">Gateway</span>
+            <span class="arch-node__detail">Envoy</span>
+          </div>
+        </div>
+      </div>
+      <div class="arch-arrow">▼</div>
+      <div class="arch-layer arch-layer--platform">
+        <h3 class="arch-layer__title">🔧 <span data-i18n="arch_platform">Platform</span></h3>
+        <div class="arch-nodes">
+          <div class="arch-node arch-node--argocd" data-tooltip="GitOps Continuous Delivery">
+            <span class="arch-node__icon">🔄</span>
+            <span class="arch-node__label">ArgoCD</span>
+            <span class="arch-node__detail">GitOps</span>
+          </div>
+          <div class="arch-node arch-node--gitea" data-tooltip="Self-hosted Git">
+            <span class="arch-node__icon">🐙</span>
+            <span class="arch-node__label">Gitea</span>
+            <span class="arch-node__detail">Git Server</span>
+          </div>
+          <div class="arch-node arch-node--prometheus" data-tooltip="Metrics Collection">
+            <span class="arch-node__icon">📊</span>
+            <span class="arch-node__label">Prometheus</span>
+            <span class="arch-node__detail">Metrics</span>
+          </div>
+          <div class="arch-node arch-node--grafana" data-tooltip="Dashboards & Visualization">
+            <span class="arch-node__icon">📈</span>
+            <span class="arch-node__label">Grafana</span>
+            <span class="arch-node__detail">Dashboards</span>
+          </div>
+          <div class="arch-node arch-node--loki" data-tooltip="Log Aggregation">
+            <span class="arch-node__icon">📝</span>
+            <span class="arch-node__label">Loki</span>
+            <span class="arch-node__detail">Logs</span>
+          </div>
+        </div>
+      </div>
+      <div class="arch-arrow">▼</div>
+      <div class="arch-layer arch-layer--app">
+        <h3 class="arch-layer__title">🐣 <span data-i18n="arch_app">Demo App — Tamagotchi as a Service</span></h3>
+        <div class="arch-nodes">
+          <div class="arch-node arch-node--frontend" data-tooltip="User Interface">
+            <span class="arch-node__icon">📱</span>
+            <span class="arch-node__label">Frontend</span>
+            <span class="arch-node__detail">HTML/JS</span>
+          </div>
+          <div class="arch-node arch-node--api" data-tooltip="REST API + Custom Metrics">
+            <span class="arch-node__icon">⚙️</span>
+            <span class="arch-node__label">API</span>
+            <span class="arch-node__detail">Node.js</span>
+          </div>
+          <div class="arch-node arch-node--db" data-tooltip="Data Persistence">
+            <span class="arch-node__icon">🗄️</span>
+            <span class="arch-node__label">PostgreSQL</span>
+            <span class="arch-node__detail">Database</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- LIVE INFRASTRUCTURE SECTION -->
+  <!-- ============================================================ -->
+  <section class="section section--dark" id="infrastructure">
+    <div class="section__header">
+      <span class="section__badge" data-i18n="infra_badge">Real-time</span>
+      <h2 class="section__title" data-i18n="infra_title">Live Infrastructure Status</h2>
+      <p class="section__subtitle" data-i18n="infra_subtitle">All data below is fetched live from the Kubernetes API</p>
+    </div>
+    <div class="infra-grid">
+      <!-- Node Info -->
+      <div class="infra-card infra-card--wide">
+        <div class="infra-card__header">
+          <span class="infra-card__icon">🖥️</span>
+          <h3 data-i18n="infra_node">Cluster Node</h3>
+          <span class="status-badge status-badge--ok" id="nodeStatus">● Ready</span>
+        </div>
+        <div class="infra-card__metrics" id="nodeMetrics">
+          <div class="metric">
+            <span class="metric__label">CPU</span>
+            <div class="metric__bar"><div class="metric__fill" id="cpuFill" style="width:0%"></div></div>
+            <span class="metric__value" id="cpuValue">—</span>
+          </div>
+          <div class="metric">
+            <span class="metric__label">RAM</span>
+            <div class="metric__bar"><div class="metric__fill metric__fill--purple" id="ramFill" style="width:0%"></div></div>
+            <span class="metric__value" id="ramValue">—</span>
+          </div>
+          <div class="metric">
+            <span class="metric__label">Disk</span>
+            <div class="metric__bar"><div class="metric__fill metric__fill--cyan" id="diskFill" style="width:0%"></div></div>
+            <span class="metric__value" id="diskValue">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pod Count -->
+      <div class="infra-card">
+        <div class="infra-card__header">
+          <span class="infra-card__icon">📦</span>
+          <h3 data-i18n="infra_pods">Running Pods</h3>
+        </div>
+        <div class="infra-card__big-number" id="podCount">—</div>
+        <div class="infra-card__detail" id="podDetail" data-i18n="infra_across">across all namespaces</div>
+      </div>
+
+      <!-- Namespace Count -->
+      <div class="infra-card">
+        <div class="infra-card__header">
+          <span class="infra-card__icon">🏷️</span>
+          <h3 data-i18n="infra_namespaces">Namespaces</h3>
+        </div>
+        <div class="infra-card__big-number" id="nsCount">—</div>
+        <div class="infra-card__detail" data-i18n="infra_active">active namespaces</div>
+      </div>
+
+      <!-- Services -->
+      <div class="infra-card">
+        <div class="infra-card__header">
+          <span class="infra-card__icon">🔗</span>
+          <h3 data-i18n="infra_services">Services</h3>
+        </div>
+        <div class="infra-card__big-number" id="svcCount">—</div>
+        <div class="infra-card__detail" data-i18n="infra_endpoints">exposed endpoints</div>
+      </div>
+
+      <!-- Pods List -->
+      <div class="infra-card infra-card--wide infra-card--tall">
+        <div class="infra-card__header">
+          <span class="infra-card__icon">📋</span>
+          <h3 data-i18n="infra_pod_list">Pod Status by Namespace</h3>
+          <button class="refresh-btn" id="refreshPods" title="Refresh">🔄</button>
+        </div>
+        <div class="pod-list" id="podList">
+          <div class="pod-list__loading" data-i18n="loading">Loading...</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- DEMO APP SECTION -->
+  <!-- ============================================================ -->
+  <section class="section" id="demo">
+    <div class="section__header">
+      <span class="section__badge" data-i18n="demo_badge">Live Demo</span>
+      <h2 class="section__title">🐣 Tamagotchi <span class="gradient-text">as a Service</span></h2>
+      <p class="section__subtitle" data-i18n="demo_subtitle">A 3-tier application where virtual creatures live as Kubernetes pods. Feed them or they die! All metrics flow to Prometheus & Grafana in real-time.</p>
+    </div>
+    <div class="demo-grid">
+      <div class="demo-card">
+        <div class="demo-card__header">
+          <span class="demo-card__icon">📱</span>
+          <h3 data-i18n="demo_frontend">Frontend</h3>
+        </div>
+        <p class="demo-card__desc" data-i18n="demo_frontend_desc">Interactive UI to adopt, feed, play with, and monitor your creatures. Dark theme with real-time stat bars.</p>
+        <a href="http://demo.<YOUR_VM_IP>.nip.io" target="_blank" class="btn btn--primary btn--sm" data-i18n="demo_open">Open App →</a>
+      </div>
+      <div class="demo-card">
+        <div class="demo-card__header">
+          <span class="demo-card__icon">⚙️</span>
+          <h3 data-i18n="demo_api">API Backend</h3>
+        </div>
+        <p class="demo-card__desc" data-i18n="demo_api_desc">Node.js REST API with custom Prometheus metrics: hunger_level, happiness_score, energy_level, feed/play/sleep counters.</p>
+        <a href="http://demo.<YOUR_VM_IP>.nip.io/api/creatures" target="_blank" class="btn btn--primary btn--sm" data-i18n="demo_api_btn">View API →</a>
+      </div>
+      <div class="demo-card">
+        <div class="demo-card__header">
+          <span class="demo-card__icon">📊</span>
+          <h3 data-i18n="demo_metrics">Metrics Pipeline</h3>
+        </div>
+        <p class="demo-card__desc" data-i18n="demo_metrics_desc">Custom metrics scraped by Prometheus every 15s, visualized in a dedicated Grafana dashboard with gauges, time series, and alerts.</p>
+        <a href="http://grafana.<YOUR_VM_IP>.nip.io" target="_blank" class="btn btn--primary btn--sm" data-i18n="demo_grafana">Open Grafana →</a>
+      </div>
+    </div>
+
+    <!-- Tamagotchi Live Stats -->
+    <div class="demo-live">
+      <h3 class="demo-live__title" data-i18n="demo_live_title">🐣 Creature Stats — Live</h3>
+      <div class="demo-live__stats" id="tamagotchiStats">
+        <div class="demo-stat">
+          <span class="demo-stat__value" id="tAlive">—</span>
+          <span class="demo-stat__label" data-i18n="demo_alive">Alive</span>
+        </div>
+        <div class="demo-stat demo-stat--danger">
+          <span class="demo-stat__value" id="tDead">—</span>
+          <span class="demo-stat__label" data-i18n="demo_dead">Dead</span>
+        </div>
+        <div class="demo-stat demo-stat--warn">
+          <span class="demo-stat__value" id="tStarving">—</span>
+          <span class="demo-stat__label" data-i18n="demo_starving">Starving</span>
+        </div>
+        <div class="demo-stat demo-stat--info">
+          <span class="demo-stat__value" id="tAvgHunger">—</span>
+          <span class="demo-stat__label" data-i18n="demo_avg_hunger">Avg Hunger</span>
+        </div>
+        <div class="demo-stat demo-stat--purple">
+          <span class="demo-stat__value" id="tAvgHappy">—</span>
+          <span class="demo-stat__label" data-i18n="demo_avg_happy">Avg Happiness</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- TECHNICAL ISSUES SECTION -->
+  <!-- ============================================================ -->
+  <section class="section" id="issues">
+    <div class="section__header">
+      <span class="section__badge" data-i18n="issues_badge">Troubleshooting</span>
+      <h2 class="section__title" data-i18n="issues_title">Technical Issues Resolved</h2>
+      <p class="section__subtitle" data-i18n="issues_subtitle">A deep dive into the engineering challenges faced and overcome while deploying this architecture on Oracle Cloud.</p>
+    </div>
+    <div class="issues-grid">
+      <div class="issue-card">
+        <div class="issue-card__header">
+          <div class="issue-card__icon">🕸️</div>
+          <h3>CI/CD Runner Network Isolation</h3>
+        </div>
+        <p class="issue-card__desc"><strong>Issue:</strong> Gitea Actions containers suffered from MTU fragmentation and NAT translation failures when communicating with K3s Pod IPs.</p>
+        <p class="issue-card__solution"><strong>Resolution:</strong> Forced CI job containers to run on the host's network namespace (<code>container.network: host</code>), allowing seamless internal DNS resolution without NAT overhead.</p>
+      </div>
+      <div class="issue-card">
+        <div class="issue-card__header">
+          <div class="issue-card__icon">🔐</div>
+          <h3>GitOps Push Authentication</h3>
+        </div>
+        <p class="issue-card__desc"><strong>Issue:</strong> Deployment pipeline failed to commit updated K8s manifests back to Gitea due to standard GitHub/Gitea token context limitations.</p>
+        <p class="issue-card__solution"><strong>Resolution:</strong> Injected a dedicated access token directly into the remote URL to bypass the context boundaries for automated GitOps pushes.</p>
+      </div>
+      <div class="issue-card">
+        <div class="issue-card__header">
+          <div class="issue-card__icon">⚡</div>
+          <h3>ArgoCD gRPC Interference</h3>
+        </div>
+        <p class="issue-card__desc"><strong>Issue:</strong> ArgoCD became completely inaccessible (502 Bad Gateway) as the Linkerd Service Mesh intercepted and broke internal gRPC TLS handshakes.</p>
+        <p class="issue-card__solution"><strong>Resolution:</strong> Selectively disabled Linkerd proxy injection on the <code>argocd</code> namespace and rolled out new pods to restore internal control plane communication.</p>
+      </div>
+      <div class="issue-card">
+        <div class="issue-card__header">
+          <div class="issue-card__icon">🐳</div>
+          <h3>ImagePullPolicy Stale Caching</h3>
+        </div>
+        <p class="issue-card__desc"><strong>Issue:</strong> Kubernetes worker nodes (containerd) failed to pull or cache-invalidated images due to internal headless service routing.</p>
+        <p class="issue-card__solution"><strong>Resolution:</strong> Switched registry target to the external proxy domain and set <code>imagePullPolicy: Always</code> to force strict layer hash validation.</p>
+      </div>
+      <div class="issue-card">
+        <div class="issue-card__header">
+          <div class="issue-card__icon">🚀</div>
+          <h3>Node.js vs Nginx Port Bindings</h3>
+        </div>
+        <p class="issue-card__desc"><strong>Issue:</strong> A frontend CSS update accidentally reverted the container build to an old Nginx Dockerfile, causing a port mismatch (80 vs 3000) for the live metrics backend.</p>
+        <p class="issue-card__solution"><strong>Resolution:</strong> Restored the <code>server.js</code> Node.js proxy architecture, rebuilt the image via nerdctl, and executed a rolling K8s deployment update.</p>
+      </div>
+      <div class="issue-card">
+        <div class="issue-card__header">
+          <div class="issue-card__icon">🔑</div>
+          <h3>ArgoCD RBAC Credentials</h3>
+        </div>
+        <p class="issue-card__desc"><strong>Issue:</strong> The Read-Only Guest visitor account was rejected by ArgoCD despite proper RBAC mapping in the ConfigMap.</p>
+        <p class="issue-card__solution"><strong>Resolution:</strong> Generated a raw bcrypt hash manually via Python and directly patched the <code>argocd-secret</code> to inject the guest password securely.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- TOOLS PORTAL SECTION -->
+  <!-- ============================================================ -->
+  <section class="section section--dark" id="tools">
+    <div class="section__header">
+      <span class="section__badge" data-i18n="tools_badge">Toolbox</span>
+      <h2 class="section__title" data-i18n="tools_title">DevOps Tools Portal</h2>
+      <p class="section__subtitle" data-i18n="tools_subtitle">Access all tools directly. Visitor accounts are read-only for security.</p>
+    </div>
+    <div class="tools-grid">
+      <a href="http://argocd.<YOUR_VM_IP>.nip.io" target="_blank" class="tool-card">
+        <div class="tool-card__icon-wrap tool-card__icon-wrap--argocd">🔄</div>
+        <h3 class="tool-card__name">ArgoCD</h3>
+        <p class="tool-card__desc" data-i18n="tool_argocd">GitOps continuous delivery. See application sync status, health, and history.</p>
+        <div class="tool-card__creds">
+          <code>guest / <YOUR_GUEST_PASSWORD></code>
+        </div>
+        <span class="tool-card__badge" data-i18n="tool_readonly">Read Only</span>
+      </a>
+      <a href="http://grafana.<YOUR_VM_IP>.nip.io" target="_blank" class="tool-card">
+        <div class="tool-card__icon-wrap tool-card__icon-wrap--grafana">📈</div>
+        <h3 class="tool-card__name">Grafana</h3>
+        <p class="tool-card__desc" data-i18n="tool_grafana">Dashboards for K8s metrics, Tamagotchi stats, and application performance.</p>
+        <div class="tool-card__creds">
+          <code>admin / <YOUR_ADMIN_PASSWORD></code>
+        </div>
+        <span class="tool-card__badge" data-i18n="tool_viewer">Viewer</span>
+      </a>
+      <a href="http://prometheus.<YOUR_VM_IP>.nip.io" target="_blank" class="tool-card">
+        <div class="tool-card__icon-wrap tool-card__icon-wrap--prometheus">📊</div>
+        <h3 class="tool-card__name">Prometheus</h3>
+        <p class="tool-card__desc" data-i18n="tool_prometheus">Query raw metrics with PromQL. Explore Tamagotchi custom metrics.</p>
+        <div class="tool-card__creds">
+          <code data-i18n="tool_noauth">No authentication</code>
+        </div>
+        <span class="tool-card__badge" data-i18n="tool_readonly">Read Only</span>
+      </a>
+      <a href="http://git.<YOUR_VM_IP>.nip.io" target="_blank" class="tool-card">
+        <div class="tool-card__icon-wrap tool-card__icon-wrap--gitea">🐙</div>
+        <h3 class="tool-card__name">Gitea</h3>
+        <p class="tool-card__desc" data-i18n="tool_gitea">Self-hosted Git server. Browse the Tamagotchi source code and K8s manifests.</p>
+        <div class="tool-card__creds">
+          <code data-i18n="tool_public">Public repos</code>
+        </div>
+        <span class="tool-card__badge" data-i18n="tool_readonly">Read Only</span>
+      </a>
+      <a href="http://demo.<YOUR_VM_IP>.nip.io" target="_blank" class="tool-card tool-card--highlight">
+        <div class="tool-card__icon-wrap tool-card__icon-wrap--tamagotchi">🐣</div>
+        <h3 class="tool-card__name">Tamagotchi App</h3>
+        <p class="tool-card__desc" data-i18n="tool_tamagotchi">The live 3-tier demo app. Adopt creatures, see metrics flow through the entire stack.</p>
+        <div class="tool-card__creds">
+          <code data-i18n="tool_interactive">Interactive!</code>
+        </div>
+        <span class="tool-card__badge tool-card__badge--live">● Live</span>
+      </a>
+      <a href="http://git.<YOUR_VM_IP>.nip.io/khalil/tamagotchi-service/actions" target="_blank" class="tool-card">
+        <div class="tool-card__icon-wrap tool-card__icon-wrap--gitea">⚡</div>
+        <h3 class="tool-card__name">Gitea Actions</h3>
+        <p class="tool-card__desc" data-i18n="tool_gitea_actions">Native Continuous Integration pipeline compatible with GitHub Actions.</p>
+        <div class="tool-card__creds">
+           <code data-i18n="tool_public_login">Login via Gitea</code>
+        </div>
+        <span class="tool-card__badge" data-i18n="tool_readonly">Read Only</span>
+      </a>
+      <a href="http://linkerd.<YOUR_VM_IP>.nip.io" target="_blank" class="tool-card">
+        <div class="tool-card__icon-wrap tool-card__icon-wrap--linkerd">🕸️</div>
+        <h3 class="tool-card__name">Linkerd</h3>
+        <p class="tool-card__desc" data-i18n="tool_linkerd">Ultralight Service Mesh providing observability, reliability, and security.</p>
+        <div class="tool-card__creds">
+           <code data-i18n="tool_noauth">No authentication</code>
+        </div>
+        <span class="tool-card__badge" data-i18n="tool_readonly">Read Only</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- FOOTER -->
+  <!-- ============================================================ -->
+  <footer class="footer">
+    <div class="footer__content">
+      <div class="footer__brand">
+        <span>⚡</span>
+        <span>KA<span class="accent">DevOps</span></span>
+      </div>
+      <p class="footer__text" data-i18n="footer_text">Built with K3s, ArgoCD, Prometheus, Grafana, Loki & Gitea — hosted on Oracle Cloud Always Free (ARM Ampere A1).</p>
+      <div class="footer__links">
+        <a href="https://linkedin.com/in/khalilaliouich" target="_blank" class="footer__link">LinkedIn</a>
+        <a href="https://github.com/khalilaliouich" target="_blank" class="footer__link">GitHub</a>
+        <a href="mailto:khalil.aliouich@gmail.com" class="footer__link">Contact</a>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <p>© 2026 Khalil Aliouich — <span data-i18n="footer_powered">Powered by determination & free cloud credits</span> ☁️</p>
+    </div>
+  </footer>
+
+  <!-- Admin Modal -->
+  <div class="modal-overlay" id="adminModal">
+    <div class="modal">
+      <h2 class="modal__title">🔐 Admin Access</h2>
+      <form id="adminForm">
+        <div class="form-group">
+          <label>Secret</label>
+          <input type="password" id="adminSecret" placeholder="Enter demo secret..." required>
+        </div>
+        <div class="modal__actions">
+          <button type="button" class="btn btn--ghost" id="cancelAdmin">Cancel</button>
+          <button type="submit" class="btn btn--primary">Unlock 🔓</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/particles.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
