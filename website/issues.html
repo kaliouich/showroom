@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Deep Dive: Technical Issues | DevOps Showcase</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* Specific styles for the issues page */
+    .issues-hero {
+      padding: 8rem 2rem 4rem;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .issues-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 2rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    .accordion-item {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 1.5rem;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+
+    .accordion-item:hover {
+      border-color: rgba(0, 240, 255, 0.4);
+    }
+
+    .accordion-header {
+      padding: 1.5rem 2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+    }
+
+    .accordion-header__title {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+    }
+
+    .accordion-header__icon {
+      font-size: 1.8rem;
+      background: rgba(255,255,255,0.05);
+      padding: 0.8rem;
+      border-radius: 12px;
+      border: 1px solid var(--glass-border);
+    }
+
+    .accordion-header h3 {
+      font-family: var(--font-heading);
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .accordion-icon {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      transition: transform 0.3s;
+    }
+
+    .accordion-item.active .accordion-icon {
+      transform: rotate(180deg);
+    }
+
+    .accordion-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.5s cubic-bezier(0, 1, 0, 1);
+      background: rgba(0,0,0,0.2);
+    }
+
+    .accordion-item.active .accordion-body {
+      max-height: 2000px;
+      transition: max-height 0.5s ease-in-out;
+    }
+
+    .accordion-content {
+      padding: 0 2rem 2rem;
+    }
+
+    .issue-section {
+      margin-top: 1.5rem;
+    }
+
+    .issue-section h4 {
+      font-family: var(--font-heading);
+      color: var(--cyan);
+      font-size: 1rem;
+      margin-bottom: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .issue-section p {
+      color: var(--text-secondary);
+      line-height: 1.7;
+      font-size: 0.95rem;
+      margin-bottom: 1rem;
+    }
+
+    pre {
+      background: #0d1117;
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      padding: 1.2rem;
+      overflow-x: auto;
+      margin-bottom: 1.5rem;
+    }
+
+    code {
+      font-family: 'Courier New', Courier, monospace;
+      color: #e6edf3;
+      font-size: 0.9rem;
+    }
+
+    .badge-success {
+      background: rgba(0, 255, 136, 0.1);
+      color: #00ff88;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 1px solid rgba(0, 255, 136, 0.2);
+    }
+
+    .badge-error {
+      background: rgba(255, 0, 85, 0.1);
+      color: #ff0055;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 1px solid rgba(255, 0, 85, 0.2);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Animated Background -->
+  <div id="particles-js"></div>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="nav__brand">
+      <div class="nav__logo">&gt;_</div>
+      <span>DevOps Showcase</span>
+    </div>
+    <div class="nav__links">
+      <a href="index.html" class="nav__link">← Back to Home</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="issues-hero">
+    <span class="hero__badge">Deep Dive Post-Mortem</span>
+    <h1 class="hero__title" style="margin-top: 1rem;">Technical <span class="gradient-text">Issues Resolved</span></h1>
+    <p class="hero__desc" style="max-width: 800px;">
+      An in-depth look at the engineering challenges faced while deploying the microservices architecture on Oracle Cloud (ARM64). Discover the root causes, the exact error logs, and the terminal commands used to fix them.
+    </p>
+  </section>
+
+  <!-- Accordion Container -->
+  <main class="issues-container">
+
+    <!-- Issue 1 -->
+    <div class="accordion-item">
+      <div class="accordion-header">
+        <div class="accordion-header__title">
+          <div class="accordion-header__icon">🕸️</div>
+          <h3>CI/CD Runner Network Isolation (Gitea Actions)</h3>
+        </div>
+        <div class="accordion-icon">▼</div>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-content">
+          <div class="issue-section">
+            <h4><span class="badge-error">Issue</span> Connection Refused / Network Unreachable</h4>
+            <p>The CI/CD pipeline steps (using Docker containers via <code>act-runner</code>) were failing to execute <code>git clone</code> or push Docker images. The standard Docker bridge network created by <code>act-runner</code> suffered from MTU fragmentation and NAT translation issues when communicating with K3s Pod IPs and Services on this specific Oracle Cloud virtualized network.</p>
+            <pre><code>remote: Invalid username or password.
+fatal: Authentication failed for 'http://git.<YOUR_VM_IP>.nip.io/...'
+curl: (7) Failed to connect to gitea-http.gitea.svc.cluster.local port 3000</code></pre>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-success">Resolution</span> Host Network Namespace</h4>
+            <p>We configured the Gitea <code>act-runner</code> to force all CI job containers to run on the host's network namespace, allowing ephemeral CI containers to seamlessly resolve <code>.svc.cluster.local</code> domains without NAT overhead.</p>
+            <pre><code># /data/gitea-runner/config.yaml
+container:
+  network: "host"
+  options: "--add-host=gitea-http.gitea.svc.cluster.local:10.43.0.10"</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Issue 2 -->
+    <div class="accordion-item">
+      <div class="accordion-header">
+        <div class="accordion-header__title">
+          <div class="accordion-header__icon">⚡</div>
+          <h3>ArgoCD gRPC Interference with Linkerd</h3>
+        </div>
+        <div class="accordion-icon">▼</div>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-content">
+          <div class="issue-section">
+            <h4><span class="badge-error">Issue</span> 502 Bad Gateway / gRPC Connection Error</h4>
+            <p>ArgoCD became completely inaccessible. The <code>argocd-server</code> logs were filled with TLS handshake failures. The installation of the Linkerd Service Mesh globally injected sidecars into the ArgoCD namespace, which aggressively intercepts gRPC traffic. ArgoCD heavily relies on internal gRPC between its server, repo-server, and application-controller.</p>
+            <pre><code>rpc error: code = Unavailable desc = connection error: desc = "transport: authentication handshake failed"</code></pre>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-success">Resolution</span> Disable Sidecar Injection</h4>
+            <p>We disabled Linkerd proxy injection specifically for the ArgoCD namespace and restarted the controllers to restore internal communication.</p>
+            <pre><code>kubectl annotate namespace argocd linkerd.io/inject=disabled --overwrite
+kubectl delete pods --all -n argocd</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Issue 3 -->
+    <div class="accordion-item">
+      <div class="accordion-header">
+        <div class="accordion-header__title">
+          <div class="accordion-header__icon">🔐</div>
+          <h3>GitOps Manifest Push Authentication</h3>
+        </div>
+        <div class="accordion-icon">▼</div>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-content">
+          <div class="issue-section">
+            <h4><span class="badge-error">Issue</span> Context Limitations</h4>
+            <p>After successfully building the Docker image, the pipeline failed during the deployment manifest update phase. The default <code>GITHUB_TOKEN</code> injected by Gitea Actions was insufficient for pushing back to the repository within the specific job context over HTTPS.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-success">Resolution</span> OAuth Token Injection</h4>
+            <p>We modified the <code>.gitea/workflows/deploy.yaml</code> to inject a dedicated access token directly into the remote URL before executing the push.</p>
+            <pre><code># Inside the CI/CD Pipeline step:
+git remote set-url origin "http://oauth2:${{ secrets.GITEA_TOKEN }}@git.<YOUR_VM_IP>.nip.io/khalil/tamagotchi-service.git"
+git push origin HEAD:main</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Issue 4 -->
+    <div class="accordion-item">
+      <div class="accordion-header">
+        <div class="accordion-header__title">
+          <div class="accordion-header__icon">🐳</div>
+          <h3>ImagePullPolicy Stale Caching</h3>
+        </div>
+        <div class="accordion-icon">▼</div>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-content">
+          <div class="issue-section">
+            <h4><span class="badge-error">Issue</span> ErrImagePull / Stale Deployments</h4>
+            <p>ArgoCD successfully synced the new `k8s.yaml` manifest, but the K3s worker nodes refused to pull it. Initially, the registry URL was configured as the internal service <code>gitea-http.gitea.svc.cluster.local:3000</code>. K3s containerd daemon resolves DNS differently than pods and couldn't authenticate properly without specific registry mirrors.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-success">Resolution</span> External Domain & Always Pull</h4>
+            <p>We switched the registry target to the external proxy domain and forced strict layer hash validation.</p>
+            <pre><code># k8s.yaml
+spec:
+  containers:
+    - name: api
+      image: git.<YOUR_VM_IP>.nip.io/khalil/tamagotchi-api:v2
+      imagePullPolicy: Always</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Issue 5 -->
+    <div class="accordion-item">
+      <div class="accordion-header">
+        <div class="accordion-header__title">
+          <div class="accordion-header__icon">🔑</div>
+          <h3>ArgoCD RBAC "Guest" Credentials</h3>
+        </div>
+        <div class="accordion-icon">▼</div>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-content">
+          <div class="issue-section">
+            <h4><span class="badge-error">Issue</span> Rejected Login</h4>
+            <p>The showcase website advertised `guest` / `<YOUR_GUEST_PASSWORD>` as the credentials for ArgoCD, but ArgoCD rejected the login despite proper RBAC mapping in the ConfigMap.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-success">Resolution</span> Bcrypt Secret Patching</h4>
+            <p>We generated a raw bcrypt hash manually via Python and directly patched the <code>argocd-secret</code> to inject the guest password securely.</p>
+            <pre><code>BCRYPT_HASH=$(python3 -c "import bcrypt; print(bcrypt.hashpw(b'<YOUR_GUEST_PASSWORD>', bcrypt.gensalt()).decode())")
+BASE64_HASH=$(echo -n "$BCRYPT_HASH" | base64 -w 0)
+
+kubectl patch secret argocd-secret -n argocd -p '{"data": {"accounts.guest.password": "'$BASE64_HASH'"}}'</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Issue 6 -->
+    <div class="accordion-item">
+      <div class="accordion-header">
+        <div class="accordion-header__title">
+          <div class="accordion-header__icon">🚀</div>
+          <h3>Node.js vs Nginx Port Bindings</h3>
+        </div>
+        <div class="accordion-icon">▼</div>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-content">
+          <div class="issue-section">
+            <h4><span class="badge-error">Issue</span> 502 Bad Gateway</h4>
+            <p>A frontend CSS update accidentally reverted the container build to an old Nginx Dockerfile, causing a port mismatch (80 vs 3000) for the live metrics backend since the Kubernetes Service was still routing to 3000.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-success">Resolution</span> Architecture Restoration</h4>
+            <p>Restored the <code>server.js</code> Node.js proxy architecture, rebuilt the image via nerdctl, and executed a rolling K8s deployment update with proper ServiceAccount bindings.</p>
+            <pre><code>sudo nerdctl build -t showcase-website:latest .
+kubectl set image deployment/showcase-website website=showcase-website:latest -n showcase
+kubectl rollout restart deployment/showcase-website -n showcase</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+  <script src="js/particles.js"></script>
+  <script>
+    // Accordion Logic
+    document.querySelectorAll('.accordion-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const item = header.parentElement;
+        const isActive = item.classList.contains('active');
+        
+        // Close all
+        document.querySelectorAll('.accordion-item').forEach(acc => {
+          acc.classList.remove('active');
+        });
+
+        // Open clicked if it wasn't already active
+        if (!isActive) {
+          item.classList.add('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

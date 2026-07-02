@@ -314,55 +314,10 @@
       <h2 class="section__title" data-i18n="issues_title">Technical Issues Resolved</h2>
       <p class="section__subtitle" data-i18n="issues_subtitle">A deep dive into the engineering challenges faced and overcome while deploying this architecture on Oracle Cloud.</p>
     </div>
-    <div class="issues-grid">
-      <div class="issue-card">
-        <div class="issue-card__header">
-          <div class="issue-card__icon">🕸️</div>
-          <h3>CI/CD Runner Network Isolation</h3>
-        </div>
-        <p class="issue-card__desc"><strong>Issue:</strong> Gitea Actions containers suffered from MTU fragmentation and NAT translation failures when communicating with K3s Pod IPs.</p>
-        <p class="issue-card__solution"><strong>Resolution:</strong> Forced CI job containers to run on the host's network namespace (<code>container.network: host</code>), allowing seamless internal DNS resolution without NAT overhead.</p>
-      </div>
-      <div class="issue-card">
-        <div class="issue-card__header">
-          <div class="issue-card__icon">🔐</div>
-          <h3>GitOps Push Authentication</h3>
-        </div>
-        <p class="issue-card__desc"><strong>Issue:</strong> Deployment pipeline failed to commit updated K8s manifests back to Gitea due to standard GitHub/Gitea token context limitations.</p>
-        <p class="issue-card__solution"><strong>Resolution:</strong> Injected a dedicated access token directly into the remote URL to bypass the context boundaries for automated GitOps pushes.</p>
-      </div>
-      <div class="issue-card">
-        <div class="issue-card__header">
-          <div class="issue-card__icon">⚡</div>
-          <h3>ArgoCD gRPC Interference</h3>
-        </div>
-        <p class="issue-card__desc"><strong>Issue:</strong> ArgoCD became completely inaccessible (502 Bad Gateway) as the Linkerd Service Mesh intercepted and broke internal gRPC TLS handshakes.</p>
-        <p class="issue-card__solution"><strong>Resolution:</strong> Selectively disabled Linkerd proxy injection on the <code>argocd</code> namespace and rolled out new pods to restore internal control plane communication.</p>
-      </div>
-      <div class="issue-card">
-        <div class="issue-card__header">
-          <div class="issue-card__icon">🐳</div>
-          <h3>ImagePullPolicy Stale Caching</h3>
-        </div>
-        <p class="issue-card__desc"><strong>Issue:</strong> Kubernetes worker nodes (containerd) failed to pull or cache-invalidated images due to internal headless service routing.</p>
-        <p class="issue-card__solution"><strong>Resolution:</strong> Switched registry target to the external proxy domain and set <code>imagePullPolicy: Always</code> to force strict layer hash validation.</p>
-      </div>
-      <div class="issue-card">
-        <div class="issue-card__header">
-          <div class="issue-card__icon">🚀</div>
-          <h3>Node.js vs Nginx Port Bindings</h3>
-        </div>
-        <p class="issue-card__desc"><strong>Issue:</strong> A frontend CSS update accidentally reverted the container build to an old Nginx Dockerfile, causing a port mismatch (80 vs 3000) for the live metrics backend.</p>
-        <p class="issue-card__solution"><strong>Resolution:</strong> Restored the <code>server.js</code> Node.js proxy architecture, rebuilt the image via nerdctl, and executed a rolling K8s deployment update.</p>
-      </div>
-      <div class="issue-card">
-        <div class="issue-card__header">
-          <div class="issue-card__icon">🔑</div>
-          <h3>ArgoCD RBAC Credentials</h3>
-        </div>
-        <p class="issue-card__desc"><strong>Issue:</strong> The Read-Only Guest visitor account was rejected by ArgoCD despite proper RBAC mapping in the ConfigMap.</p>
-        <p class="issue-card__solution"><strong>Resolution:</strong> Generated a raw bcrypt hash manually via Python and directly patched the <code>argocd-secret</code> to inject the guest password securely.</p>
-      </div>
+    <div style="text-align: center; margin-top: 3rem;">
+      <a href="issues.html" class="btn btn--primary" style="font-size: 1.1rem; padding: 1rem 2.5rem;">
+        View Technical Deep Dive →
+      </a>
     </div>
   </section>
 

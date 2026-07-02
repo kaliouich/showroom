@@ -30,6 +30,7 @@ $SCP_CMD "${PROJECT_DIR}/website/Dockerfile" "${SSH_USER}@${VM_IP}:~/showcase-we
 $SCP_CMD "${PROJECT_DIR}/website/package.json" "${SSH_USER}@${VM_IP}:~/showcase-website/"
 $SCP_CMD "${PROJECT_DIR}/website/server.js" "${SSH_USER}@${VM_IP}:~/showcase-website/"
 $SCP_CMD "${PROJECT_DIR}/website/index.html" "${SSH_USER}@${VM_IP}:~/showcase-website/"
+$SCP_CMD "${PROJECT_DIR}/website/issues.html" "${SSH_USER}@${VM_IP}:~/showcase-website/"
 $SCP_CMD "${PROJECT_DIR}/website/css/style.css" "${SSH_USER}@${VM_IP}:~/showcase-website/css/"
 $SCP_CMD "${PROJECT_DIR}/website/js/particles.js" "${SSH_USER}@${VM_IP}:~/showcase-website/js/"
 $SCP_CMD "${PROJECT_DIR}/website/js/app.js" "${SSH_USER}@${VM_IP}:~/showcase-website/js/"
@@ -154,11 +155,11 @@ OUTER_EOF
 echo ""
 echo "[3/3] ✅ Verifying..."
 sleep 5
-HTTP_CODE=\$(curl -s -o /dev/null -w "%{http_code}" "http://showcase.${NIP_DOMAIN}" 2>/dev/null || echo "000")
-if [ "\$HTTP_CODE" = "200" ]; then
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://showcase.${NIP_DOMAIN}" 2>/dev/null || echo "000")
+if [ "$HTTP_CODE" = "200" ]; then
   echo "✅ Website is live and responding with HTTP 200!"
 else
-  echo "⚠️  Website returned HTTP \${HTTP_CODE} — it may take a moment to be fully ready."
+  echo "⚠️  Website returned HTTP ${HTTP_CODE} — it may take a moment to be fully ready."
 fi
 
 echo ""
