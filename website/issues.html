@@ -169,7 +169,6 @@
     </div>
     <div class="nav__links">
       <a href="index.html" class="nav__link" data-i18n="nav_back">← Back to Home</a>
-      <a href="diy.html" class="nav__link" data-i18n="nav_diy">🛠️ DIY Guide</a>
     </div>
     <div class="nav__actions">
       <div class="lang-switcher">
@@ -206,7 +205,7 @@
             <h4><span class="badge-error" data-i18n="badge_issue">Issue</span> Connection Refused / Network Unreachable</h4>
             <p data-i18n="issue_1_desc">The CI/CD pipeline steps (using Docker containers via <code>act-runner</code>) were failing to execute <code>git clone</code> or push Docker images. The standard Docker bridge network created by <code>act-runner</code> suffered from MTU fragmentation and NAT translation issues when communicating with K3s Pod IPs and Services on this specific Oracle Cloud virtualized network.</p>
             <pre><code>remote: Invalid username or password.
-fatal: Authentication failed for 'http://git.<YOUR_VM_IP>.nip.io/...'
+fatal: Authentication failed for 'http://git.khalilaliouich.com/...'
 curl: (7) Failed to connect to gitea-http.gitea.svc.cluster.local port 3000</code></pre>
           </div>
           <div class="issue-section">
@@ -266,7 +265,7 @@ kubectl delete pods --all -n argocd</code></pre>
             <h4><span class="badge-success" data-i18n="badge_resolution">Resolution</span> OAuth Token Injection</h4>
             <p data-i18n="issue_3_sol">We modified the <code>.gitea/workflows/deploy.yaml</code> to inject a dedicated access token directly into the remote URL before executing the push.</p>
             <pre><code># Inside the CI/CD Pipeline step:
-git remote set-url origin "http://oauth2:${{ secrets.GITEA_TOKEN }}@git.<YOUR_VM_IP>.nip.io/khalil/tamagotchi-service.git"
+git remote set-url origin "http://oauth2:${{ secrets.GITEA_TOKEN }}@git.khalilaliouich.com/khalil/tamagotchi-service.git"
 git push origin HEAD:main</code></pre>
           </div>
         </div>
@@ -295,7 +294,7 @@ git push origin HEAD:main</code></pre>
 spec:
   containers:
     - name: api
-      image: git.<YOUR_VM_IP>.nip.io/khalil/tamagotchi-api:v2
+      image: git.khalilaliouich.com/khalil/tamagotchi-api:v2
       imagePullPolicy: Always</code></pre>
           </div>
         </div>

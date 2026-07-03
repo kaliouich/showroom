@@ -8,7 +8,8 @@ spec:
   - name: main-gateway
     namespace: default
   hostnames:
-  - "showcase.<YOUR_VM_IP>.nip.io"
+  - "showcase.khalilaliouich.com"
+  - "khalilaliouich.com"
   rules:
   - matches:
     - path:
@@ -28,7 +29,7 @@ spec:
   - name: main-gateway
     namespace: default
   hostnames:
-  - "demo.<YOUR_VM_IP>.nip.io"
+  - "demo.khalilaliouich.com"
   rules:
   - matches:
     - path:
@@ -48,7 +49,7 @@ spec:
   - name: main-gateway
     namespace: default
   hostnames:
-  - "argocd.<YOUR_VM_IP>.nip.io"
+  - "argocd.khalilaliouich.com"
   rules:
   - matches:
     - path:
@@ -68,7 +69,7 @@ spec:
   - name: main-gateway
     namespace: default
   hostnames:
-  - "grafana.<YOUR_VM_IP>.nip.io"
+  - "grafana.khalilaliouich.com"
   rules:
   - matches:
     - path:
@@ -88,7 +89,7 @@ spec:
   - name: main-gateway
     namespace: default
   hostnames:
-  - "prometheus.<YOUR_VM_IP>.nip.io"
+  - "prometheus.khalilaliouich.com"
   rules:
   - matches:
     - path:
@@ -108,7 +109,7 @@ spec:
   - name: main-gateway
     namespace: default
   hostnames:
-  - "git.<YOUR_VM_IP>.nip.io"
+  - "git.khalilaliouich.com"
   rules:
   - matches:
     - path:
@@ -128,7 +129,7 @@ spec:
   - name: main-gateway
     namespace: default
   hostnames:
-  - "sonar.<YOUR_VM_IP>.nip.io"
+  - "sonar.khalilaliouich.com"
   rules:
   - matches:
     - path:
@@ -148,7 +149,7 @@ spec:
   - name: main-gateway
     namespace: default
   hostnames:
-  - "linkerd.<YOUR_VM_IP>.nip.io"
+  - "linkerd.khalilaliouich.com"
   rules:
   - matches:
     - path:
@@ -161,3 +162,19 @@ spec:
     backendRefs:
     - name: web
       port: 8084
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: n8n-route
+  namespace: showcase
+spec:
+  parentRefs:
+  - name: main-gateway
+    namespace: default
+  hostnames:
+  - "n8n.khalilaliouich.com"
+  rules:
+  - backendRefs:
+    - name: n8n
+      port: 80

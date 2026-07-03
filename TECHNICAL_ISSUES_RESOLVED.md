@@ -27,7 +27,7 @@ The default `GITHUB_TOKEN` injected by Gitea Actions was insufficient or imprope
 **Resolution:**
 We modified the `.gitea/workflows/deploy.yaml` to inject a dedicated access token (or the GITEA_TOKEN) directly into the remote URL before pushing:
 ```bash
-git remote set-url origin "http://oauth2:${{ secrets.GITEA_TOKEN }}@git.<YOUR_VM_IP>.nip.io/khalil/tamagotchi-service.git"
+git remote set-url origin "http://oauth2:${{ secrets.GITEA_TOKEN }}@git.khalilaliouich.com/khalil/tamagotchi-service.git"
 git push origin HEAD:main
 ```
 
@@ -35,7 +35,7 @@ git push origin HEAD:main
 
 ## 3. ArgoCD Inaccessibility & Linkerd gRPC Interference
 **Issue:**
-ArgoCD became completely inaccessible (returning `502 Bad Gateway` via Ingress) and the argocd-server logs were filled with `rpc error: code = Unavailable desc = connection error`.
+ArgoCD became completely inaccessible (returning `502 Bad Gateway` via HTTPRoute/Gateway) and the argocd-server logs were filled with `rpc error: code = Unavailable desc = connection error`.
 **Root Cause:**
 The installation of the Linkerd Service Mesh globally injected sidecars into the ArgoCD namespace. Linkerd aggressively intercepts gRPC traffic. ArgoCD heavily relies on internal gRPC between `argocd-server`, `argocd-repo-server`, and `argocd-application-controller`. The proxy interception broke the TLS handshakes.
 **Resolution:**
@@ -49,11 +49,11 @@ kubectl delete pods --all -n argocd
 
 ## 4. Kubernetes Worker Nodes Pulling Stale Images
 **Issue:**
-ArgoCD successfully synced the new `k8s.yaml` manifest specifying the newly built image (e.g., `git.<YOUR_VM_IP>.nip.io/khalil/tamagotchi-api:...`), but the K3s cluster refused to pull it, or pulled it but threw `ErrImagePull`.
+ArgoCD successfully synced the new `k8s.yaml` manifest specifying the newly built image (e.g., `git.khalilaliouich.com/khalil/tamagotchi-api:...`), but the K3s cluster refused to pull it, or pulled it but threw `ErrImagePull`.
 **Root Cause:**
 Initially, the registry URL in `k8s.yaml` was configured as the internal service `gitea-http.gitea.svc.cluster.local:3000`. K3s worker nodes (containerd) resolve DNS differently than pods and couldn't authenticate or resolve the internal service properly without specific containerd registry mirrors.
 **Resolution:**
-1. Updated the deployment YAML to use the external, resolvable domain: `git.<YOUR_VM_IP>.nip.io`.
+1. Updated the deployment YAML to use the external, resolvable domain: `git.khalilaliouich.com`.
 2. Changed `imagePullPolicy` from `IfNotPresent` to `Always` to ensure K3s always queries the registry for the latest layer hashes, effectively preventing stale deployments.
 
 ---

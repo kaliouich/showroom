@@ -20,8 +20,8 @@ Les demandes clés étaient :
 ### Infrastructure de Base (Phase 1)
 - **OS** : Ubuntu 24.04 ARM64 (sans interface graphique).
 - **Orchestrateur** : K3s (v1.36) installé sans Traefik.
-- **Réseau & Routing** : Helm, Nginx Ingress Controller (hostNetwork: true), Cert-Manager (Let's Encrypt).
-- **DNS** : Wildcard `*.<YOUR_VM_IP>.nip.io`.
+- **Réseau & Routing** : Helm, Envoy Gateway (Gateway API), Cert-Manager.
+- **DNS** : Wildcard `*.khalilaliouich.com`.
 
 ### Plateforme & Outillage DevOps (Phase 2)
 - **Git** : Gitea (Léger, parfait pour ARM).
@@ -75,7 +75,7 @@ Les demandes clés étaient :
 
 5. **Clonage / Push Git lors de l'automatisation**
    - *Problème* : Le script tentait de pousser le code du Tamagotchi vers le service local `gitea-http`, mais c'était un service "Headless" (`ClusterIP: None`), donc injoignable directement par son DNS interne classique depuis le host.
-   - *Solution* : Le push du code source a été re-routé via l'URL publique de l'Ingress Nginx (`http://git.<YOUR_VM_IP>.nip.io`).
+   - *Solution* : Le push du code source a été re-routé via l'URL publique de l'HTTPRoute/Gateway Nginx (`http://git.khalilaliouich.com`).
 
 6. **Connexion réseau externe bloquée (Ports 80/443)**
    - *Problème* : Les sites web déployés (showcase, argocd, grafana) n'étaient pas accessibles depuis l'extérieur (Time Out).
@@ -93,7 +93,7 @@ Les demandes clés étaient :
 
 9. **GitOps Manifest Update Auth & ImagePullPolicy**
    - *Problème* : La pipeline CI n'arrivait pas à pousser les modifications du fichier `k8s.yaml` vers Gitea, et les Worker nodes K3s ne tiraient pas la nouvelle image construite.
-   - *Solution* : Injection d'un token d'accès dans l'URL Git (`https://x-access-token:...`) pour autoriser le `git push`. La politique d'image a été passée à `imagePullPolicy: Always` avec le domaine externe du registre (`git.<YOUR_VM_IP>.nip.io`) pour s'assurer que K3s télécharge systématiquement la dernière image.
+   - *Solution* : Injection d'un token d'accès dans l'URL Git (`https://x-access-token:...`) pour autoriser le `git push`. La politique d'image a été passée à `imagePullPolicy: Always` avec le domaine externe du registre (`git.khalilaliouich.com`) pour s'assurer que K3s télécharge systématiquement la dernière image.
 
 10. **ArgoCD inaccessible (502/Connection Refused) avec Linkerd**
     - *Problème* : L'interface web et l'API d'ArgoCD plantaient car le proxy sidecar `linkerd` interceptait et cassait le trafic gRPC/TLS interne d'ArgoCD.
@@ -112,18 +112,18 @@ Les demandes clés étaient :
 ## 🔗 4. Mémento des Liens & Identifiants
 
 - IP Serveur : `<YOUR_VM_IP>`
-- **Site Vitrine** : [http://showcase.<YOUR_VM_IP>.nip.io](http://showcase.<YOUR_VM_IP>.nip.io)
+- **Site Vitrine** : [http://showcase.khalilaliouich.com](http://showcase.khalilaliouich.com)
   - Secret "Admin" du site : `<YOUR_DEMO_SECRET>`
-- **Tamagotchi App** : [http://demo.<YOUR_VM_IP>.nip.io](http://demo.<YOUR_VM_IP>.nip.io)
-- **ArgoCD** : [https://argocd.<YOUR_VM_IP>.nip.io](https://argocd.<YOUR_VM_IP>.nip.io)
+- **Tamagotchi App** : [http://demo.khalilaliouich.com](http://demo.khalilaliouich.com)
+- **ArgoCD** : [https://argocd.khalilaliouich.com](https://argocd.khalilaliouich.com)
   - Utilisateur / Mdp : `guest` / `<YOUR_GUEST_PASSWORD>`
-- **Grafana** : [http://grafana.<YOUR_VM_IP>.nip.io](http://grafana.<YOUR_VM_IP>.nip.io)
+- **Grafana** : [http://grafana.khalilaliouich.com](http://grafana.khalilaliouich.com)
   - Utilisateur / Mdp : `admin` / `<YOUR_ADMIN_PASSWORD>`
-- **Gitea** : [http://git.<YOUR_VM_IP>.nip.io](http://git.<YOUR_VM_IP>.nip.io)
+- **Gitea** : [http://git.khalilaliouich.com](http://git.khalilaliouich.com)
   - Utilisateur / Mdp : `khalil` / `<YOUR_ADMIN_PASSWORD>`
-- **Prometheus** : [http://prometheus.<YOUR_VM_IP>.nip.io](http://prometheus.<YOUR_VM_IP>.nip.io) (Accès libre)
-- **SonarQube** : [http://sonar.<YOUR_VM_IP>.nip.io](http://sonar.<YOUR_VM_IP>.nip.io) (admin / <YOUR_ADMIN_PASSWORD>)
-- **Linkerd Viz** : [http://linkerd.<YOUR_VM_IP>.nip.io](http://linkerd.<YOUR_VM_IP>.nip.io)
+- **Prometheus** : [http://prometheus.khalilaliouich.com](http://prometheus.khalilaliouich.com) (Accès libre)
+- **SonarQube** : [http://sonar.khalilaliouich.com](http://sonar.khalilaliouich.com) (admin / <YOUR_ADMIN_PASSWORD>)
+- **Linkerd Viz** : [http://linkerd.khalilaliouich.com](http://linkerd.khalilaliouich.com)
 
 ---
 

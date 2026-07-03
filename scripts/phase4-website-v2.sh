@@ -11,7 +11,7 @@ SSH_KEY="${2:?Usage: ./phase4-website-v2.sh <VM_IP> <SSH_KEY_PATH>}"
 SSH_USER="ubuntu"
 SSH_CMD="ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${SSH_USER}@${VM_IP}"
 SCP_CMD="scp -o StrictHostKeyChecking=no -i ${SSH_KEY}"
-NIP_DOMAIN="${VM_IP}.nip.io"
+NIP_DOMAIN="khalilaliouich.com"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
@@ -32,7 +32,6 @@ $SCP_CMD "${PROJECT_DIR}/website/server.js" "${SSH_USER}@${VM_IP}:~/showcase-web
 $SCP_CMD "${PROJECT_DIR}/website/index.html" "${SSH_USER}@${VM_IP}:~/showcase-website/"
 $SCP_CMD "${PROJECT_DIR}/website/issues.html" "${SSH_USER}@${VM_IP}:~/showcase-website/"
 $SCP_CMD "${PROJECT_DIR}/website/about.html" "${SSH_USER}@${VM_IP}:~/showcase-website/"
-$SCP_CMD "${PROJECT_DIR}/website/diy.html" "${SSH_USER}@${VM_IP}:~/showcase-website/"
 $SCP_CMD "${PROJECT_DIR}/website/css/style.css" "${SSH_USER}@${VM_IP}:~/showcase-website/css/"
 $SCP_CMD "${PROJECT_DIR}/website/js/particles.js" "${SSH_USER}@${VM_IP}:~/showcase-website/js/"
 $SCP_CMD "${PROJECT_DIR}/website/js/app.js" "${SSH_USER}@${VM_IP}:~/showcase-website/js/"
@@ -103,6 +102,10 @@ spec:
           imagePullPolicy: Never
           ports:
             - containerPort: 3000
+          volumeMounts:
+            - name: host-source
+              mountPath: /app/public
+
           resources:
             requests:
               cpu: 50m
@@ -110,6 +113,11 @@ spec:
             limits:
               cpu: 200m
               memory: 128Mi
+      volumes:
+        - name: host-source
+          hostPath:
+            path: /home/ubuntu/showcase-website
+            type: Directory
 ---
 apiVersion: v1
 kind: Service
