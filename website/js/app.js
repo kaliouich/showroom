@@ -241,16 +241,16 @@ const terminalCommands = [
     'tamagotchi-api-fd8f8ddf9-v6prj         1/1     Running   0          1d',
     'tamagotchi-frontend-667d7c99cb-gqxg4   1/1     Running   0          1d',
   ]},
-  { cmd: 'kubectl get ingress --all-namespaces', output: [
-    'NAMESPACE    NAME                 CLASS   HOSTS                          ADDRESS   PORTS',
-    'argocd       argocd-ingress       nginx   argocd.khalilaliouich.com      80,443',
-    'gitea        gitea-ingress        nginx   git.khalilaliouich.com         80',
-    'monitoring   grafana              nginx   grafana.khalilaliouich.com     80',
-    'tamagotchi   tamagotchi-ingress   nginx   demo.khalilaliouich.com        80',
+  { cmd: 'kubectl get httproutes --all-namespaces', output: [
+    'NAMESPACE    NAME               HOSTNAMES',
+    'argocd       argocd-route       ["argocd.khalilaliouich.com"]',
+    'gitea        gitea-route        ["git.khalilaliouich.com"]',
+    'monitoring   grafana-route      ["grafana.khalilaliouich.com"]',
+    'tamagotchi   demo-route         ["demo.khalilaliouich.com"]',
   ]},
   { cmd: 'helm list --all-namespaces', output: [
     'NAME            NAMESPACE       STATUS    CHART',
-    'ingress-nginx   ingress-nginx   deployed  ingress-nginx-4.12.2',
+    'envoy-gateway   envoy-gateway   deployed  envoy-gateway-1.0.1',
     'cert-manager    cert-manager    deployed  cert-manager-v1.20.3',
     'gitea           gitea           deployed  gitea-10.6.0',
     'kube-prometheus monitoring      deployed  kube-prometheus-stack-68.4.5',
