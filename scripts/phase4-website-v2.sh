@@ -142,6 +142,7 @@ spec:
     namespace: default
   hostnames:
   - "showcase.${NIP_DOMAIN}"
+  - "${NIP_DOMAIN}"
   rules:
   - matches:
     - path:
