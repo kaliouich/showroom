@@ -49,7 +49,7 @@ spec:
             - name: POSTGRES_USER
               value: tamagotchi
             - name: POSTGRES_PASSWORD
-              value: <YOUR_DB_PASSWORD>
+              value: y9pWPB6uIN
           volumeMounts:
             - name: postgres-storage
               mountPath: /var/lib/postgresql/data
@@ -118,7 +118,7 @@ spec:
             - name: DB_USER
               value: tamagotchi
             - name: DB_PASSWORD
-              value: <YOUR_DB_PASSWORD>
+              value: y9pWPB6uIN
             - name: DECAY_INTERVAL_MS
               value: "15000"
           resources:
