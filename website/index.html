@@ -323,6 +323,27 @@
   </section>
 
   <!-- ============================================================ -->
+  <!-- LIVE TELEMETRY SECTION -->
+  <!-- ============================================================ -->
+  <section class="section" id="telemetry" style="background-color: #f4f6f8;">
+    <div class="section__header">
+      <span class="section__badge">Telemetry</span>
+      <h2 class="section__title">Live Dashboard</h2>
+      <p class="section__subtitle">Real-time metrics embedded directly from Grafana without authentication.</p>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2rem; max-width: 1200px; margin: 3rem auto 0; padding: 0 1rem;">
+      <div style="background: white; padding: 1rem; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+        <h3 style="margin-bottom: 1rem; color: #1a202c; font-size: 1.25rem;">Node Compute Resources</h3>
+        <iframe src="https://grafana.khalilaliouich.com/d/7d57716318ee0dddbac5a7f451fb7753/node-exporter-nodes?orgId=1&kiosk=tv" width="100%" height="400" frameborder="0" style="border-radius: 8px;"></iframe>
+      </div>
+      <div style="background: white; padding: 1rem; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+        <h3 style="margin-bottom: 1rem; color: #1a202c; font-size: 1.25rem;">Tamagotchi Application Metrics</h3>
+        <iframe src="https://grafana.khalilaliouich.com/d/ajntj2/f09f90a3-tamagotchi-as-a-service?orgId=1&kiosk=tv" width="100%" height="400" frameborder="0" style="border-radius: 8px;"></iframe>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
   <!-- TOOLS PORTAL SECTION -->
   <!-- ============================================================ -->
   <section class="section section--dark" id="tools">

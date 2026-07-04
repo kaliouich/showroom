@@ -11,7 +11,7 @@ VM_IP="${1:?Usage: ./phase2-platform.sh <VM_IP> <SSH_KEY_PATH>}"
 SSH_KEY="${2:?Usage: ./phase2-platform.sh <VM_IP> <SSH_KEY_PATH>}"
 SSH_USER="ubuntu"
 SSH_CMD="ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${SSH_USER}@${VM_IP}"
-NIP_DOMAIN="${VM_IP}.nip.io"
+NIP_DOMAIN="khalilaliouich.com"
 
 echo "=========================================="
 echo "🚀 Phase 2 — Platform Services"
@@ -181,7 +181,10 @@ helm install kube-prometheus prometheus-community/kube-prometheus-stack \
   --set prometheus.prometheusSpec.resources.requests.cpu=200m \
   --set grafana.resources.requests.memory=128Mi \
   --set grafana.resources.limits.memory=256Mi \
-  --set grafana.resources.requests.cpu=100m
+  --set grafana.resources.requests.cpu=100m \
+  --set "grafana.grafana\.ini.security.allow_embedding=true" \
+  --set "grafana.grafana\.ini.auth\.anonymous.enabled=true" \
+  --set "grafana.grafana\.ini.auth\.anonymous.org_role=Viewer"
 
 echo "Waiting for Grafana to be ready..."
 kubectl -n monitoring rollout status deployment/kube-prometheus-grafana --timeout=300s
