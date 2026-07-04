@@ -153,7 +153,8 @@ spec:
   selector:
     app: tamagotchi-api
   ports:
-    - port: 8080
+    - name: http-api
+      port: 8080
       targetPort: 8080
 ---
 # Tamagotchi Frontend Deployment
@@ -216,7 +217,7 @@ spec:
     matchLabels:
       app: tamagotchi-api
   endpoints:
-    - port: "8080"
+    - port: http-api
       path: /metrics
       interval: 15s
   namespaceSelector:
