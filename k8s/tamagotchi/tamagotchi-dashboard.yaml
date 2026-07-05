@@ -12,49 +12,193 @@ data:
       "title": "🐣 Tamagotchi as a Service",
       "tags": [ "tamagotchi", "demo" ],
       "timezone": "browser",
-      "schemaVersion": 16,
-      "version": 0,
-      "refresh": "10s",
+      "schemaVersion": 30,
+      "version": 1,
+      "refresh": "5s",
+      "time": {
+        "from": "now-15m",
+        "to": "now"
+      },
       "panels": [
         {
           "type": "stat",
-          "title": "Alive Creatures",
-          "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
-          "targets": [{ "expr": "tamagotchi_creatures_alive_total", "format": "time_series" }]
+          "title": "🌟 Alive Creatures",
+          "gridPos": { "h": 6, "w": 4, "x": 0, "y": 0 },
+          "targets": [{ "expr": "tamagotchi_creatures_alive_total", "format": "time_series" }],
+          "options": {
+            "graphMode": "area",
+            "colorMode": "value",
+            "justifyMode": "auto",
+            "textMode": "auto"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "red", "value": null },
+                  { "color": "super-light-green", "value": 1 }
+                ]
+              }
+            }
+          }
         },
         {
           "type": "stat",
-          "title": "Dead Creatures",
-          "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
-          "targets": [{ "expr": "tamagotchi_creatures_dead_total", "format": "time_series" }]
+          "title": "💀 Dead Creatures",
+          "gridPos": { "h": 6, "w": 4, "x": 4, "y": 0 },
+          "targets": [{ "expr": "tamagotchi_creatures_dead_total", "format": "time_series" }],
+          "options": {
+            "graphMode": "area",
+            "colorMode": "value",
+            "justifyMode": "auto",
+            "textMode": "auto"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "dark-red", "value": 1 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "type": "gauge",
+          "title": "🍔 Average Hunger",
+          "gridPos": { "h": 6, "w": 5, "x": 8, "y": 0 },
+          "targets": [{ "expr": "avg(tamagotchi_hunger_level)", "format": "time_series" }],
+          "options": {
+            "reduceOptions": { "values": false, "calcs": ["lastNotNull"] },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true
+          },
+          "fieldConfig": {
+            "defaults": {
+              "min": 0,
+              "max": 100,
+              "unit": "percent",
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 50 },
+                  { "color": "red", "value": 80 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "type": "gauge",
+          "title": "💖 Average Happiness",
+          "gridPos": { "h": 6, "w": 5, "x": 13, "y": 0 },
+          "targets": [{ "expr": "avg(tamagotchi_happiness_score)", "format": "time_series" }],
+          "options": {
+            "reduceOptions": { "values": false, "calcs": ["lastNotNull"] },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true
+          },
+          "fieldConfig": {
+            "defaults": {
+              "min": 0,
+              "max": 100,
+              "unit": "percent",
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "red", "value": null },
+                  { "color": "yellow", "value": 30 },
+                  { "color": "green", "value": 70 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "type": "gauge",
+          "title": "⚡ Average Energy",
+          "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+          "targets": [{ "expr": "avg(tamagotchi_energy_level)", "format": "time_series" }],
+          "options": {
+            "reduceOptions": { "values": false, "calcs": ["lastNotNull"] },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true
+          },
+          "fieldConfig": {
+            "defaults": {
+              "min": 0,
+              "max": 100,
+              "unit": "percent",
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "red", "value": null },
+                  { "color": "orange", "value": 30 },
+                  { "color": "blue", "value": 70 }
+                ]
+              }
+            }
+          }
         },
         {
           "type": "timeseries",
-          "title": "Interactions (Rate)",
-          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+          "title": "🎮 Interactions Activity",
+          "gridPos": { "h": 8, "w": 14, "x": 0, "y": 6 },
           "targets": [
             { "expr": "rate(tamagotchi_feed_actions_total[1m])", "legendFormat": "Feed Rate" },
             { "expr": "rate(tamagotchi_play_actions_total[1m])", "legendFormat": "Play Rate" },
             { "expr": "rate(tamagotchi_sleep_actions_total[1m])", "legendFormat": "Sleep Rate" }
-          ]
+          ],
+          "options": {
+            "legend": { "displayMode": "list", "placement": "bottom" },
+            "tooltip": { "mode": "multi" }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "fillOpacity": 25,
+                "gradientMode": "opacity"
+              }
+            }
+          }
         },
         {
           "type": "timeseries",
-          "title": "Average Stats (Hunger, Happiness, Energy)",
-          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+          "title": "⏱️ API Latency (ms)",
+          "gridPos": { "h": 8, "w": 10, "x": 14, "y": 6 },
           "targets": [
-            { "expr": "avg(tamagotchi_hunger_level)", "legendFormat": "Average Hunger" },
-            { "expr": "avg(tamagotchi_happiness_score)", "legendFormat": "Average Happiness" },
-            { "expr": "avg(tamagotchi_energy_level)", "legendFormat": "Average Energy" }
-          ]
-        },
-        {
-          "type": "timeseries",
-          "title": "HTTP Request Duration",
-          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
-          "targets": [
-            { "expr": "rate(tamagotchi_http_request_duration_seconds_sum[1m]) / rate(tamagotchi_http_request_duration_seconds_count[1m])", "legendFormat": "Average Request Latency (s)" }
-          ]
+            { "expr": "rate(tamagotchi_http_request_duration_seconds_sum[1m]) / rate(tamagotchi_http_request_duration_seconds_count[1m]) * 1000", "legendFormat": "Avg Latency" }
+          ],
+          "options": {
+            "legend": { "displayMode": "list", "placement": "bottom" },
+            "tooltip": { "mode": "single" }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "color": { "mode": "continuous-GrYlRd" },
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "smooth",
+                "lineWidth": 3,
+                "fillOpacity": 15,
+                "gradientMode": "scheme"
+              }
+            }
+          }
         }
       ]
     }
