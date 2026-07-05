@@ -1,0 +1,126 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: auth
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: authelia-storage
+  namespace: auth
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authelia
+  namespace: auth
+  labels:
+    app: authelia
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: authelia
+  template:
+    metadata:
+      labels:
+        app: authelia
+    spec:
+      containers:
+        - name: authelia
+          image: authelia/authelia:4.38
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9091
+          env:
+            - name: AUTHELIA_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: authelia-secrets
+                  key: jwt_secret
+            - name: AUTHELIA_SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: authelia-secrets
+                  key: session_secret
+            - name: AUTHELIA_STORAGE_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: authelia-secrets
+                  key: storage_encryption_key
+            - name: AUTHELIA_IDENTITY_PROVIDERS_OIDC_HMAC_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: authelia-secrets
+                  key: oidc_hmac_secret
+            - name: AUTHELIA_IDENTITY_PROVIDERS_OIDC_ISSUER_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: authelia-secrets
+                  key: oidc_issuer_private_key
+            - name: AUTHELIA_IDENTITY_PROVIDERS_OIDC_CLIENTS_GRAFANA_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: authelia-secrets
+                  key: oidc_client_grafana_secret
+            - name: AUTHELIA_IDENTITY_PROVIDERS_OIDC_CLIENTS_ARGOCD_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: authelia-secrets
+                  key: oidc_client_argocd_secret
+            - name: AUTHELIA_IDENTITY_PROVIDERS_OIDC_CLIENTS_GITEA_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: authelia-secrets
+                  key: oidc_client_gitea_secret
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+            - name: storage
+              mountPath: /var/lib/authelia
+      volumes:
+        - name: config
+          configMap:
+            name: authelia-config
+        - name: storage
+          persistentVolumeClaim:
+            claimName: authelia-storage
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: authelia
+  namespace: auth
+spec:
+  ports:
+    - port: 80
+      targetPort: 9091
+  selector:
+    app: authelia
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: authelia-route
+  namespace: auth
+spec:
+  parentRefs:
+    - name: gateway
+      namespace: traefik
+  hostnames:
+    - "auth.khalilaliouich.com"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: authelia
+          port: 80
