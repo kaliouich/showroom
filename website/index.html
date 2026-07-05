@@ -8,9 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=4">
+  <link rel="stylesheet" href="css/style.css?v=6">
 </head>
 <body>
+  <div class="cyber-grid"></div>
   <!-- Particles Background -->
   <canvas id="particlesCanvas"></canvas>
 
@@ -18,7 +19,7 @@
   <nav class="nav" id="nav">
     <div class="nav__logo">
       <span class="nav__icon">⚡</span>
-      <span class="nav__brand">KA<span class="accent">DevOps</span></span>
+      <span class="nav__brand">KA<span class="accent neon-flicker">DevOps</span></span>
     </div>
     <div class="nav__links">
       <a href="#hero" class="nav__link active" data-i18n="nav_home">Home</a>
@@ -48,7 +49,7 @@
         <span data-i18n="hero_badge">Live Infrastructure — Oracle Cloud Always Free</span>
       </div>
       <h1 class="hero__title">
-        <span data-i18n="hero_title_1">Hi, I'm</span> <span class="gradient-text">Khalil Aliouich</span>
+        <span data-i18n="hero_title_1">Hi, I'm</span> <span class="gradient-text glitch" data-text="Khalil Aliouich">Khalil Aliouich</span>
       </h1>
       <p class="hero__subtitle">
         <span class="typewriter" id="typewriter"></span><span class="cursor">|</span>
