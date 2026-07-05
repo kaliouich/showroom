@@ -20,22 +20,22 @@ data:
           "type": "stat",
           "title": "Alive Creatures",
           "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
-          "targets": [{ "expr": "tamagotchi_alive_total", "format": "time_series" }]
+          "targets": [{ "expr": "tamagotchi_creatures_alive_total", "format": "time_series" }]
         },
         {
           "type": "stat",
           "title": "Dead Creatures",
           "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
-          "targets": [{ "expr": "tamagotchi_dead_total", "format": "time_series" }]
+          "targets": [{ "expr": "tamagotchi_creatures_dead_total", "format": "time_series" }]
         },
         {
           "type": "timeseries",
           "title": "Interactions (Rate)",
           "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
           "targets": [
-            { "expr": "rate(tamagotchi_interactions_feed_total[1m])", "legendFormat": "Feed Rate" },
-            { "expr": "rate(tamagotchi_interactions_play_total[1m])", "legendFormat": "Play Rate" },
-            { "expr": "rate(tamagotchi_interactions_sleep_total[1m])", "legendFormat": "Sleep Rate" }
+            { "expr": "rate(tamagotchi_feed_actions_total[1m])", "legendFormat": "Feed Rate" },
+            { "expr": "rate(tamagotchi_play_actions_total[1m])", "legendFormat": "Play Rate" },
+            { "expr": "rate(tamagotchi_sleep_actions_total[1m])", "legendFormat": "Sleep Rate" }
           ]
         },
         {
@@ -44,7 +44,7 @@ data:
           "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
           "targets": [
             { "expr": "avg(tamagotchi_hunger_level)", "legendFormat": "Average Hunger" },
-            { "expr": "avg(tamagotchi_happiness_level)", "legendFormat": "Average Happiness" },
+            { "expr": "avg(tamagotchi_happiness_score)", "legendFormat": "Average Happiness" },
             { "expr": "avg(tamagotchi_energy_level)", "legendFormat": "Average Energy" }
           ]
         },
@@ -53,7 +53,7 @@ data:
           "title": "HTTP Request Duration",
           "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
           "targets": [
-            { "expr": "rate(http_request_duration_seconds_sum[1m]) / rate(http_request_duration_seconds_count[1m])", "legendFormat": "Average Request Latency (s)" }
+            { "expr": "rate(tamagotchi_http_request_duration_seconds_sum[1m]) / rate(tamagotchi_http_request_duration_seconds_count[1m])", "legendFormat": "Average Request Latency (s)" }
           ]
         }
       ]
