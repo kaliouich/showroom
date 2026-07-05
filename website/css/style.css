@@ -608,13 +608,13 @@ a { color: inherit; text-decoration: none; }
 .glitch::before {
   left: 4px;
   text-shadow: -4px 0 #ff0055;
-  animation: glitch-anim-1 0.4s infinite linear alternate-reverse;
+  animation: glitch-anim-1 3s infinite linear;
 }
 
 .glitch::after {
   left: -4px;
   text-shadow: 4px 0 #00f0ff;
-  animation: glitch-anim-2 0.3s infinite linear alternate-reverse;
+  animation: glitch-anim-2 3s infinite linear;
 }
 
 @keyframes glitch-skew {
@@ -627,21 +627,21 @@ a { color: inherit; text-decoration: none; }
 }
 
 @keyframes glitch-anim-1 {
-  0% { clip-path: inset(10% 0 60% 0); }
-  20% { clip-path: inset(80% 0 5% 0); }
-  40% { clip-path: inset(40% 0 40% 0); }
-  60% { clip-path: inset(0% 0 90% 0); }
-  80% { clip-path: inset(50% 0 30% 0); }
-  100% { clip-path: inset(20% 0 70% 0); }
+  0%, 90% { clip-path: inset(10% 0 60% 0); opacity: 0; }
+  91% { clip-path: inset(80% 0 5% 0); opacity: 1; }
+  93% { clip-path: inset(40% 0 40% 0); opacity: 1; }
+  95% { clip-path: inset(0% 0 90% 0); opacity: 1; }
+  97% { clip-path: inset(50% 0 30% 0); opacity: 1; }
+  99%, 100% { clip-path: inset(20% 0 70% 0); opacity: 0; }
 }
 
 @keyframes glitch-anim-2 {
-  0% { clip-path: inset(30% 0 20% 0); }
-  20% { clip-path: inset(10% 0 60% 0); }
-  40% { clip-path: inset(70% 0 10% 0); }
-  60% { clip-path: inset(20% 0 50% 0); }
-  80% { clip-path: inset(80% 0 5% 0); }
-  100% { clip-path: inset(5% 0 80% 0); }
+  0%, 90% { clip-path: inset(30% 0 20% 0); opacity: 0; }
+  91% { clip-path: inset(10% 0 60% 0); opacity: 1; }
+  93% { clip-path: inset(70% 0 10% 0); opacity: 1; }
+  95% { clip-path: inset(20% 0 50% 0); opacity: 1; }
+  97% { clip-path: inset(80% 0 5% 0); opacity: 1; }
+  99%, 100% { clip-path: inset(5% 0 80% 0); opacity: 0; }
 }
 
 .neon-flicker {
