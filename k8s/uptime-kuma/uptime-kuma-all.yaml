@@ -3,6 +3,19 @@ kind: Namespace
 metadata:
   name: uptime-kuma
 ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: uptime-kuma-pvc
+  namespace: uptime-kuma
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -28,7 +41,8 @@ spec:
               name: kuma-data
       volumes:
         - name: kuma-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: uptime-kuma-pvc
 ---
 apiVersion: v1
 kind: Service
