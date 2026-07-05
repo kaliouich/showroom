@@ -24,9 +24,9 @@ Les demandes clés étaient :
 - **DNS** : Wildcard `*.khalilaliouich.com`.
 
 ### Plateforme & Outillage DevOps (Phase 2)
-- **Git** : Gitea (Léger, parfait pour ARM).
+- **Git** : Gitea (Léger, parfait pour ARM) avec stockage persistant `oci-bv`.
 - **GitOps** : ArgoCD.
-- **Monitoring** : Kube-Prometheus-Stack (Prometheus + Grafana).
+- **Monitoring** : Kube-Prometheus-Stack (Prometheus + Grafana). Grafana est désormais configuré avec un stockage persistant local (`hostPath: /var/lib/showcase/grafana-data`) pour conserver les modifications manuelles.
 - **Logging** : Loki + Promtail (Logs des pods aggrégés dans Grafana).
 
 ### Démo "Tamagotchi as a Service" 🐣 (Phase 3)
@@ -106,6 +106,10 @@ Les demandes clés étaient :
 12. **ArgoCD Credentials "Guest" & UI CSS Alignment**
     - *Problème* : ArgoCD n'acceptait pas les identifiants visiteur, et les cartes du site vitrine n'étaient pas centrées.
     - *Solution* : Le hash bcrypt du mot de passe `<YOUR_GUEST_PASSWORD>` a été généré manuellement et patché dans le Secret `argocd-secret`. La grille CSS a été transformée de `CSS Grid` vers `Flexbox` (`justify-content: center`) pour un alignement symétrique parfait.
+
+13. **Nettoyage Ingress & Persistence Grafana**
+    - *Problème* : Des anciens objets Ingress Nginx traînaient en parallèle de la nouvelle Gateway API. De plus, Grafana perdait ses données (emptyDir) lors des redémarrages.
+    - *Solution* : Suppression des Ingress fantômes (`kube-prometheus-grafana`, etc.) pour ne garder que les `HTTPRoute` d'Envoy Gateway. Mise à niveau du Helm Chart Prometheus pour lier Grafana à un PVC (`hostPath` sur `/var/lib/showcase/grafana-data`). Les anciennes images Docker ont également été purgées (`nerdctl image prune -a`) pour libérer l'espace disque.
 
 ---
 

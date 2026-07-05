@@ -78,3 +78,15 @@ Generated a new bcrypt hash (`$2b$12$...`) for the password `<YOUR_GUEST_PASSWOR
 ```bash
 kubectl patch secret argocd-secret -n argocd -p '{"data": {"accounts.guest.password": "<base64_hash>"}}'
 ```
+
+---
+
+## 7. Legacy Ingress Cleanup & Grafana Persistence
+**Issue:**
+The cluster was utilizing the modern Kubernetes Gateway API (with Envoy Gateway), but older `Ingress` objects (managed by NGINX) were left behind by default Helm chart deployments (like `kube-prometheus-stack`). Additionally, Grafana was losing its manual UI configurations on every pod restart.
+**Root Cause:**
+The `kube-prometheus-stack` deploys standard Ingress resources by default. Grafana uses an `emptyDir` ephemeral volume by default.
+**Resolution:**
+1. Manually deleted the ghost Ingress objects (`kubectl delete ingress`) to fully transition routing responsibilities to `HTTPRoute` resources.
+2. Deployed a `PersistentVolume` (`hostPath`) and `PersistentVolumeClaim` specifically for Grafana data.
+3. Upgraded the Prometheus Helm release (`helm upgrade --reuse-values`) to point Grafana to this PVC, ensuring dashboards and users created in the UI survive pod restarts without conflicting with other data directories (like `n8n`).
