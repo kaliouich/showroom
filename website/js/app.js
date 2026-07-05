@@ -201,6 +201,7 @@ const typewriterLines = [
 let twLineIdx = 0, twCharIdx = 0, twDeleting = false;
 
 function typewrite() {
+
   const el = document.getElementById('typewriter');
   if (!el) return;
   const line = typewriterLines[twLineIdx];
@@ -453,3 +454,25 @@ fetchTamagotchiStats();
 setInterval(fetchTamagotchiStats, 10000);
 initScrollAnimations();
 initActiveNav();
+
+// ---- Hamburger Menu ----
+function initHamburgerMenu() {
+  const nav = document.getElementById('nav');
+  const hamburgerBtn = document.getElementById('hamburgerBtn');
+  const navLinks = document.querySelectorAll('.nav__link');
+
+  if (hamburgerBtn) {
+    hamburgerBtn.addEventListener('click', () => {
+      nav.classList.toggle('mobile-open');
+    });
+  }
+
+  navLinks.forEach(link => {
+    link.addEventListener('click', () => {
+      if (nav.classList.contains('mobile-open')) {
+        nav.classList.remove('mobile-open');
+      }
+    });
+  });
+}
+initHamburgerMenu();

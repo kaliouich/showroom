@@ -1,5 +1,5 @@
 // ============================================================================
-// Particles Background — Floating dots with connecting lines
+// Particles Background — Floating dots with connecting lines (Infra Theme)
 // ============================================================================
 const canvas = document.getElementById('particlesCanvas');
 const ctx = canvas.getContext('2d');

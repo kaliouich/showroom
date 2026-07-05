@@ -8,40 +8,34 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=27">
+  <link rel="stylesheet" href="css/style.css?v=11">
 </head>
 <body>
+  <div class="cyber-grid"></div>
   <!-- Particles Background -->
   <canvas id="particlesCanvas"></canvas>
 
   <!-- Navigation -->
   <nav class="nav" id="nav">
-    <div class="nav__header">
-      <div class="nav__logo">
-        <span class="nav__icon">⚡</span>
-        <span class="nav__brand">KA<span class="accent neon-flicker">DevOps</span></span>
-      </div>
-      <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
-        <span></span><span></span><span></span>
-      </button>
+    <div class="nav__logo">
+      <span class="nav__icon">⚡</span>
+      <span class="nav__brand">KA<span class="accent neon-flicker">DevOps</span></span>
     </div>
-    <div class="nav__menu" id="navMenu">
-      <div class="nav__links">
-        <a href="#hero" class="nav__link active" data-i18n="nav_home">Home</a>
-        <a href="#architecture" class="nav__link" data-i18n="nav_architecture">Architecture</a>
-        <a href="#infrastructure" class="nav__link" data-i18n="nav_infra">Live Infra</a>
-        <a href="#demo" class="nav__link" data-i18n="nav_demo">Demo App</a>
-        <a href="#tools" class="nav__link" data-i18n="nav_tools">Tools</a>
-        <a href="about.html" class="nav__link" data-i18n="nav_about">👤 About</a>
-        <a href="https://status.khalilaliouich.com/status/default" class="nav__link" target="_blank">🟢 Status</a>
+    <div class="nav__links">
+      <a href="#hero" class="nav__link active" data-i18n="nav_home">Home</a>
+      <a href="#architecture" class="nav__link" data-i18n="nav_architecture">Architecture</a>
+      <a href="#infrastructure" class="nav__link" data-i18n="nav_infra">Live Infra</a>
+      <a href="#demo" class="nav__link" data-i18n="nav_demo">Demo App</a>
+      <a href="#tools" class="nav__link" data-i18n="nav_tools">Tools</a>
+      <a href="about.html" class="nav__link" data-i18n="nav_about">👤 About</a>
+      <a href="https://status.khalilaliouich.com/status/default" class="nav__link" target="_blank">🟢 Status</a>
+    </div>
+    <div class="nav__actions">
+      <div class="lang-switcher">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="fr">FR</button>
       </div>
-      <div class="nav__actions">
-        <div class="lang-switcher">
-          <button class="lang-btn active" data-lang="en">EN</button>
-          <button class="lang-btn" data-lang="fr">FR</button>
-        </div>
-        <button class="nav__cta" id="adminBtn" data-i18n="nav_admin">🔐 Admin</button>
-      </div>
+      <button class="nav__cta" id="adminBtn" data-i18n="nav_admin">🔐 Admin</button>
     </div>
   </nav>
 
@@ -366,7 +360,7 @@
         <h3 class="tool-card__name">ArgoCD</h3>
         <p class="tool-card__desc" data-i18n="tool_argocd">GitOps continuous delivery. See application sync status, health, and history.</p>
         <div class="tool-card__creds">
-          <code data-i18n="tool_sso_guest">SSO: guest / visitor2026</code>
+          <code>guest / <YOUR_GUEST_PASSWORD></code>
         </div>
         <span class="tool-card__badge" data-i18n="tool_readonly">Read Only</span>
       </a>
@@ -375,7 +369,7 @@
         <h3 class="tool-card__name">Grafana</h3>
         <p class="tool-card__desc" data-i18n="tool_grafana">Dashboards for K8s metrics, Tamagotchi stats, and application performance.</p>
         <div class="tool-card__creds">
-          <code data-i18n="tool_sso_admin">SSO: admin / admin2026</code>
+          <code>admin / <YOUR_ADMIN_PASSWORD></code>
         </div>
         <span class="tool-card__badge" data-i18n="tool_viewer">Viewer</span>
       </a>
@@ -475,7 +469,7 @@
     </div>
   </div>
 
-  <script src="js/particles.js?v=27"></script>
-  <script src="js/app.js?v=27"></script>
+  <script src="js/particles.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
