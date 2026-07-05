@@ -49,7 +49,9 @@ Les demandes clés étaient :
 
 ### Masterclass DevOps Expansion (Phase 6)
 - **Gitea Actions** : Moteur de CI natif et léger, 100% compatible avec la syntaxe GitHub Actions (Remplace Woodpecker).
-- **SonarQube** : Serveur d'analyse statique de code (limité en RAM pour préserver la VM).
+- **SonarQube (DevSecOps & SAST)** : Intégration avancée d'un serveur d'analyse statique de code (Static Application Security Testing).
+  - **Rôle** : Scanne automatiquement le code source (via Gitea Actions) pour détecter les bugs, les vulnérabilités de sécurité (OWASP Top 10), les "Code Smells" (dette technique) et évaluer la qualité logicielle (Clean Code).
+  - **Optimisation Extreme (ARM64)** : Fait rarissime sur une infrastructure Cloud Free Tier, SonarQube tourne via des images Docker optimisées avec des restrictions strictes sur la JVM (Java Virtual Machine) d'Elasticsearch et du Compute Engine, garantissant des analyses complexes sans "OOMKilled".
 - **Linkerd** : Service Mesh injecté dans les pods de l'application Tamagotchi pour la sécurité (mTLS) et l'observabilité.
 - **Trivy Operator & Kyverno** : Scanner de vulnérabilités et moteur de politiques (Policy-as-Code) fonctionnant en arrière-plan.
 

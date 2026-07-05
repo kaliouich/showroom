@@ -90,3 +90,16 @@ The `kube-prometheus-stack` deploys standard Ingress resources by default. Grafa
 1. Manually deleted the ghost Ingress objects (`kubectl delete ingress`) to fully transition routing responsibilities to `HTTPRoute` resources.
 2. Deployed a `PersistentVolume` (`hostPath`) and `PersistentVolumeClaim` specifically for Grafana data.
 3. Upgraded the Prometheus Helm release (`helm upgrade --reuse-values`) to point Grafana to this PVC, ensuring dashboards and users created in the UI survive pod restarts without conflicting with other data directories (like `n8n`).
+
+---
+
+## 8. SonarQube Resource Exhaustion on ARM64
+**Issue:**
+Deploying SonarQube natively via Helm resulted in severe `OOMKilled` (Out Of Memory) errors, pod crash loops, and degraded performance across the entire K3s cluster. Elasticsearch (the search engine internal to SonarQube) failed to initialize on the ARM architecture.
+**Root Cause:**
+SonarQube is a heavy enterprise Java application composed of a Web server, a Compute Engine, and an Elasticsearch node. By default, it allocates massive JVM heap sizes (e.g., `-Xmx2G` for each component) and requires high `vm.max_map_count` kernel settings for Elasticsearch.
+**Resolution:**
+1. **Kernel Optimization:** Applied `sysctl -w vm.max_map_count=262144` on the Oracle Cloud VM host to allow Elasticsearch memory mapping.
+2. **JVM Tuning (Helm Values):** Aggressively tuned the `sonar.web.javaOpts`, `sonar.ce.javaOpts`, and `sonar.search.javaOpts` to restrict heap sizes (`-Xmx512m -Xms128m`) to keep the total memory footprint under 1.5GB.
+3. **Database Constraints:** Configured the bundled PostgreSQL pod with explicit `resources.limits` to prevent query cache inflation.
+4. **CI Integration:** Adjusted the `sonar-scanner` parameters in Gitea Actions to analyze the repository shallowly, reducing CPU spikes during continuous integration sweeps.
