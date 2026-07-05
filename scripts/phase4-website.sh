@@ -11,7 +11,7 @@ SSH_KEY="${2:?Usage: ./phase4-website.sh <VM_IP> <SSH_KEY_PATH>}"
 SSH_USER="ubuntu"
 SSH_CMD="ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${SSH_USER}@${VM_IP}"
 SCP_CMD="scp -o StrictHostKeyChecking=no -i ${SSH_KEY}"
-NIP_DOMAIN="${VM_IP}.nip.io"
+NIP_DOMAIN="khalilaliouich.com"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
@@ -69,7 +69,7 @@ spec:
           image: showcase-website:v2
           imagePullPolicy: Never
           ports:
-            - containerPort: 80
+            - containerPort: 3000
           resources:
             requests:
               cpu: 50m
@@ -88,7 +88,7 @@ spec:
     app: showcase-website
   ports:
     - port: 80
-      targetPort: 80
+      targetPort: 3000
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress

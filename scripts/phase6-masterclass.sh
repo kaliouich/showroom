@@ -5,7 +5,7 @@ VM_IP="${1:?Usage: ./phase6-masterclass.sh <VM_IP> <SSH_KEY_PATH>}"
 SSH_KEY="${2:?Usage: ./phase6-masterclass.sh <VM_IP> <SSH_KEY_PATH>}"
 SSH_USER="ubuntu"
 SSH_CMD="ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${SSH_USER}@${VM_IP}"
-NIP_DOMAIN="${VM_IP}.nip.io"
+NIP_DOMAIN="khalilaliouich.com"
 
 echo "=========================================="
 echo "🌟 Phase 6 — Masterclass DevOps Expansion"

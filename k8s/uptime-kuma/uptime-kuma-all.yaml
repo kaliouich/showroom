@@ -43,21 +43,22 @@ spec:
       port: 80
       targetPort: 3001
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
-  name: uptime-kuma
+  name: uptime-kuma-route
   namespace: uptime-kuma
 spec:
-  ingressClassName: nginx
+  parentRefs:
+  - name: main-gateway
+    namespace: default
+  hostnames:
+  - "status.khalilaliouich.com"
   rules:
-    - host: status.khalilaliouich.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: uptime-kuma
-                port:
-                  number: 80
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: uptime-kuma
+      port: 80

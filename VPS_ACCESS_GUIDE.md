@@ -4,9 +4,9 @@ Ce guide explique comment vous connecter à votre serveur d'infrastructure (Orac
 
 ## 1. Informations de connexion
 
-- **Adresse IP publique :** `88.96.58.76`
+- **Adresse IP publique :** `<YOUR_VM_IP>`
 - **Utilisateur distant :** `ubuntu`
-- **Clé SSH :** Votre clé privée (actuellement située sur votre machine locale sous le nom `khalil.aliouich@gmail.com-2026-06-28T08_23_02.949Z.pem`)
+- **Clé SSH :** Votre clé privée (actuellement située sur votre machine locale sous le nom `<YOUR_SSH_KEY>.pem`)
 
 ---
 
@@ -15,7 +15,7 @@ Ce guide explique comment vous connecter à votre serveur d'infrastructure (Orac
 Pour vous connecter directement via le terminal, utilisez la commande suivante en ajustant le chemin vers votre clé SSH privée :
 
 ```bash
-ssh -i /chemin/vers/votre/cle/khalil.aliouich@gmail.com-2026-06-28T08_23_02.949Z.pem ubuntu@88.96.58.76
+ssh -i /chemin/vers/votre/cle/<YOUR_SSH_KEY>.pem ubuntu@<YOUR_VM_IP>
 ```
 
 ---
@@ -37,9 +37,9 @@ Grâce à l'extension **Remote - SSH**, vous pouvez éditer les fichiers de votr
 
 ```ssh-config
 Host OCI-Showcase
-    HostName 88.96.58.76
+    HostName <YOUR_VM_IP>
     User ubuntu
-    IdentityFile /chemin/vers/votre/cle/khalil.aliouich@gmail.com-2026-06-28T08_23_02.949Z.pem
+    IdentityFile /chemin/vers/votre/cle/<YOUR_SSH_KEY>.pem
     StrictHostKeyChecking no
 ```
 *(Attention : Remplacez `/chemin/vers/votre/cle/` par le chemin réel où est stockée votre clé sur votre ordinateur personnel)*.

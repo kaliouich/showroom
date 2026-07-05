@@ -12,7 +12,7 @@ SSH_KEY="${2:?Usage: ./phase3-tamagotchi.sh <VM_IP> <SSH_KEY_PATH>}"
 SSH_USER="ubuntu"
 SSH_CMD="ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${SSH_USER}@${VM_IP}"
 SCP_CMD="scp -o StrictHostKeyChecking=no -i ${SSH_KEY}"
-NIP_DOMAIN="${VM_IP}.nip.io"
+NIP_DOMAIN="khalilaliouich.com"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 

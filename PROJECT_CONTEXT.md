@@ -11,7 +11,7 @@ Les demandes clés étaient :
 - Une **application de démo interactive** ("Tamagotchi as a Service" - architecture 3-tiers) générant des métriques personnalisées dans Prometheus et affichées dans Grafana.
 - Un portail/site web "WOW" (dark mode, glassmorphism) permettant aux visiteurs d'accéder à ArgoCD, Gitea, Grafana et l'app Démo.
 - Un système de **Read-Only / Lecture seule** pour les visiteurs afin de sécuriser l'infrastructure (seul l'admin peut modifier).
-- Un nom de domaine gratuit via `nip.io` pointant sur l'IP publique de la VM (`<YOUR_VM_IP>`).
+- Un nom de domaine personnalisé (`khalilaliouich.com`) pointant sur l'IP publique de la VM.
 
 ---
 
