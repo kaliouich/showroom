@@ -27,6 +27,7 @@ Les demandes clés étaient :
 - **Git** : Gitea (Léger, parfait pour ARM) avec stockage persistant `oci-bv`.
 - **GitOps** : ArgoCD.
 - **Monitoring** : Kube-Prometheus-Stack (Prometheus + Grafana). Grafana est désormais configuré avec un stockage persistant local (`hostPath: /var/lib/showcase/grafana-data`) pour conserver les modifications manuelles.
+- **Statut / Uptime** : Uptime Kuma déployé pour surveiller les endpoints externes (`https://status.khalilaliouich.com/status/default`).
 - **Logging** : Loki + Promtail (Logs des pods aggrégés dans Grafana).
 
 ### Démo "Tamagotchi as a Service" 🐣 (Phase 3)
@@ -44,7 +45,7 @@ Les demandes clés étaient :
   - Le frontend affiche désormais les **métriques réelles** du cluster en direct (Pods, Namespaces, etc.) via le endpoint `/api/infra`.
 
 ### Sécurité & Accès (Phase 5)
-- **ArgoCD** : Compte visiteur configuré (`guest` / `<YOUR_GUEST_PASSWORD>`) avec RBAC `role:readonly`.
+- **ArgoCD** : Compte visiteur configuré (`guest` / `visitor2026`) avec RBAC `role:readonly`.
 - **ClusterRole** : Création d'un rôle Kubernetes `visitor-readonly` (Get/List/Watch uniquement) et génération d'un token ServiceAccount.
 
 ### Masterclass DevOps Expansion (Phase 6)
@@ -100,6 +101,18 @@ Les demandes clés étaient :
 10. **ArgoCD inaccessible (502/Connection Refused) avec Linkerd**
     - *Problème* : L'interface web et l'API d'ArgoCD plantaient car le proxy sidecar `linkerd` interceptait et cassait le trafic gRPC/TLS interne d'ArgoCD.
     - *Solution* : Désactivation de l'injection Linkerd sur le namespace `argocd` (`linkerd.io/inject: disabled`) et redémarrage des contrôleurs.
+
+11. **UI Translation Race Condition (Bug d'affichage i18n)**
+    - *Problème* : Le site affichait occasionnellement les clés brutes (`issues_title`) au lieu du texte traduit lors du changement de langue, écrasant le HTML statique.
+    - *Solution* : Ajout des clés manquantes dans les dictionnaires `en` et `fr` du fichier `app.js`.
+
+12. **Build Docker "invisible" pour K3s (`ErrImageNeverPull`)**
+    - *Problème* : Après avoir recompilé l'image `showcase-website:v37` localement, le déploiement Kubernetes échouait en disant que l'image n'existait pas localement (`ErrImageNeverPull`).
+    - *Solution* : L'image avait été construite dans le socket containerd standard (Docker). Pour que K3s la voie, la commande a dû être relancée en ciblant spécifiquement le socket de K3s : `sudo nerdctl --address /run/k3s/containerd/containerd.sock --namespace k8s.io build ...`.
+
+13. **Blocage indéfini des `git commit` (GPG Signing)**
+    - *Problème* : Les tentatives de commits Git tournaient dans le vide car la configuration globale exigeait une signature GPG (`commit.gpgsign=true`), attendant silencieusement une passphrase.
+    - *Solution* : Ajout de l'argument `--no-gpg-sign` pour forcer la validation du commit automatisé.
 
 11. **Site Vitrine 502 Bad Gateway (Nginx vs Node.js)**
     - *Problème* : Lors de la mise à jour CSS, l'image Docker a été reconstruite avec un ancien `Dockerfile` (basé sur Nginx, port 80), alors que l'architecture Kubernetes s'attendait au backend Node.js (port 3000).

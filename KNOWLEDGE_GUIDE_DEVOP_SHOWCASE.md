@@ -79,7 +79,9 @@ Grafana est une coquille vide, c'est juste une interface de visualisation.
 > **R :** Via **CoreDNS**. Chaque pod K8s a son fichier `/etc/resolv.conf` configuré pour pointer vers le pod CoreDNS. Si le pod Tamagotchi cherche `postgres`, CoreDNS répond avec l'IP interne (`ClusterIP`) du service PostgreSQL (ex: `10.43.x.x`). `kube-proxy` (ou les iptables générées par K3s) route ensuite les paquets vers le bon pod.
 
 > **Q : Comment les images Docker sont-elles construites sur une machine qui n'a pas Docker ?**
-> **R :** Le cluster utilise `nerdctl`, un outil CLI compatible avec Docker mais conçu pour Containerd. Couplé avec `buildkit`, nerdctl compile le `Dockerfile`, génère les layers (couches), et enregistre l'image directement dans l'espace de stockage de Containerd sous le namespace `k8s.io`. K3s peut alors utiliser cette image instantanément sans avoir besoin d'un registre externe.
+> **R :** Le cluster utilise `nerdctl`, un outil CLI compatible avec Docker mais conçu pour Containerd. Couplé avec `buildkit`, nerdctl compile le `Dockerfile`, génère les layers (couches), et enregistre l'image directement dans l'espace de stockage de Containerd sous le namespace `k8s.io`. 
+> 
+> *Note Critique :* Pour que K3s "voie" l'image, il est impératif d'utiliser le socket spécifique de K3s (`--address /run/k3s/containerd/containerd.sock`) et l'espace de nom correct (`--namespace k8s.io`), sinon l'image sera construite dans le namespace standard de docker et rejetée avec une erreur `ErrImageNeverPull`. K3s peut alors utiliser cette image instantanément sans avoir besoin d'un registre externe.
 
 > **Q : Pourquoi le cluster utilise "local-path" pour certaines bases de données ?**
 > **R :** `local-path` est un provisionneur CSI minimaliste fourni par K3s. Quand Kubernetes demande un PVC (PersistentVolumeClaim) de 2Go, le provisionneur crée automatiquement un dossier sur le disque physique de la VM (dans `/var/lib/rancher/k3s/storage/`). Kubernetes monte ce dossier à l'intérieur du pod. C'est extrêmement performant en I/O (car c'est le NVMe direct de la VM), mais la donnée ne peut pas migrer sur un autre serveur physique si la VM meurt.
