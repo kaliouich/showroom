@@ -51,6 +51,7 @@ const i18n = {
     footer_text: 'Built with K3s, ArgoCD, Prometheus, Grafana, Loki & Gitea — hosted on Oracle Cloud Always Free (ARM Ampere A1).',
     footer_powered: 'Powered by determination & free cloud credits',
     nav_about: '👤 About', nav_back: '← Back to Home',
+    issues_badge: 'Troubleshooting', issues_title: 'Technical Issues Resolved', issues_subtitle: 'A deep dive into the engineering challenges faced and overcome while deploying this architecture on Oracle Cloud.',
     issues_hero_badge: 'Deep Dive Post-Mortem', issues_hero_title: 'Technical <span class="gradient-text">Issues Resolved</span>',
     issues_hero_desc: 'An in-depth look at the engineering challenges faced while deploying the microservices architecture on Oracle Cloud (ARM64). Discover the root causes, the exact error logs, and the terminal commands used to fix them.',
     issue_1_title: 'CI/CD Runner Network Isolation (Gitea Actions)',
@@ -90,6 +91,7 @@ const i18n = {
     about_exfo_desc: 'Designed an IDP for 50+ developers across 11 K8s clusters. Reduced release cycles by 40% using ArgoCD App of Apps and GitLab CI. Implemented end-to-end DevSecOps pipelines with Trivy/SBOM security scans and automated smoke tests. Managed multi-cloud Infrastructure as Code via Terraform and Crossplane.',
     about_delta_title: 'Ingénieur DevOps / Cloud Tech Lead',
     about_delta_desc: 'Led DevOps and FinOps initiatives for Europe\'s IoT Smart Home leader. Managed Azure AKS topologies with Terraform, maintained 99.9% SLA for REST APIs, and mentored development teams on GitOps and DevSecOps best practices.',
+    about_rd_desc: 'Hardware-level programming and debugging for ARM Cortex/Linux systems at companies like NXP, Hill-Rom, Ekinops, and Itron. Pioneered early Edge architectures with Zigbee/WSN gateways.',
     about_skills_title: 'Technical Stack'
   },
   fr: {
@@ -132,6 +134,7 @@ const i18n = {
     footer_text: "Construit avec K3s, ArgoCD, Prometheus, Grafana, Loki & Gitea — hébergé sur Oracle Cloud Always Free (ARM Ampere A1).",
     footer_powered: 'Propulsé par la détermination et des crédits cloud gratuits',
     nav_about: '👤 À propos', nav_back: '← Retour à l\'Accueil',
+    issues_badge: 'Dépannage', issues_title: 'Problèmes Techniques Résolus', issues_subtitle: 'Une plongée approfondie dans les défis d\'ingénierie rencontrés et surmontés lors du déploiement de cette architecture sur Oracle Cloud.',
     issues_hero_badge: 'Analyse Approfondie Post-Mortem', issues_hero_title: 'Problèmes Techniques <span class="gradient-text">Résolus</span>',
     issues_hero_desc: 'Un regard approfondi sur les défis d\'ingénierie rencontrés lors du déploiement de l\'architecture microservices sur Oracle Cloud (ARM64). Découvrez les causes racines, les logs d\'erreurs exacts et les commandes terminales utilisées pour les corriger.',
     issue_1_title: 'Isolation Réseau du Runner CI/CD (Gitea Actions)',
@@ -171,6 +174,7 @@ const i18n = {
     about_exfo_desc: 'Conception d\'un IDP pour plus de 50 développeurs sur 11 clusters K8s. Réduction des cycles de release de 40% grâce à ArgoCD App of Apps et GitLab CI. Implémentation de pipelines DevSecOps complets avec scans de sécurité Trivy/SBOM et tests automatisés. Gestion d\'Infrastructure as Code multi-cloud via Terraform et Crossplane.',
     about_delta_title: 'Ingénieur DevOps / Cloud Tech Lead',
     about_delta_desc: 'Direction d\'initiatives DevOps et FinOps pour le leader européen de l\'IoT Smart Home. Gestion des topologies Azure AKS avec Terraform, maintien d\'un SLA de 99.9% pour les API REST, et mentorat des équipes de développement sur les bonnes pratiques GitOps et DevSecOps.',
+    about_rd_desc: 'Programmation et débogage bas-niveau pour systèmes ARM Cortex/Linux (NXP, Hill-Rom, Ekinops, Itron). Pionnier des architectures Edge naissantes avec passerelles Zigbee/WSN.',
     about_skills_title: 'Stack Technique'
   }
 };
