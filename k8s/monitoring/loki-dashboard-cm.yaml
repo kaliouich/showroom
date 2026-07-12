@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loki-live-logs-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  loki-live-logs.json: |
+    {
+      "uid": "loki-live-logs",
+      "title": "Loki Live Logs - Tamagotchi",
+      "tags": ["loki", "logs", "tamagotchi"],
+      "timezone": "browser",
+      "schemaVersion": 36,
+      "refresh": "5s",
+      "panels": [
+        {
+          "type": "logs",
+          "title": "Live Container Logs (namespace: tamagotchi)",
+          "gridPos": {
+            "h": 20,
+            "w": 24,
+            "x": 0,
+            "y": 0
+          },
+          "targets": [
+            {
+              "expr": "{namespace=\"tamagotchi\"} |~ \".*\"",
+              "refId": "A"
+            }
+          ],
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "options": {
+            "showTime": true,
+            "showLabels": true,
+            "showCommonLabels": false,
+            "wrapLogMessage": true,
+            "sortOrder": "Descending"
+          }
+        }
+      ]
+    }
