@@ -15,12 +15,14 @@ const SA_DIR = '/var/run/secrets/kubernetes.io/serviceaccount';
 const PROMETHEUS_URL = process.env.PROMETHEUS_URL
   || 'http://kube-prometheus-kube-prome-prometheus.monitoring.svc.cluster.local:9090';
 
-// Le ServiceAccount a un ClusterRole en lecture seule sur tout le cluster, mais
-// l'endpoint /api/infra est public : on ne divulgue que les namespaces de la
-// vitrine. Sans ce filtre, n'importe quel visiteur obtient la topologie complète
-// du cluster (quels outils tournent, où) — une carte utile pour un attaquant.
+// Le ServiceAccount a un ClusterRole en lecture seule sur tout le cluster.
+// PUBLIC_NAMESPACES="*" expose tous les namespaces dans /api/infra (choix
+// assumé : révèle la topologie complète du cluster à tout visiteur anonyme).
+// Une liste explicite ("showcase,tamagotchi") restreint l'exposition à ces
+// namespaces uniquement.
 const PUBLIC_NAMESPACES = (process.env.PUBLIC_NAMESPACES || 'showcase,tamagotchi')
   .split(',').map(s => s.trim()).filter(Boolean);
+const EXPOSE_ALL_NAMESPACES = PUBLIC_NAMESPACES.includes('*');
 
 // Le CA du cluster est monté dans le pod : on valide la chaîne au lieu de
 // désactiver la vérification TLS.
@@ -111,7 +113,7 @@ app.get('/api/infra', async (req, res) => {
     }
 
     const pods = podsRes.items
-      .filter(p => PUBLIC_NAMESPACES.includes(p.metadata.namespace))
+      .filter(p => EXPOSE_ALL_NAMESPACES || PUBLIC_NAMESPACES.includes(p.metadata.namespace))
       .map(p => {
         const statuses = p.status.containerStatuses || [];
         return {
@@ -154,5 +156,5 @@ app.get('/healthz', (req, res) => res.json({ status: 'ok' }));
 
 app.listen(port, () => {
   console.log(`Showcase backend à l'écoute sur le port ${port}`);
-  console.log(`Namespaces exposés : ${PUBLIC_NAMESPACES.join(', ')}`);
+  console.log(`Namespaces exposés : ${EXPOSE_ALL_NAMESPACES ? 'TOUS' : PUBLIC_NAMESPACES.join(', ')}`);
 });
