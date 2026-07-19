@@ -122,26 +122,6 @@ spec:
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: sonarqube-route
-  namespace: sonarqube
-spec:
-  parentRefs:
-  - name: main-gateway
-    namespace: default
-  hostnames:
-  - "sonar.khalilaliouich.com"
-  rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /
-    backendRefs:
-    - name: sonarqube-sonarqube
-      port: 9000
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
   name: linkerd-route
   namespace: linkerd-viz
 spec:

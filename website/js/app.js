@@ -14,6 +14,7 @@ const i18n = {
   en: {
     nav_home: 'Home', nav_architecture: 'Architecture', nav_infra: 'Live Infra',
     nav_demo: 'Demo App', nav_tools: 'Tools', nav_admin: '🔐 Admin',
+    nav_dashboard: 'Dashboard', nav_issues: 'Issues',
     hero_badge: 'Live Infrastructure — Oracle Cloud Always Free',
     hero_title_1: "Hi, I'm", hero_desc: 'This entire infrastructure — Kubernetes cluster, GitOps pipeline, monitoring stack, and demo app — is running live on a single ARM server provisioned for free on Oracle Cloud.',
     hero_cta_explore: '🚀 Explore Live Infrastructure', hero_cta_demo: '🐣 See Demo App',
@@ -47,7 +48,7 @@ const i18n = {
     tool_tamagotchi: 'The live 3-tier demo app. Adopt creatures, see metrics flow through the entire stack.',
     tool_readonly: 'Read Only', tool_viewer: 'Viewer', tool_noauth: 'No authentication',
     tool_public: 'Public repos', tool_interactive: 'Interactive!',
-    tool_gitea_actions: 'Native Continuous Integration pipeline compatible with GitHub Actions.', tool_sonarqube: 'Static code analysis to detect bugs, vulnerabilities, and code smells.', tool_linkerd: 'Ultralight Service Mesh providing observability, reliability, and security.', tool_public_login: 'Login via Gitea',
+    tool_gitea_actions: 'Native Continuous Integration pipeline compatible with GitHub Actions.', tool_linkerd: 'Ultralight Service Mesh providing observability, reliability, and security.', tool_public_login: 'Login via Gitea',
     footer_text: 'Built with K3s, ArgoCD, Prometheus, Grafana, Loki & Gitea — hosted on Oracle Cloud Always Free (ARM Ampere A1).',
     footer_powered: 'Powered by determination & free cloud credits',
     nav_about: '👤 About', nav_back: '← Back to Home',
@@ -97,6 +98,7 @@ const i18n = {
   fr: {
     nav_home: 'Accueil', nav_architecture: 'Architecture', nav_infra: 'Infra Live',
     nav_demo: 'App Démo', nav_tools: 'Outils', nav_admin: '🔐 Admin',
+    nav_dashboard: 'Tableau de bord', nav_issues: 'Incidents',
     hero_badge: 'Infrastructure Live — Oracle Cloud Gratuit',
     hero_title_1: "Je suis", hero_desc: "Toute cette infrastructure — cluster Kubernetes, pipeline GitOps, stack de monitoring et application de démo — tourne en temps réel sur un seul serveur ARM provisionné gratuitement sur Oracle Cloud.",
     hero_cta_explore: "🚀 Explorer l'Infrastructure", hero_cta_demo: '🐣 Voir la Démo',
@@ -130,7 +132,7 @@ const i18n = {
     tool_tamagotchi: "L'application démo 3-tiers live. Adoptez des créatures et voyez les métriques traverser toute la stack.",
     tool_readonly: 'Lecture seule', tool_viewer: 'Visualiseur', tool_noauth: "Sans authentification",
     tool_public: 'Repos publics', tool_interactive: 'Interactif !',
-    tool_gitea_actions: "Pipeline d'intégration continue native compatible avec GitHub Actions.", tool_sonarqube: "Analyse statique du code pour détecter bugs, vulnérabilités et mauvaises pratiques.", tool_linkerd: "Service Mesh ultra-léger offrant observabilité, fiabilité et sécurité.", tool_public_login: 'Connexion via Gitea',
+    tool_gitea_actions: "Pipeline d'intégration continue native compatible avec GitHub Actions.", tool_linkerd: "Service Mesh ultra-léger offrant observabilité, fiabilité et sécurité.", tool_public_login: 'Connexion via Gitea',
     footer_text: "Construit avec K3s, ArgoCD, Prometheus, Grafana, Loki & Gitea — hébergé sur Oracle Cloud Always Free (ARM Ampere A1).",
     footer_powered: 'Propulsé par la détermination et des crédits cloud gratuits',
     nav_about: '👤 À propos', nav_back: '← Retour à l\'Accueil',
@@ -179,14 +181,30 @@ const i18n = {
   }
 };
 
-let currentLang = 'en';
+// Le choix de langue était perdu à chaque navigation : le site repassait en
+// anglais en arrivant sur about.html ou issues.html. On le persiste, avec repli
+// sur la langue du navigateur au premier passage.
+const LANG_KEY = 'ka-lang';
+const SUPPORTED_LANGS = ['en', 'fr'];
+
+function initialLang() {
+  const saved = localStorage.getItem(LANG_KEY);
+  if (SUPPORTED_LANGS.includes(saved)) return saved;
+  const nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+  return SUPPORTED_LANGS.includes(nav) ? nav : 'en';
+}
+
+let currentLang = initialLang();
 
 function t(key) {
   return (i18n[currentLang] && i18n[currentLang][key]) || i18n.en[key] || key;
 }
 
 function setLang(lang) {
+  if (!SUPPORTED_LANGS.includes(lang)) return;
   currentLang = lang;
+  try { localStorage.setItem(LANG_KEY, lang); } catch (e) { /* mode privé */ }
+  document.documentElement.lang = lang;
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
   document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = t(el.dataset.i18n); });
 }
@@ -194,6 +212,9 @@ function setLang(lang) {
 document.querySelectorAll('.lang-btn').forEach(btn => {
   btn.addEventListener('click', () => setLang(btn.dataset.lang));
 });
+
+// Applique la langue retenue dès le chargement de chaque page.
+setLang(currentLang);
 
 // ---- Typewriter Effect ----
 const typewriterLines = [

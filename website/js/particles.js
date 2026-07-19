@@ -1,8 +1,10 @@
 // ============================================================================
 // Particles Background — Floating dots with connecting lines (Infra Theme)
 // ============================================================================
+// Seule index.html possède ce canvas ; about.html et issues.html chargent
+// néanmoins ce script, ce qui levait une TypeError à chaque visite.
 const canvas = document.getElementById('particlesCanvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas ? canvas.getContext('2d') : null;
 
 let particles = [];
 const PARTICLE_COUNT = 60;
@@ -68,11 +70,13 @@ function drawParticles() {
   requestAnimationFrame(drawParticles);
 }
 
-window.addEventListener('resize', () => {
+if (ctx) {
+  window.addEventListener('resize', () => {
+    resizeCanvas();
+    createParticles();
+  });
+
   resizeCanvas();
   createParticles();
-});
-
-resizeCanvas();
-createParticles();
-drawParticles();
+  drawParticles();
+}

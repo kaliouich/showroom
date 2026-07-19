@@ -22,7 +22,6 @@ graph TB
         subgraph "Plateforme"
             AC[ArgoCD]
             GT["Gitea<br/>+ Actions"]
-            SQ[SonarQube]
         end
 
         subgraph "Observabilité"
@@ -47,7 +46,7 @@ graph TB
     end
 
     U -->|HTTPS| EG
-    EG --> WS & TG & AC & GF & GT & SQ & UK & N8
+    EG --> WS & TG & AC & GF & GT & UK & N8
     GT -->|webhook| AC
     AC -->|sync| TG
     TG -->|métriques custom| PR
@@ -68,15 +67,16 @@ graph TB
 | CI/CD | Gitea Actions (compatible GitHub Actions) |
 | Observabilité | Prometheus, Grafana, Loki + Promtail, Uptime Kuma |
 | Service mesh | Linkerd (mTLS) |
-| DevSecOps | SonarQube (SAST), Trivy Operator, Kyverno (Policy-as-Code) |
+| DevSecOps | Trivy Operator, Kyverno (Policy-as-Code) |
 | Démo | Tamagotchi as a Service — React / Node.js / PostgreSQL |
 
 ## Ce que le projet démontre
 
-**Contraintes ARM64 + Free Tier.** SonarQube sur ARM avec Elasticsearch tuné pour
-éviter l'OOMKill, sur une VM partagée avec un cluster complet. La plupart des
-images de l'écosystème ne publient pas d'ARM64 : chaque composant a dû être
-vérifié ou reconstruit.
+**Contraintes ARM64 + Free Tier.** Faire cohabiter un cluster complet, sa stack
+d'observabilité, un service mesh et une application 3-tiers dans 24 Go de RAM
+partagés. La plupart des images de l'écosystème ne publient pas d'ARM64 : chaque
+composant a dû être vérifié, et les composants trop lourds écartés au profit
+d'alternatives adaptées (Gitea plutôt que GitLab).
 
 **Un dashboard réellement live.** Le site interroge l'API Kubernetes via un
 ServiceAccount en lecture seule et Prometheus pour le CPU/RAM/disque. Les chiffres

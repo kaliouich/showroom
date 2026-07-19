@@ -55,7 +55,7 @@ echo "▶️  Running Phase 4: Premium Showcase Website..."
 "${SCRIPT_DIR}/phase4-website-v2.sh" "$VM_IP" "$SSH_KEY"
 pause_or_continue
 
-# --- Phase 6: Masterclass (Linkerd, SonarQube, Kyverno, etc) ---
+# --- Phase 6: Masterclass (Linkerd, Kyverno, Trivy, etc) ---
 echo "▶️  Running Phase 6: Masterclass DevOps Tooling..."
 "${SCRIPT_DIR}/phase6-masterclass.sh" "$VM_IP" "$SSH_KEY"
 
@@ -64,10 +64,9 @@ echo "=================================================================="
 echo "🎉 ALL PHASES COMPLETED SUCCESSFULLY!"
 echo "=================================================================="
 echo "You can now access your DevOps environment at:"
-echo "   🌐 Showcase:    http://showcase.khalilaliouich.com"
-echo "   🐣 Tamagotchi:  http://demo.khalilaliouich.com"
+echo "   🌐 Showcase:    https://showcase.khalilaliouich.com"
+echo "   🐣 Tamagotchi:  https://demo.khalilaliouich.com"
 echo "   🔄 ArgoCD:      https://argocd.khalilaliouich.com  (guest / <YOUR_GUEST_PASSWORD>)"
-echo "   📈 Grafana:     http://grafana.khalilaliouich.com   (admin / <YOUR_ADMIN_PASSWORD>)"
-echo "   🐙 Gitea:       http://git.khalilaliouich.com       (khalil / <YOUR_ADMIN_PASSWORD>)"
-echo "   📊 SonarQube:   http://sonar.khalilaliouich.com     (admin / <YOUR_ADMIN_PASSWORD>)"
+echo "   📈 Grafana:     https://grafana.khalilaliouich.com  (admin / <YOUR_ADMIN_PASSWORD>)"
+echo "   🐙 Gitea:       https://git.khalilaliouich.com      (khalil / <YOUR_ADMIN_PASSWORD>)"
 echo "=================================================================="

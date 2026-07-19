@@ -169,6 +169,12 @@
     </div>
     <div class="nav__links">
       <a href="index.html" class="nav__link" data-i18n="nav_back">← Back to Home</a>
+      <a href="index.html#architecture" class="nav__link" data-i18n="nav_architecture">Architecture</a>
+      <a href="index.html#infrastructure" class="nav__link" data-i18n="nav_infra">Live Infra</a>
+      <a href="index.html#demo" class="nav__link" data-i18n="nav_demo">Demo App</a>
+      <a href="index.html#tools" class="nav__link" data-i18n="nav_tools">Tools</a>
+      <a href="about.html" class="nav__link" data-i18n="nav_about">👤 About</a>
+      <a href="https://status.khalilaliouich.com/status/default" class="nav__link" target="_blank">🟢 Status</a>
     </div>
     <div class="nav__actions">
       <div class="lang-switcher">
@@ -205,7 +211,7 @@
             <h4><span class="badge-error" data-i18n="badge_issue">Issue</span> Connection Refused / Network Unreachable</h4>
             <p data-i18n="issue_1_desc">The CI/CD pipeline steps (using Docker containers via <code>act-runner</code>) were failing to execute <code>git clone</code> or push Docker images. The standard Docker bridge network created by <code>act-runner</code> suffered from MTU fragmentation and NAT translation issues when communicating with K3s Pod IPs and Services on this specific Oracle Cloud virtualized network.</p>
             <pre><code>remote: Invalid username or password.
-fatal: Authentication failed for 'http://git.khalilaliouich.com/...'
+fatal: Authentication failed for 'https://git.khalilaliouich.com/...'
 curl: (7) Failed to connect to gitea-http.gitea.svc.cluster.local port 3000</code></pre>
           </div>
           <div class="issue-section">
@@ -356,7 +362,6 @@ kubectl rollout restart deployment/showcase-website -n showcase</code></pre>
 
   </main>
 
-  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
   <script src="js/particles.js"></script>
   <script>
     // Accordion Logic

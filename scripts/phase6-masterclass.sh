@@ -19,7 +19,6 @@ helm repo add kyverno https://kyverno.github.io/kyverno/
 helm repo add aqua https://aquasecurity.github.io/helm-charts/
 helm repo add kubecost https://kubecost.github.io/cost-analyzer/
 helm repo add woodpecker https://woodpecker-ci.org/
-helm repo add sonarqube https://SonarSource.github.io/helm-chart-sonarqube
 helm repo update
 
 # ==========================================
@@ -81,42 +80,7 @@ spec:
 YAML
 
 # ==========================================
-# 4. SONARQUBE (Code Quality)
-# ==========================================
-echo ""
-echo "[5/6] 📊 Installing SonarQube (Reduced RAM config)..."
-kubectl create ns sonarqube 2>/dev/null || true
-helm upgrade --install sonarqube sonarqube/sonarqube -n sonarqube \
-  --set postgresql.enabled=true \
-  --set postgresql.primary.resources.requests.memory=128Mi \
-  --set postgresql.primary.resources.requests.cpu=50m \
-  --set resources.requests.memory=1Gi \
-  --set resources.limits.memory=2Gi \
-  --set jvmOpts="-Xmx1G -Xms1G"
-
-cat <<YAML | kubectl apply -f -
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: sonarqube-ingress
-  namespace: sonarqube
-spec:
-  ingressClassName: nginx
-  rules:
-  - host: sonar.${NIP_DOMAIN}
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: sonarqube-sonarqube
-            port:
-              number: 9000
-YAML
-
-# ==========================================
-# 5. LINKERD (Service Mesh)
+# 4. LINKERD (Service Mesh)
 # ==========================================
 echo ""
 echo "[6/6] 🕸️ Installing Linkerd..."
