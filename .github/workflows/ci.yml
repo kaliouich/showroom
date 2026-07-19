@@ -1,0 +1,85 @@
+# CI du showroom. Syntaxe compatible Gitea Actions (le runner du cluster) et
+# GitHub Actions.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  secrets:
+    name: Scan de secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # gitleaks a besoin de l'historique complet
+
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # gitleaks inspecte le contenu des fichiers : une archive binaire lui est
+      # opaque. C'est précisément ainsi qu'une clé privée TLS a fini publiée
+      # dans ce dépôt. On refuse donc les archives sur leur seule extension.
+      - name: Refuser les archives et le matériel cryptographique
+        run: |
+          FOUND=$(git ls-files | grep -iE '\.(zip|tar|tar\.gz|tgz|key|pem|p12|pfx)$' || true)
+          if [ -n "$FOUND" ]; then
+            echo "::error::Fichiers interdits (archive ou clé) commités :"
+            echo "$FOUND"
+            exit 1
+          fi
+          echo "Aucune archive ni clé versionnée."
+
+  build:
+    name: Build & scan de l'image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+
+      - name: Installer les dépendances
+        working-directory: website
+        run: npm ci
+
+      - name: Audit des dépendances
+        working-directory: website
+        run: npm audit --audit-level=high
+
+      - name: Vérifier la syntaxe du serveur
+        working-directory: website
+        run: node --check server.js
+
+      - name: Construire l'image
+        run: docker build -t showcase-website:${{ github.sha }} ./website
+
+      - name: Trivy — vulnérabilités de l'image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: showcase-website:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          ignore-unfixed: true
+
+  manifests:
+    name: Validation des manifestes K8s
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: kubeconform
+        run: |
+          curl -sSL -o kubeconform.tar.gz \
+            https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz
+          tar xzf kubeconform.tar.gz kubeconform
+          # -ignore-missing-schemas : les CRD (Gateway API, cert-manager) n'ont
+          # pas de schéma dans le catalogue par défaut.
+          ./kubeconform -summary -ignore-missing-schemas -strict k8s/

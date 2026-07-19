@@ -12,3 +12,22 @@ node_modules/
 # Temporary
 *.log
 *.tmp
+
+# ---- Secrets & matériel cryptographique ----
+# Une clé privée TLS a déjà fuité via une archive .zip commitée ici : les
+# archives sont opaques aux scanners de secrets, d'où leur exclusion en bloc.
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*-ssl-bundle*
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+.env
+.env.*
+!.env.example
+kubeconfig
+*.kubeconfig

@@ -1,0 +1,39 @@
+# Certificat TLS de khalilaliouich.com, géré par cert-manager.
+#
+# Remplace le certificat wildcard installé manuellement (dont la clé privée avait
+# fuité sur GitHub — voir TECHNICAL_ISSUES_RESOLVED.md).
+#
+# Pourquoi pas de wildcard : `*.khalilaliouich.com` impose un challenge DNS-01,
+# donc un token API chez le registrar. Lister les hostnames réels permet un
+# HTTP-01 entièrement automatique, sans secret supplémentaire à stocker.
+# → Ajouter un sous-domaine = ajouter une ligne dans `dnsNames` ci-dessous.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: khalilaliouich-tls
+  namespace: default
+spec:
+  secretName: khalilaliouich-tls-v2
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    # Régénère une clé neuve à chaque renouvellement plutôt que de réutiliser
+    # la même paire indéfiniment : limite la fenêtre d'exposition d'une fuite.
+    rotationPolicy: Always
+  duration: 2160h # 90j
+  renewBefore: 720h # renouvellement à J-30
+  dnsNames:
+    - khalilaliouich.com
+    - argocd.khalilaliouich.com
+    - demo.khalilaliouich.com
+    - git.khalilaliouich.com
+    - grafana.khalilaliouich.com
+    - habits.khalilaliouich.com
+    - linkerd.khalilaliouich.com
+    - n8n.khalilaliouich.com
+    - prometheus.khalilaliouich.com
+    - showcase.khalilaliouich.com
+    - status.khalilaliouich.com
