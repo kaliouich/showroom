@@ -5,7 +5,7 @@
 
 const VM_IP = '<YOUR_VM_IP>';
 const NIP = 'khalilaliouich.com';
-const TAMAGOTCHI_API = `http://demo.${NIP}/api`;
+const TAMAGOTCHI_API = `https://demo.${NIP}/api`;
 const SHOWCASE_API = window.location.origin;
 const DEMO_SECRET = '<YOUR_DEMO_SECRET>';
 
@@ -200,6 +200,10 @@ function t(key) {
   return (i18n[currentLang] && i18n[currentLang][key]) || i18n.en[key] || key;
 }
 
+// Rempli par initArchTooltips() si une infobulle est ouverte au moment du
+// changement de langue, pour la rafraîchir plutôt que de la laisser périmée.
+let onLangChange = null;
+
 function setLang(lang) {
   if (!SUPPORTED_LANGS.includes(lang)) return;
   currentLang = lang;
@@ -207,6 +211,7 @@ function setLang(lang) {
   document.documentElement.lang = lang;
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
   document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = t(el.dataset.i18n); });
+  if (onLangChange) onLangChange();
 }
 
 document.querySelectorAll('.lang-btn').forEach(btn => {
@@ -430,55 +435,67 @@ function initActiveNav() {
 }
 
 // ---- Admin Modal ----
+// Ces éléments n'existent que sur index.html. Sans cette garde, une erreur
+// non interceptée ici stoppait l'exécution du reste du script sur about.html
+// et issues.html — y compris initHamburgerMenu() plus bas, qui ne s'exécutait
+// donc jamais : le menu mobile de ces deux pages était mort en silence.
 const adminModal = document.getElementById('adminModal');
 const adminForm = document.getElementById('adminForm');
+const adminBtn = document.getElementById('adminBtn');
 let isAdmin = false;
 
-document.getElementById('adminBtn').addEventListener('click', () => {
-  if (isAdmin) {
-    isAdmin = false;
-    document.getElementById('adminBtn').textContent = '🔐 Admin';
-    return;
-  }
-  adminModal.classList.add('active');
-});
+if (adminBtn && adminModal && adminForm) {
+  adminBtn.addEventListener('click', () => {
+    if (isAdmin) {
+      isAdmin = false;
+      adminBtn.textContent = '🔐 Admin';
+      return;
+    }
+    adminModal.classList.add('active');
+  });
 
-document.getElementById('cancelAdmin').addEventListener('click', () => {
-  adminModal.classList.remove('active');
-});
-
-adminModal.addEventListener('click', (e) => {
-  if (e.target === adminModal) adminModal.classList.remove('active');
-});
-
-adminForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  const secret = document.getElementById('adminSecret').value;
-  if (secret === DEMO_SECRET) {
-    isAdmin = true;
+  document.getElementById('cancelAdmin')?.addEventListener('click', () => {
     adminModal.classList.remove('active');
-    document.getElementById('adminBtn').textContent = '🔓 Admin (ON)';
-    document.getElementById('adminBtn').style.color = '#00ff88';
-    document.getElementById('adminBtn').style.borderColor = '#00ff88';
-  } else {
-    document.getElementById('adminSecret').style.borderColor = '#ff4466';
-    setTimeout(() => { document.getElementById('adminSecret').style.borderColor = ''; }, 1500);
-  }
-});
+  });
+
+  adminModal.addEventListener('click', (e) => {
+    if (e.target === adminModal) adminModal.classList.remove('active');
+  });
+
+  adminForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const secretInput = document.getElementById('adminSecret');
+    if (secretInput.value === DEMO_SECRET) {
+      isAdmin = true;
+      adminModal.classList.remove('active');
+      adminBtn.textContent = '🔓 Admin (ON)';
+      adminBtn.style.color = '#00ff88';
+      adminBtn.style.borderColor = '#00ff88';
+    } else {
+      secretInput.style.borderColor = '#ff4466';
+      setTimeout(() => { secretInput.style.borderColor = ''; }, 1500);
+    }
+  });
+}
 
 // ---- Refresh Button ----
-document.getElementById('refreshPods').addEventListener('click', () => {
+document.getElementById('refreshPods')?.addEventListener('click', () => {
   populateInfraData();
 });
 
 // ---- Init ----
-typewrite();
-animateTerminal();
-populateInfraData();
-fetchTamagotchiStats();
-setInterval(fetchTamagotchiStats, 10000);
+// Ces fonctions lisent aussi des éléments propres à index.html : gardées pour
+// ne s'exécuter que là où elles ont un effet.
+if (document.getElementById('typewriter')) typewrite();
+if (document.getElementById('termCmd')) animateTerminal();
+if (document.getElementById('podList')) populateInfraData();
+if (document.getElementById('tamagotchiStats')) {
+  fetchTamagotchiStats();
+  setInterval(fetchTamagotchiStats, 10000);
+}
 initScrollAnimations();
 initActiveNav();
+initArchTooltips();
 
 // ---- Hamburger Menu ----
 function initHamburgerMenu() {
@@ -501,3 +518,261 @@ function initHamburgerMenu() {
   });
 }
 initHamburgerMenu();
+
+// ---- Architecture Tooltips ----
+// Infobulle riche au survol de chaque brique du diagramme "Architecture
+// Overview" : définition générale de l'outil + son rôle précis dans CETTE
+// architecture (pas une description marketing générique).
+const ARCH_TOOLTIP_DATA = {
+  oci: {
+    icon: '🖥️', accent: 'cyan',
+    title: { en: 'Oracle Cloud ARM VM', fr: 'VM ARM Oracle Cloud' },
+    badge: { en: 'Infrastructure', fr: 'Infrastructure' },
+    def: {
+      en: 'A single Ampere A1 (ARM64) virtual machine — 4 OCPUs, 24GB RAM — provisioned entirely within Oracle Cloud\'s Always Free tier.',
+      fr: "Une unique VM Ampere A1 (ARM64) — 4 OCPUs, 24 Go de RAM — provisionnée intégralement dans le Free Tier d'Oracle Cloud."
+    },
+    role: {
+      en: 'It is the <b>only</b> physical resource this entire stack runs on — no other server, no managed service. Every component in this diagram shares this same CPU, RAM and disk.',
+      fr: "C'est la <b>seule</b> ressource physique sur laquelle tourne toute cette stack — aucun autre serveur, aucun service managé. Chaque brique de ce schéma partage ce même CPU, cette même RAM et ce même disque."
+    }
+  },
+  k3s: {
+    icon: '☸️', accent: 'cyan',
+    title: { en: 'K3s', fr: 'K3s' },
+    badge: { en: 'Infrastructure', fr: 'Infrastructure' },
+    def: {
+      en: 'A lightweight, CNCF-certified Kubernetes distribution shipped as a single ~70MB binary.',
+      fr: 'Une distribution Kubernetes légère et certifiée CNCF, livrée sous la forme d\'un seul binaire d\'environ 70 Mo.'
+    },
+    role: {
+      en: 'It is the <b>orchestrator</b> that schedules every pod on this page — from ArgoCD to the Tamagotchi demo — onto the VM above. Traefik was removed at install time in favor of Envoy Gateway.',
+      fr: "C'est l'<b>orchestrateur</b> qui planifie chaque pod visible sur cette page — d'ArgoCD à la démo Tamagotchi — sur la VM ci-dessus. Traefik a été retiré à l'installation au profit d'Envoy Gateway."
+    }
+  },
+  gateway: {
+    icon: '🌐', accent: 'cyan',
+    title: { en: 'Envoy Gateway', fr: 'Envoy Gateway' },
+    badge: { en: 'Infrastructure', fr: 'Infrastructure' },
+    def: {
+      en: 'The Kubernetes Gateway API implementation, powered by the Envoy proxy, replacing a traditional Ingress controller.',
+      fr: "L'implémentation de la Gateway API de Kubernetes, propulsée par le proxy Envoy, en remplacement d'un contrôleur Ingress classique."
+    },
+    role: {
+      en: 'Every hostname on khalilaliouich.com — this site, ArgoCD, Grafana, Gitea… — is routed through <b>one single Gateway</b> and its HTTPRoutes, terminating TLS with certificates issued by cert-manager.',
+      fr: 'Chaque sous-domaine de khalilaliouich.com — ce site, ArgoCD, Grafana, Gitea… — passe par une <b>Gateway unique</b> et ses HTTPRoutes, avec un TLS terminé par des certificats émis par cert-manager.'
+    }
+  },
+  argocd: {
+    icon: '🔄', accent: 'purple',
+    title: { en: 'ArgoCD', fr: 'ArgoCD' },
+    badge: { en: 'Platform · GitOps', fr: 'Platform · GitOps' },
+    def: {
+      en: 'A GitOps continuous delivery tool: it continuously reconciles the live cluster state against manifests stored in Git.',
+      fr: "Un outil de livraison continue GitOps : il réconcilie en continu l'état réel du cluster avec les manifestes stockés dans Git."
+    },
+    role: {
+      en: 'It watches this project\'s <b>k8s/</b> folder on Gitea and applies changes automatically — <b>selfHeal</b> and <b>prune</b> are both enabled, so a manual kubectl edit gets reverted back to what is committed.',
+      fr: 'Il surveille le dossier <b>k8s/</b> de ce projet sur Gitea et applique les changements automatiquement — <b>selfHeal</b> et <b>prune</b> sont activés : une modification kubectl manuelle est annulée pour revenir à ce qui est commité.'
+    }
+  },
+  gitea: {
+    icon: '🐙', accent: 'purple',
+    title: { en: 'Gitea', fr: 'Gitea' },
+    badge: { en: 'Platform · Git', fr: 'Platform · Git' },
+    def: {
+      en: 'A lightweight, self-hosted Git service — the same core workflow as GitHub, running in a single low-memory pod.',
+      fr: 'Un service Git léger et auto-hébergé — le même workflow de base que GitHub, dans un seul pod peu gourmand en mémoire.'
+    },
+    role: {
+      en: 'It hosts the source code for this website and the Tamagotchi app, and its <b>Gitea Actions</b> runner executes this project\'s CI/CD pipeline (build, scan, push image).',
+      fr: "Il héberge le code source de ce site et de l'app Tamagotchi, et son runner <b>Gitea Actions</b> exécute le pipeline CI/CD du projet (build, scan, push d'image)."
+    }
+  },
+  prometheus: {
+    icon: '📊', accent: 'purple',
+    title: { en: 'Prometheus', fr: 'Prometheus' },
+    badge: { en: 'Platform · Metrics', fr: 'Platform · Métriques' },
+    def: {
+      en: 'A time-series database and monitoring system that scrapes metrics from targets on a fixed schedule.',
+      fr: 'Une base de données de séries temporelles et un système de supervision qui interroge ses cibles à intervalle régulier.'
+    },
+    role: {
+      en: 'It pulls the real CPU / RAM / disk numbers shown live in the section below, plus custom Tamagotchi metrics like hunger and happiness — this page\'s backend queries it directly via PromQL.',
+      fr: 'Il collecte les vrais chiffres CPU / RAM / disque affichés en direct dans la section ci-dessous, ainsi que les métriques Tamagotchi (faim, bonheur) — le backend de ce site l\'interroge directement en PromQL.'
+    }
+  },
+  grafana: {
+    icon: '📈', accent: 'purple',
+    title: { en: 'Grafana', fr: 'Grafana' },
+    badge: { en: 'Platform · Dashboards', fr: 'Platform · Dashboards' },
+    def: {
+      en: 'A visualization layer that turns raw Prometheus and Loki data into dashboards.',
+      fr: 'Une couche de visualisation qui transforme les données brutes de Prometheus et Loki en dashboards.'
+    },
+    role: {
+      en: 'The public account linked in the Tools section is intentionally locked to <b>viewer permissions</b> — visitors can explore real dashboards without being able to modify anything.',
+      fr: 'Le compte public accessible depuis la section Outils est volontairement limité aux <b>permissions de lecture</b> — les visiteurs explorent de vrais dashboards sans pouvoir rien modifier.'
+    }
+  },
+  loki: {
+    icon: '📝', accent: 'purple',
+    title: { en: 'Loki', fr: 'Loki' },
+    badge: { en: 'Platform · Logs', fr: 'Platform · Logs' },
+    def: {
+      en: 'A log aggregation system built like Prometheus, but for logs instead of metrics.',
+      fr: 'Un système d\'agrégation de logs conçu comme Prometheus, mais pour les logs plutôt que les métriques.'
+    },
+    role: {
+      en: 'Promtail ships every pod\'s stdout/stderr here. The <b>Live Dashboard</b> section further down embeds a Grafana panel querying Loki directly, so you can watch cluster logs stream in your browser.',
+      fr: "Promtail y envoie les logs stdout/stderr de chaque pod. La section <b>Live Dashboard</b> plus bas embarque un panneau Grafana qui interroge Loki directement, pour suivre les logs du cluster en direct dans le navigateur."
+    }
+  },
+  frontend: {
+    icon: '📱', accent: 'green',
+    title: { en: 'Frontend', fr: 'Frontend' },
+    badge: { en: 'Demo App · UI', fr: 'Demo App · UI' },
+    def: {
+      en: 'The demo app\'s user interface — plain HTML/JS served as static files.',
+      fr: "L'interface utilisateur de l'app démo — du HTML/JS pur servi en fichiers statiques."
+    },
+    role: {
+      en: 'This is the part of Tamagotchi as a Service you actually click around in: adopting creatures, feeding them, watching them react near real-time.',
+      fr: "C'est la partie de Tamagotchi as a Service que l'on manipule réellement : adopter des créatures, les nourrir, observer leurs réactions quasi en temps réel."
+    }
+  },
+  api: {
+    icon: '⚙️', accent: 'green',
+    title: { en: 'API', fr: 'API' },
+    badge: { en: 'Demo App · Backend', fr: 'Demo App · Backend' },
+    def: {
+      en: 'A Node.js / Express backend exposing REST endpoints and a /metrics endpoint in Prometheus format.',
+      fr: 'Un backend Node.js / Express exposant des endpoints REST et un endpoint /metrics au format Prometheus.'
+    },
+    role: {
+      en: 'Every action in the frontend hits this API, which updates PostgreSQL and simultaneously exposes gauges like <b>tamagotchi_hunger_level</b> for Prometheus to scrape.',
+      fr: 'Chaque action du frontend passe par cette API, qui met à jour PostgreSQL et expose simultanément des jauges comme <b>tamagotchi_hunger_level</b> que Prometheus vient collecter.'
+    }
+  },
+  postgres: {
+    icon: '🗄️', accent: 'green',
+    title: { en: 'PostgreSQL', fr: 'PostgreSQL' },
+    badge: { en: 'Demo App · Database', fr: 'Demo App · Base de données' },
+    def: {
+      en: 'A relational database — the persistence layer for the demo app.',
+      fr: "Une base de données relationnelle — la couche de persistance de l'app démo."
+    },
+    role: {
+      en: 'It stores every creature\'s state (hunger, happiness, alive/dead) so the Tamagotchi app <b>survives pod restarts</b> instead of resetting on every redeploy.',
+      fr: "Il stocke l'état de chaque créature (faim, bonheur, vivant/mort) pour que l'app Tamagotchi <b>survive aux redémarrages de pods</b> au lieu de repartir à zéro à chaque déploiement."
+    }
+  }
+};
+
+function initArchTooltips() {
+  const nodes = document.querySelectorAll('.arch-node[data-node]');
+  if (!nodes.length) return;
+
+  const tip = document.createElement('div');
+  tip.className = 'arch-tooltip';
+  tip.setAttribute('role', 'tooltip');
+  tip.innerHTML = `
+    <div class="arch-tooltip__arrow"></div>
+    <div class="arch-tooltip__head">
+      <span class="arch-tooltip__icon"></span>
+      <div>
+        <div class="arch-tooltip__title"></div>
+        <span class="arch-tooltip__badge"></span>
+      </div>
+    </div>
+    <p class="arch-tooltip__def"></p>
+    <div class="arch-tooltip__role">
+      <span class="arch-tooltip__role-icon">📍</span>
+      <span class="arch-tooltip__role-text"></span>
+    </div>
+  `;
+  document.body.appendChild(tip);
+
+  const els = {
+    icon: tip.querySelector('.arch-tooltip__icon'),
+    title: tip.querySelector('.arch-tooltip__title'),
+    badge: tip.querySelector('.arch-tooltip__badge'),
+    def: tip.querySelector('.arch-tooltip__def'),
+    role: tip.querySelector('.arch-tooltip__role-text')
+  };
+
+  const ACCENT_VARS = { cyan: 'var(--cyan)', purple: 'var(--purple)', green: 'var(--green)' };
+  let activeNode = null;
+  let hideTimer = null;
+
+  function position(node) {
+    const r = node.getBoundingClientRect();
+    tip.style.left = '0px';
+    tip.style.top = '0px';
+    // Mesure hors-écran d'abord pour connaître ses dimensions réelles.
+    const tw = tip.offsetWidth;
+    const th = tip.offsetHeight;
+    const margin = 14;
+
+    let placeAbove = r.top - th - margin > 8;
+    let top = placeAbove ? r.top - th - margin : r.bottom + margin;
+    let left = r.left + r.width / 2 - tw / 2;
+
+    const maxLeft = window.innerWidth - tw - 10;
+    left = Math.max(10, Math.min(left, maxLeft));
+
+    tip.classList.toggle('arch-tooltip--arrow-bottom', placeAbove);
+    tip.classList.toggle('arch-tooltip--arrow-top', !placeAbove);
+
+    const arrowLeft = Math.max(16, Math.min(r.left + r.width / 2 - left - 7, tw - 30));
+    tip.querySelector('.arch-tooltip__arrow').style.left = `${arrowLeft}px`;
+    tip.style.setProperty('--tt-origin-x', `${((r.left + r.width / 2 - left) / tw) * 100}%`);
+    tip.style.setProperty('--tt-origin-y', placeAbove ? '100%' : '0%');
+
+    tip.style.left = `${left}px`;
+    tip.style.top = `${top}px`;
+  }
+
+  function show(node) {
+    const data = ARCH_TOOLTIP_DATA[node.dataset.node];
+    if (!data) return;
+    clearTimeout(hideTimer);
+    activeNode = node;
+
+    tip.style.setProperty('--tt-accent', ACCENT_VARS[data.accent] || ACCENT_VARS.cyan);
+    els.icon.textContent = data.icon;
+    els.title.textContent = data.title[currentLang] || data.title.en;
+    els.badge.textContent = data.badge[currentLang] || data.badge.en;
+    els.def.textContent = data.def[currentLang] || data.def.en;
+    els.role.innerHTML = data.role[currentLang] || data.role.en;
+
+    tip.classList.add('arch-tooltip--visible');
+    position(node);
+  }
+
+  function hide() {
+    activeNode = null;
+    tip.classList.remove('arch-tooltip--visible');
+  }
+
+  nodes.forEach(node => {
+    node.addEventListener('mouseenter', () => show(node));
+    node.addEventListener('mouseleave', () => { hideTimer = setTimeout(hide, 60); });
+    node.addEventListener('focus', () => show(node));
+    node.addEventListener('blur', hide);
+    // Tactile : bascule au tap, se referme au tap suivant ailleurs.
+    node.addEventListener('click', (e) => {
+      if (activeNode === node) { hide(); return; }
+      e.stopPropagation();
+      show(node);
+    });
+  });
+
+  document.addEventListener('click', () => hide());
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hide(); });
+  window.addEventListener('scroll', () => { if (activeNode) hide(); }, { passive: true });
+  window.addEventListener('resize', () => { if (activeNode) position(activeNode); });
+
+  // Rafraîchit le contenu affiché plutôt que de le laisser dans une langue périmée.
+  onLangChange = () => { if (activeNode) show(activeNode); };
+}

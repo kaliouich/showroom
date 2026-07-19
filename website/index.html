@@ -101,17 +101,17 @@
       <div class="arch-layer arch-layer--infra">
         <h3 class="arch-layer__title">☁️ <span data-i18n="arch_infra">Infrastructure</span></h3>
         <div class="arch-nodes">
-          <div class="arch-node" data-tooltip="Oracle Cloud VM.Standard.A1.Flex">
+          <div class="arch-node" data-node="oci" data-accent="cyan" tabindex="0">
             <span class="arch-node__icon">🖥️</span>
             <span class="arch-node__label">OCI ARM</span>
             <span class="arch-node__detail">4 OCPUs • 24GB</span>
           </div>
-          <div class="arch-node" data-tooltip="K3s Lightweight Kubernetes">
+          <div class="arch-node" data-node="k3s" data-accent="cyan" tabindex="0">
             <span class="arch-node__icon">☸️</span>
             <span class="arch-node__label">K3s</span>
             <span class="arch-node__detail">v1.36</span>
           </div>
-          <div class="arch-node" data-tooltip="Envoy Gateway">
+          <div class="arch-node" data-node="gateway" data-accent="cyan" tabindex="0">
             <span class="arch-node__icon">🌐</span>
             <span class="arch-node__label">Gateway</span>
             <span class="arch-node__detail">Envoy</span>
@@ -122,27 +122,27 @@
       <div class="arch-layer arch-layer--platform">
         <h3 class="arch-layer__title">🔧 <span data-i18n="arch_platform">Platform</span></h3>
         <div class="arch-nodes">
-          <div class="arch-node arch-node--argocd" data-tooltip="GitOps Continuous Delivery">
+          <div class="arch-node arch-node--argocd" data-node="argocd" data-accent="purple" tabindex="0">
             <span class="arch-node__icon">🔄</span>
             <span class="arch-node__label">ArgoCD</span>
             <span class="arch-node__detail">GitOps</span>
           </div>
-          <div class="arch-node arch-node--gitea" data-tooltip="Self-hosted Git">
+          <div class="arch-node arch-node--gitea" data-node="gitea" data-accent="purple" tabindex="0">
             <span class="arch-node__icon">🐙</span>
             <span class="arch-node__label">Gitea</span>
             <span class="arch-node__detail">Git Server</span>
           </div>
-          <div class="arch-node arch-node--prometheus" data-tooltip="Metrics Collection">
+          <div class="arch-node arch-node--prometheus" data-node="prometheus" data-accent="purple" tabindex="0">
             <span class="arch-node__icon">📊</span>
             <span class="arch-node__label">Prometheus</span>
             <span class="arch-node__detail">Metrics</span>
           </div>
-          <div class="arch-node arch-node--grafana" data-tooltip="Dashboards & Visualization">
+          <div class="arch-node arch-node--grafana" data-node="grafana" data-accent="purple" tabindex="0">
             <span class="arch-node__icon">📈</span>
             <span class="arch-node__label">Grafana</span>
             <span class="arch-node__detail">Dashboards</span>
           </div>
-          <div class="arch-node arch-node--loki" data-tooltip="Log Aggregation">
+          <div class="arch-node arch-node--loki" data-node="loki" data-accent="purple" tabindex="0">
             <span class="arch-node__icon">📝</span>
             <span class="arch-node__label">Loki</span>
             <span class="arch-node__detail">Logs</span>
@@ -153,17 +153,17 @@
       <div class="arch-layer arch-layer--app">
         <h3 class="arch-layer__title">🐣 <span data-i18n="arch_app">Demo App — Tamagotchi as a Service</span></h3>
         <div class="arch-nodes">
-          <div class="arch-node arch-node--frontend" data-tooltip="User Interface">
+          <div class="arch-node arch-node--frontend" data-node="frontend" data-accent="green" tabindex="0">
             <span class="arch-node__icon">📱</span>
             <span class="arch-node__label">Frontend</span>
             <span class="arch-node__detail">HTML/JS</span>
           </div>
-          <div class="arch-node arch-node--api" data-tooltip="REST API + Custom Metrics">
+          <div class="arch-node arch-node--api" data-node="api" data-accent="green" tabindex="0">
             <span class="arch-node__icon">⚙️</span>
             <span class="arch-node__label">API</span>
             <span class="arch-node__detail">Node.js</span>
           </div>
-          <div class="arch-node arch-node--db" data-tooltip="Data Persistence">
+          <div class="arch-node arch-node--db" data-node="postgres" data-accent="green" tabindex="0">
             <span class="arch-node__icon">🗄️</span>
             <span class="arch-node__label">PostgreSQL</span>
             <span class="arch-node__detail">Database</span>

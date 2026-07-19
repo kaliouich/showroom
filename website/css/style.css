@@ -516,6 +516,115 @@ a { color: inherit; text-decoration: none; }
 .arch-node__label { font-size: 0.9rem; font-weight: 700; font-family: var(--font-heading); }
 .arch-node__detail { font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono); }
 
+/* Halo de survol teinté par couche (cyan = infra, purple = platform, green = app) */
+.arch-node[data-accent="cyan"]:hover { box-shadow: 0 15px 35px rgba(0,0,0,0.8), 0 0 40px rgba(0, 240, 255, 0.35); border-color: rgba(0, 240, 255, 0.5); }
+.arch-node[data-accent="purple"]:hover { box-shadow: 0 15px 35px rgba(0,0,0,0.8), 0 0 40px rgba(138, 43, 226, 0.4); border-color: rgba(138, 43, 226, 0.5); }
+.arch-node[data-accent="green"]:hover { box-shadow: 0 15px 35px rgba(0,0,0,0.8), 0 0 40px rgba(0, 255, 136, 0.35); border-color: rgba(0, 255, 136, 0.5); }
+.arch-node:focus-visible { outline: none; }
+
+/* ---- Architecture Tooltip (rich popover) ---- */
+.arch-tooltip {
+  --tt-accent: var(--cyan);
+  position: fixed;
+  z-index: 999;
+  width: min(340px, calc(100vw - 2.5rem));
+  padding: 1.4rem 1.5rem 1.5rem;
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, rgba(24,24,42,0.97), rgba(14,14,26,0.97));
+  border: 1px solid var(--glass-border-hover);
+  box-shadow: 0 25px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.02), 0 0 45px -10px var(--tt-accent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px) scale(0.96);
+  transform-origin: var(--tt-origin-x, 50%) var(--tt-origin-y, 100%);
+  transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.arch-tooltip--visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+.arch-tooltip::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 3px;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: linear-gradient(90deg, transparent, var(--tt-accent), transparent);
+}
+.arch-tooltip__arrow {
+  position: absolute;
+  width: 14px; height: 14px;
+  background: rgb(18,18,32);
+  border: 1px solid var(--glass-border-hover);
+  transform: rotate(45deg);
+}
+.arch-tooltip--arrow-bottom .arch-tooltip__arrow { bottom: -8px; border-top: none; border-left: none; }
+.arch-tooltip--arrow-top .arch-tooltip__arrow { top: -8px; border-bottom: none; border-right: none; }
+
+.arch-tooltip__head {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+.arch-tooltip__icon {
+  font-size: 1.6rem;
+  width: 2.8rem; height: 2.8rem;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--tt-accent) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tt-accent) 35%, transparent);
+}
+.arch-tooltip__title {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+.arch-tooltip__badge {
+  display: inline-block;
+  margin-top: 0.3rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tt-accent);
+  font-family: var(--font-mono);
+}
+.arch-tooltip__def {
+  font-size: 0.87rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+.arch-tooltip__role {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--tt-accent) 8%, rgba(255,255,255,0.02));
+  border: 1px solid color-mix(in srgb, var(--tt-accent) 20%, var(--glass-border));
+}
+.arch-tooltip__role-icon { font-size: 0.95rem; flex-shrink: 0; margin-top: 0.1rem; }
+.arch-tooltip__role-text { font-size: 0.83rem; line-height: 1.55; color: var(--text-primary); }
+.arch-tooltip__role-text b, .arch-tooltip__role-text strong {
+  color: var(--tt-accent);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arch-tooltip { transition: opacity 0.12s linear; transform: none !important; }
+}
+
+@media (hover: none) {
+  /* Tactile : pas de survol fiable, on agrandit la zone de tap et on retire
+     l'effet de lift qui gênerait le doigt. */
+  .arch-node:hover { transform: none; }
+}
+
 .arch-arrow {
   text-align: center;
   font-size: 1.8rem;
