@@ -427,12 +427,14 @@ async function populateInfraData() {
       return;
     }
 
-    document.getElementById('cpuFill').style.width = data.cpu;
-    document.getElementById('cpuValue').textContent = data.cpu;
-    document.getElementById('ramFill').style.width = '18%'; // mock
-    document.getElementById('ramValue').textContent = data.ram;
-    document.getElementById('diskFill').style.width = '25%'; // mock
-    document.getElementById('diskValue').textContent = data.disk;
+    // Chaque jauge vient de Prometheus ; pct null = donnee indisponible,
+    // on affiche alors une barre vide plutot qu'une valeur inventee.
+    [['cpu', 'cpuFill', 'cpuValue'], ['ram', 'ramFill', 'ramValue'], ['disk', 'diskFill', 'diskValue']]
+      .forEach(([key, fillId, valueId]) => {
+        const g = data[key] || {};
+        document.getElementById(fillId).style.width = g.pct === null || g.pct === undefined ? '0%' : `${g.pct}%`;
+        document.getElementById(valueId).textContent = g.label || '—';
+      });
     document.getElementById('podCount').textContent = data.podCount;
     document.getElementById('nsCount').textContent = data.nsCount;
     document.getElementById('svcCount').textContent = data.svcCount;

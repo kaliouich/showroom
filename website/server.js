@@ -60,6 +60,58 @@ function k8sRequest(apiPath) {
   });
 }
 
+// Prometheus (node-exporter) is the only honest source for node metrics here:
+// the node reports ephemeral-storage as 44Gi while the root filesystem is 183Gi,
+// so kubelet capacity cannot be used for the disk gauge.
+const PROM = process.env.PROM_URL
+  || 'http://kube-prometheus-kube-prome-prometheus.monitoring.svc.cluster.local:9090';
+
+function promQuery(query) {
+  return new Promise((resolve) => {
+    const url = `${PROM}/api/v1/query?query=${encodeURIComponent(query)}`;
+    const req = require('http').get(url, { timeout: 4000 }, (r) => {
+      let data = '';
+      r.on('data', chunk => data += chunk);
+      r.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          const result = parsed.data && parsed.data.result;
+          resolve(result && result.length ? parseFloat(result[0].value[1]) : null);
+        } catch (e) { resolve(null); }
+      });
+    });
+    req.on('error', () => resolve(null));
+    req.on('timeout', () => { req.destroy(); resolve(null); });
+  });
+}
+
+const GB = 1024 ** 3;
+const gauge = (pct, label) =>
+  pct === null ? { pct: null, label: '—' } : { pct: Math.round(pct * 10) / 10, label };
+
+async function nodeMetrics() {
+  const [cpu, memTotal, memAvail, fsTotal, fsAvail] = await Promise.all([
+    promQuery('100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)'),
+    promQuery('node_memory_MemTotal_bytes'),
+    promQuery('node_memory_MemAvailable_bytes'),
+    promQuery('node_filesystem_size_bytes{mountpoint="/"}'),
+    promQuery('node_filesystem_avail_bytes{mountpoint="/"}')
+  ]);
+
+  const ramOk = memTotal !== null && memAvail !== null;
+  const ramUsed = ramOk ? memTotal - memAvail : null;
+  const diskOk = fsTotal !== null && fsAvail !== null;
+  const diskUsed = diskOk ? fsTotal - fsAvail : null;
+
+  return {
+    cpu: gauge(cpu, cpu === null ? null : `${Math.round(cpu)}%`),
+    ram: gauge(ramOk ? (ramUsed / memTotal) * 100 : null,
+      ramOk ? `${(ramUsed / GB).toFixed(1)} / ${(memTotal / GB).toFixed(1)} GB` : null),
+    disk: gauge(diskOk ? (diskUsed / fsTotal) * 100 : null,
+      diskOk ? `${Math.round(diskUsed / GB)} / ${Math.round(fsTotal / GB)} GB` : null)
+  };
+}
+
 app.get('/api/infra', async (req, res) => {
   try {
     const [podsRes, nodesRes, nsRes, svcRes] = await Promise.all([
@@ -85,13 +137,12 @@ app.get('/api/infra', async (req, res) => {
       };
     }).sort((a, b) => a.ns.localeCompare(b.ns) || a.name.localeCompare(b.name));
 
-    // Basic node metrics simulation (since metric server might not be exposed to this SA)
-    const node = nodesRes.items[0];
-    
+    const metrics = await nodeMetrics();
+
     res.json({
-      cpu: '35%',
-      ram: '4.3 / 24 GB',
-      disk: '11 / 44 GB',
+      cpu: metrics.cpu,
+      ram: metrics.ram,
+      disk: metrics.disk,
       podCount: pods.length,
       nsCount: nsRes.items.length,
       svcCount: svcRes.items.length,
