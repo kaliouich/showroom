@@ -149,6 +149,7 @@ a { color: inherit; text-decoration: none; }
 
 .nav__link {
   padding: 0.5rem 1.2rem;
+  white-space: nowrap;
   border-radius: 999px;
   font-size: 0.9rem;
   font-weight: 600;
@@ -1299,6 +1300,57 @@ a { color: inherit; text-decoration: none; }
 
 .hire-card__icon { font-size: 2rem; margin-bottom: 1rem; }
 
+/* Carte "socle" : occupe toute la largeur, au-dessus des specialites */
+.hire-card--feature {
+  grid-column: 1 / -1;
+  border-color: rgba(0, 240, 255, 0.22);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(0, 240, 255, 0.08) 0%, transparent 55%),
+    var(--bg-card);
+}
+.hire-card--feature::before { opacity: 1; background: var(--gradient-cool); }
+.hire-card--feature .hire-card__title { font-size: 1.35rem; }
+.hire-card--feature .hire-card__desc { max-width: 78ch; }
+
+.hire-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.hire-chip {
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.hire-portable {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--glass-border);
+  font-size: 0.9rem;
+}
+
+.hire-portable__label { color: var(--text-muted); }
+.hire-portable__list { color: var(--cyan); font-weight: 600; }
+
+.hire-portable__note {
+  margin-top: 0.8rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
 .hire-card__title {
   font-size: 1.15rem;
   font-weight: 700;
@@ -1386,6 +1438,14 @@ a { color: inherit; text-decoration: none; }
   font-size: 0.85rem;
   color: var(--text-muted);
   font-family: var(--font-mono);
+}
+
+/* Nav resserree : les libelles FR sont plus longs qu'en EN */
+@media (max-width: 1600px) {
+  .nav__links { gap: 0.3rem; }
+  .nav__link { padding: 0.5rem 0.75rem; font-size: 0.85rem; }
+  .nav__menu { margin-left: 1.2rem; }
+  .nav__actions { gap: 0.6rem; }
 }
 
 /* ---- Responsive ---- */
