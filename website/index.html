@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Khalil Aliouich — DevOps Engineer | Live Infrastructure Showcase</title>
-  <meta name="description" content="Explore a live Kubernetes cluster, ArgoCD GitOps pipeline, Prometheus monitoring, and a Tamagotchi demo — all running on Oracle Cloud Always Free.">
+  <title>Khalil Aliouich — Freelance DevOps &amp; Platform Engineer | Live Infrastructure Showcase</title>
+  <meta name="description" content="Freelance DevOps &amp; Platform Engineer, available for your projects. Explore a live Kubernetes cluster, ArgoCD GitOps pipeline, Prometheus monitoring, and a Tamagotchi demo — all running on Oracle Cloud Always Free.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=11">
+  <link rel="stylesheet" href="css/style.css?v=13">
 </head>
 <body>
 
@@ -30,8 +30,9 @@
       <div class="nav__links">
         <a href="#hero" class="nav__link active" data-i18n="nav_home">Home</a>
         <a href="#architecture" class="nav__link" data-i18n="nav_architecture">Architecture</a>
-        <a href="#infrastructure" class="nav__link" data-i18n="nav_infra">Live Infra</a>
+        <a href="#live" class="nav__link" data-i18n="nav_infra">Live Infra</a>
         <a href="#demo" class="nav__link" data-i18n="nav_demo">Demo App</a>
+        <a href="#freelance" class="nav__link nav__link--hire" data-i18n="nav_freelance">💼 Hire Me</a>
         <a href="#tools" class="nav__link" data-i18n="nav_tools">Tools</a>
         <a href="about.html" class="nav__link" data-i18n="nav_about">👤 About</a>
         <a href="https://status.khalilaliouich.com/status/default" class="nav__link" target="_blank">🟢 Status</a>
@@ -46,14 +47,17 @@
     </div>
   </nav>
 
-  <!-- ============================================================ -->
-  <!-- HERO SECTION -->
-  <!-- ============================================================ -->
   <section class="hero" id="hero">
     <div class="hero__content">
-      <div class="hero__badge">
-        <span class="pulse-dot"></span>
-        <span data-i18n="hero_badge">Live Infrastructure — Oracle Cloud Always Free</span>
+      <div class="hero__badges">
+        <div class="hero__badge">
+          <span class="pulse-dot"></span>
+          <span data-i18n="hero_badge">Live Infrastructure — Oracle Cloud Always Free</span>
+        </div>
+        <a href="#freelance" class="hero__badge hero__badge--hire">
+          <span class="pulse-dot pulse-dot--magenta"></span>
+          <span data-i18n="hero_badge_freelance">Freelance — available for your projects</span>
+        </a>
       </div>
       <h1 class="hero__title">
         <span data-i18n="hero_title_1">Hi, I'm</span> <span class="gradient-text glitch" data-text="Khalil Aliouich">Khalil Aliouich</span>
@@ -65,7 +69,8 @@
         This entire infrastructure — Kubernetes cluster, GitOps pipeline, monitoring stack, and demo app — is running live on a single ARM server provisioned for free on Oracle Cloud.
       </p>
       <div class="hero__actions">
-        <a href="#infrastructure" class="btn btn--primary" data-i18n="hero_cta_explore">🚀 Explore Live Infrastructure</a>
+        <a href="#live" class="btn btn--primary" data-i18n="hero_cta_explore">🚀 Explore Live Infrastructure</a>
+        <a href="#freelance" class="btn btn--ghost" data-i18n="hero_cta_hire">💼 Work With Me</a>
         <a href="#demo" class="btn btn--ghost" data-i18n="hero_cta_demo">🐣 See Demo App</a>
       </div>
     </div>
@@ -86,9 +91,6 @@
     </div>
   </section>
 
-  <!-- ============================================================ -->
-  <!-- ARCHITECTURE SECTION -->
-  <!-- ============================================================ -->
   <section class="section" id="architecture">
     <div class="section__header">
       <span class="section__badge" data-i18n="arch_badge">System Design</span>
@@ -171,16 +173,18 @@
     </div>
   </section>
 
-  <!-- ============================================================ -->
-  <!-- LIVE INFRASTRUCTURE SECTION -->
-  <!-- ============================================================ -->
-  <section class="section section--dark" id="infrastructure">
+  <section class="section section--dark" id="live">
     <div class="section__header">
       <span class="section__badge" data-i18n="infra_badge">Real-time</span>
       <h2 class="section__title" data-i18n="infra_title">Live Infrastructure Status</h2>
-      <p class="section__subtitle" data-i18n="infra_subtitle">All data below is fetched live from the Kubernetes API</p>
+      <p class="section__subtitle" data-i18n="live_subtitle">Two ways to look at the same running cluster: raw data straight from the Kubernetes API, or the Grafana dashboards it feeds.</p>
     </div>
-    <div class="infra-grid">
+    <div class="tabs">
+      <button class="tab active" data-tab="k8s" data-i18n="live_tab_k8s">☸️ Kubernetes API</button>
+      <button class="tab" data-tab="grafana" data-i18n="live_tab_grafana">📈 Grafana Dashboards</button>
+    </div>
+    <div class="tab-pane active" id="tab-k8s">
+      <div class="infra-grid">
       <!-- Node Info -->
       <div class="infra-card infra-card--wide">
         <div class="infra-card__header">
@@ -249,45 +253,29 @@
         </div>
       </div>
     </div>
+    </div>
+    <div class="tab-pane" id="tab-grafana">
+      <div style="display: flex; flex-direction: column; gap: 2rem; max-width: 1200px; margin: 2rem auto 0; padding: 0 1rem;">
+      <div style="background: rgba(255,255,255,0.05); padding: 0.5rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+        <h3 style="margin: 0.5rem 0 1rem 1rem; color: #fff; font-size: 1.1rem; font-weight: 500;">Node Compute Resources</h3>
+        <iframe src="https://grafana.khalilaliouich.com/d/7d57716318ee0dddbac5a7f451fb7753?orgId=1&kiosk&theme=dark&transparent=true" width="100%" height="320" frameborder="0" style="border-radius: 8px;"></iframe>
+      </div>
+      <div style="background: rgba(255,255,255,0.05); padding: 0.5rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+        <h3 style="margin: 0.5rem 0 1rem 1rem; color: #fff; font-size: 1.1rem; font-weight: 500;">Tamagotchi Application Metrics</h3>
+        <iframe src="https://grafana.khalilaliouich.com/d/ajntj2?orgId=1&kiosk&theme=dark&transparent=true" width="100%" height="320" frameborder="0" style="border-radius: 8px; margin-bottom: 2rem;"></iframe>
+
+        <iframe src="https://grafana.khalilaliouich.com/d/loki-live-logs?orgId=1&kiosk&theme=dark&transparent=true" width="100%" height="320" frameborder="0" style="border-radius: 8px;"></iframe>
+      </div>
+    </div>
+    </div>
   </section>
 
-  <!-- ============================================================ -->
-  <!-- DEMO APP SECTION -->
-  <!-- ============================================================ -->
   <section class="section" id="demo">
     <div class="section__header">
       <span class="section__badge" data-i18n="demo_badge">Live Demo</span>
       <h2 class="section__title">🐣 Tamagotchi <span class="gradient-text">as a Service</span></h2>
-      <p class="section__subtitle" data-i18n="demo_subtitle">A 3-tier application where virtual creatures live as Kubernetes pods. Feed them or they die! All metrics flow to Prometheus & Grafana in real-time.</p>
+      <p class="section__subtitle" data-i18n="demo_subtitle_short">Virtual creatures living as Kubernetes pods. Feed them or they die — and every action becomes a Prometheus metric.</p>
     </div>
-    <div class="demo-grid">
-      <div class="demo-card">
-        <div class="demo-card__header">
-          <span class="demo-card__icon">📱</span>
-          <h3 data-i18n="demo_frontend">Frontend</h3>
-        </div>
-        <p class="demo-card__desc" data-i18n="demo_frontend_desc">Interactive UI to adopt, feed, play with, and monitor your creatures. Dark theme with real-time stat bars.</p>
-        <a href="http://demo.khalilaliouich.com" target="_blank" class="btn btn--primary btn--sm" data-i18n="demo_open">Open App →</a>
-      </div>
-      <div class="demo-card">
-        <div class="demo-card__header">
-          <span class="demo-card__icon">⚙️</span>
-          <h3 data-i18n="demo_api">API Backend</h3>
-        </div>
-        <p class="demo-card__desc" data-i18n="demo_api_desc">Node.js REST API with custom Prometheus metrics: hunger_level, happiness_score, energy_level, feed/play/sleep counters.</p>
-        <a href="http://demo.khalilaliouich.com/api/creatures" target="_blank" class="btn btn--primary btn--sm" data-i18n="demo_api_btn">View API →</a>
-      </div>
-      <div class="demo-card">
-        <div class="demo-card__header">
-          <span class="demo-card__icon">📊</span>
-          <h3 data-i18n="demo_metrics">Metrics Pipeline</h3>
-        </div>
-        <p class="demo-card__desc" data-i18n="demo_metrics_desc">Custom metrics scraped by Prometheus every 15s, visualized in a dedicated Grafana dashboard with gauges, time series, and alerts.</p>
-        <a href="http://grafana.khalilaliouich.com" target="_blank" class="btn btn--primary btn--sm" data-i18n="demo_grafana">Open Grafana →</a>
-      </div>
-    </div>
-
-    <!-- Tamagotchi Live Stats -->
     <div class="demo-live">
       <h3 class="demo-live__title" data-i18n="demo_live_title">🐣 Creature Stats — Live</h3>
       <div class="demo-live__stats" id="tamagotchiStats">
@@ -313,51 +301,79 @@
         </div>
       </div>
     </div>
+    <div class="demo-actions">
+      <a href="http://demo.khalilaliouich.com" target="_blank" class="btn btn--primary" data-i18n="demo_open">Open App →</a>
+      <a href="http://demo.khalilaliouich.com/api/creatures" target="_blank" class="btn btn--ghost" data-i18n="demo_api_btn">View API →</a>
+      <a href="issues.html" class="btn btn--ghost" data-i18n="demo_issues_link">🔧 How I debugged it →</a>
+    </div>
   </section>
 
-  <!-- ============================================================ -->
-  <!-- TECHNICAL ISSUES SECTION -->
-  <!-- ============================================================ -->
-  <section class="section" id="issues">
+  <section class="section section--dark" id="freelance">
     <div class="section__header">
-      <span class="section__badge" data-i18n="issues_badge">Troubleshooting</span>
-      <h2 class="section__title" data-i18n="issues_title">Technical Issues Resolved</h2>
-      <p class="section__subtitle" data-i18n="issues_subtitle">A deep dive into the engineering challenges faced and overcome while deploying this architecture on Oracle Cloud.</p>
+      <span class="section__badge section__badge--hire" data-i18n="freelance_badge">Freelance — Open for missions</span>
+      <h2 class="section__title" data-i18n="freelance_title">Everything you just explored? <span class="gradient-text">I can build it for you.</span></h2>
+      <p class="section__subtitle" data-i18n="freelance_subtitle">I'm an independent DevOps &amp; Platform Engineer with 12+ years of experience. This site isn't a slide deck — it's a production cluster you can click through right now. That's the same rigor I bring to your platform.</p>
     </div>
-    <div style="text-align: center; margin-top: 3rem;">
-      <a href="issues.html" class="btn btn--primary" style="font-size: 1.1rem; padding: 1rem 2.5rem;">
-        View Technical Deep Dive →
-      </a>
+
+    <div class="hire-availability">
+      <span class="hire-availability__dot"></span>
+      <span data-i18n="freelance_availability">Available now — remote across France &amp; Europe, on-site on request</span>
+    </div>
+
+    <div class="hire-grid">
+      <div class="hire-card">
+        <div class="hire-card__icon">☸️</div>
+        <h3 class="hire-card__title" data-i18n="freelance_offer_1_title">Kubernetes Platforms</h3>
+        <p class="hire-card__desc" data-i18n="freelance_offer_1_desc">Design, migration, and hardening of K8s clusters (EKS, AKS, OpenStack, K3s). Internal Developer Platforms and Golden Paths that let your teams ship without opening a ticket.</p>
+      </div>
+      <div class="hire-card">
+        <div class="hire-card__icon">🔄</div>
+        <h3 class="hire-card__title" data-i18n="freelance_offer_2_title">GitOps &amp; CI/CD</h3>
+        <p class="hire-card__desc" data-i18n="freelance_offer_2_desc">ArgoCD App-of-Apps, GitLab CI, Gitea Actions, Terraform and Crossplane. On my last assignment: release cycles cut by 40% and deployments that stopped being an event.</p>
+      </div>
+      <div class="hire-card">
+        <div class="hire-card__icon">📊</div>
+        <h3 class="hire-card__title" data-i18n="freelance_offer_3_title">Observability &amp; SRE</h3>
+        <p class="hire-card__desc" data-i18n="freelance_offer_3_desc">Prometheus, Grafana, Loki, meaningful SLOs and alerts that actually wake the right person. From blind infrastructure to a 99.9% SLA you can prove.</p>
+      </div>
+      <div class="hire-card">
+        <div class="hire-card__icon">🛡️</div>
+        <h3 class="hire-card__title" data-i18n="freelance_offer_4_title">DevSecOps &amp; FinOps</h3>
+        <p class="hire-card__desc" data-i18n="freelance_offer_4_desc">Trivy/SBOM scanning built into the pipeline, network policies, secrets management — and a cloud bill audit, because the best-architected platform is also the one you can afford.</p>
+      </div>
+    </div>
+
+    <div class="hire-proof">
+      <div class="hire-proof__item">
+        <span class="hire-proof__value">12+</span>
+        <span class="hire-proof__label" data-i18n="freelance_proof_1">years from ARM firmware to Kubernetes</span>
+      </div>
+      <div class="hire-proof__item">
+        <span class="hire-proof__value">50+</span>
+        <span class="hire-proof__label" data-i18n="freelance_proof_2">developers served by the platforms I built</span>
+      </div>
+      <div class="hire-proof__item">
+        <span class="hire-proof__value">CKA</span>
+        <span class="hire-proof__label" data-i18n="freelance_proof_3">certified — CNCF / Linux Foundation</span>
+      </div>
+      <div class="hire-proof__item">
+        <span class="hire-proof__value">99.9%</span>
+        <span class="hire-proof__label" data-i18n="freelance_proof_4">SLA held in production</span>
+      </div>
+    </div>
+
+    <div class="hire-cta">
+      <h3 class="hire-cta__title" data-i18n="freelance_cta_title">Got a platform to build, migrate, or rescue?</h3>
+      <p class="hire-cta__desc" data-i18n="freelance_cta_desc">Tell me about your context in a few lines — I'll reply within 48 hours with an honest read: what I'd do, how long it takes, and whether you even need me.</p>
+      <div class="hire-cta__actions">
+        <a href="mailto:khalil.aliouich@gmail.com?subject=Freelance%20mission%20—%20DevOps%20%2F%20Platform%20Engineering" class="btn btn--primary" data-i18n="freelance_cta_mail">✉️ Discuss your project</a>
+        <a href="https://www.linkedin.com/in/khalil-aliouich-90b53798/" target="_blank" class="btn btn--ghost" data-i18n="freelance_cta_linkedin">🔗 Reach me on LinkedIn</a>
+      </div>
+      <p class="hire-cta__note" data-i18n="freelance_cta_note">Time &amp; materials or fixed price · short audits as well as long-term assignments · first call always free.</p>
     </div>
   </section>
 
-  <!-- ============================================================ -->
-  <!-- LIVE TELEMETRY SECTION -->
-  <!-- ============================================================ -->
-  <section class="section section--dark" id="telemetry">
-    <div class="section__header">
-      <span class="section__badge">Telemetry</span>
-      <h2 class="section__title">Live Dashboard</h2>
-      <p class="section__subtitle">Real-time metrics embedded directly from Grafana without authentication.</p>
-    </div>
-    <div style="display: flex; flex-direction: column; gap: 2rem; max-width: 1200px; margin: 2rem auto 0; padding: 0 1rem;">
-      <div style="background: rgba(255,255,255,0.05); padding: 0.5rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
-        <h3 style="margin: 0.5rem 0 1rem 1rem; color: #fff; font-size: 1.1rem; font-weight: 500;">Node Compute Resources</h3>
-        <iframe src="https://grafana.khalilaliouich.com/d/7d57716318ee0dddbac5a7f451fb7753?orgId=1&kiosk&theme=dark&transparent=true" width="100%" height="320" frameborder="0" style="border-radius: 8px;"></iframe>
-      </div>
-      <div style="background: rgba(255,255,255,0.05); padding: 0.5rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
-        <h3 style="margin: 0.5rem 0 1rem 1rem; color: #fff; font-size: 1.1rem; font-weight: 500;">Tamagotchi Application Metrics</h3>
-        <iframe src="https://grafana.khalilaliouich.com/d/ajntj2?orgId=1&kiosk&theme=dark&transparent=true" width="100%" height="320" frameborder="0" style="border-radius: 8px; margin-bottom: 2rem;"></iframe>
-
-        <iframe src="https://grafana.khalilaliouich.com/d/loki-live-logs?orgId=1&kiosk&theme=dark&transparent=true" width="100%" height="320" frameborder="0" style="border-radius: 8px;"></iframe>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============================================================ -->
-  <!-- TOOLS PORTAL SECTION -->
-  <!-- ============================================================ -->
-  <section class="section section--dark" id="tools">
+  <section class="section" id="tools">
     <div class="section__header">
       <span class="section__badge" data-i18n="tools_badge">Toolbox</span>
       <h2 class="section__title" data-i18n="tools_title">DevOps Tools Portal</h2>
@@ -450,6 +466,8 @@
       </div>
       <p class="footer__text" data-i18n="footer_text">Built with K3s, ArgoCD, Prometheus, Grafana, Loki & Gitea — hosted on Oracle Cloud Always Free (ARM Ampere A1).</p>
       <div class="footer__links">
+        <a href="#freelance" class="footer__link" data-i18n="nav_freelance">💼 Hire Me</a>
+        <a href="issues.html" class="footer__link" data-i18n="issues_title">Technical Issues Resolved</a>
         <a href="about.html" class="footer__link" data-i18n="nav_about">About Me</a>
         <a href="https://www.linkedin.com/in/khalil-aliouich-90b53798/" target="_blank" class="footer__link">LinkedIn</a>
         <a href="https://github.com/kaliouich" target="_blank" class="footer__link">GitHub</a>
@@ -480,5 +498,6 @@
 
   <script src="js/particles.js"></script>
   <script src="js/app.js"></script>
+
 </body>
 </html>

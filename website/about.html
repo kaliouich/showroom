@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>About the Engineer | DevOps Showcase</title>
-  
+  <title>About the Engineer | Freelance DevOps &amp; Platform Engineer</title>
+  <meta name="description" content="Khalil Aliouich — freelance DevOps &amp; Platform Engineer, 12+ years from ARM firmware to Kubernetes. Available for your platform, GitOps, and observability projects.">
+
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css?v=12" />
   <style>
     .about-hero {
       padding: 8rem 2rem 3rem;
@@ -203,6 +204,7 @@
     </div>
     <div class="nav__links">
       <a href="index.html" class="nav__link" data-i18n="nav_back">← Back to Home</a>
+      <a href="index.html#freelance" class="nav__link nav__link--hire" data-i18n="nav_freelance">💼 Hire Me</a>
     </div>
     <div class="nav__actions">
       <div class="lang-switcher">
@@ -225,6 +227,10 @@
     <aside class="profile-sidebar">
       <h2>Khalil Aliouich</h2>
       <h3>Senior DevOps & Platform Engineer</h3>
+      <div class="hire-availability" style="margin: 0 auto 1.5rem;">
+        <span class="hire-availability__dot"></span>
+        <span data-i18n="about_freelance_pill">Freelance — available</span>
+      </div>
       <p style="color: var(--text-secondary); line-height: 1.6; font-size: 0.95rem;" data-i18n="about_desc">
         12+ years of experience across Telecom, IoT, Cloud-Native, and Edge Computing. Specializing in highly resilient hybrid-cloud platforms.
       </p>
@@ -235,6 +241,9 @@
         </a>
         <a href="https://github.com/kaliouich" target="_blank" class="social-btn">
           <span data-i18n="about_github">🐙 GitHub Repositories</span>
+        </a>
+        <a href="mailto:khalil.aliouich@gmail.com?subject=Freelance%20mission%20—%20DevOps%20%2F%20Platform%20Engineering" class="social-btn" style="background: rgba(255,0,85,0.08); border-color: rgba(255,0,85,0.25);">
+          <span data-i18n="about_hire_btn">✉️ Hire me for your project</span>
         </a>
       </div>
       
@@ -248,6 +257,24 @@
     <!-- Main Content Area -->
     <div class="content-main">
       
+      <!-- Freelance Card -->
+      <div class="card" style="border-color: rgba(255,0,85,0.25); background:
+           radial-gradient(circle at 100% 0%, rgba(255,0,85,0.10) 0%, transparent 60%),
+           radial-gradient(circle at 0% 100%, rgba(0,240,255,0.08) 0%, transparent 60%),
+           var(--bg-card);">
+        <h2><span class="icon">💼</span> <span data-i18n="about_freelance_title">Available as a Freelancer</span></h2>
+        <p data-i18n="about_freelance_desc">
+          I work as an independent DevOps &amp; Platform Engineer and I'm currently taking on new assignments — remote across France &amp; Europe, on-site on request. Kubernetes platforms, GitOps and CI/CD, observability, DevSecOps and cloud cost optimization: from a two-week audit to a long-term engagement embedded in your team.
+        </p>
+        <p style="margin-bottom: 0;" data-i18n="about_freelance_proof">
+          The best proof of what I do is one click away: <a href="index.html" style="color: var(--cyan);">this entire site</a> runs on a live Kubernetes cluster I built and operate — GitOps pipeline, monitoring stack, and public dashboards included.
+        </p>
+        <div class="hire-cta__actions" style="justify-content: flex-start; margin-top: 1.5rem;">
+          <a href="mailto:khalil.aliouich@gmail.com?subject=Freelance%20mission%20—%20DevOps%20%2F%20Platform%20Engineering" class="btn btn--primary btn--sm" data-i18n="freelance_cta_mail">✉️ Discuss your project</a>
+          <a href="index.html#freelance" class="btn btn--ghost btn--sm" data-i18n="about_freelance_services">See my services →</a>
+        </div>
+      </div>
+
       <!-- Summary Card -->
       <div class="card">
         <h2><span class="icon">🚀</span> <span data-i18n="about_summary_title">Professional Summary</span></h2>

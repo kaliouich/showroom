@@ -12,3 +12,12 @@ node_modules/
 # Temporary
 *.log
 *.tmp
+
+# Secrets — ne jamais commiter (dépôt public)
+*.key
+*.key.pem
+*-ssl-bundle.zip
+*-ssl-bundle/
+kubeconfig
+.claude/
+.claude-flow/

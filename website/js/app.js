@@ -14,9 +14,12 @@ const i18n = {
   en: {
     nav_home: 'Home', nav_architecture: 'Architecture', nav_infra: 'Live Infra',
     nav_demo: 'Demo App', nav_tools: 'Tools', nav_admin: '🔐 Admin',
+    nav_freelance: '💼 Hire Me',
     hero_badge: 'Live Infrastructure — Oracle Cloud Always Free',
+    hero_badge_freelance: 'Freelance — available for your projects',
     hero_title_1: "Hi, I'm", hero_desc: 'This entire infrastructure — Kubernetes cluster, GitOps pipeline, monitoring stack, and demo app — is running live on a single ARM server provisioned for free on Oracle Cloud.',
     hero_cta_explore: '🚀 Explore Live Infrastructure', hero_cta_demo: '🐣 See Demo App',
+    hero_cta_hire: '💼 Work With Me',
     arch_badge: 'System Design', arch_title: 'Architecture Overview',
     arch_subtitle: 'A complete DevOps ecosystem running on a single ARM instance',
     arch_infra: 'Infrastructure', arch_platform: 'Platform',
@@ -27,8 +30,12 @@ const i18n = {
     infra_namespaces: 'Namespaces', infra_services: 'Services',
     infra_across: 'across all namespaces', infra_active: 'active namespaces',
     infra_endpoints: 'exposed endpoints', infra_pod_list: 'Pod Status by Namespace',
+    live_subtitle: 'Two ways to look at the same running cluster: raw data straight from the Kubernetes API, or the Grafana dashboards it feeds.',
+    live_tab_k8s: '☸️ Kubernetes API', live_tab_grafana: '📈 Grafana Dashboards',
     loading: 'Loading...',
     demo_badge: 'Live Demo',
+    demo_subtitle_short: 'Virtual creatures living as Kubernetes pods. Feed them or they die — and every action becomes a Prometheus metric.',
+    demo_issues_link: '🔧 How I debugged it →',
     demo_subtitle: 'A 3-tier application where virtual creatures live as Kubernetes pods. Feed them or they die! All metrics flow to Prometheus & Grafana in real-time.',
     demo_frontend: 'Frontend', demo_api: 'API Backend', demo_metrics: 'Metrics Pipeline',
     demo_frontend_desc: 'Interactive UI to adopt, feed, play with, and monitor your creatures. Dark theme with real-time stat bars.',
@@ -92,14 +99,44 @@ const i18n = {
     about_delta_title: 'Ingénieur DevOps / Cloud Tech Lead',
     about_delta_desc: 'Led DevOps and FinOps initiatives for Europe\'s IoT Smart Home leader. Managed Azure AKS topologies with Terraform, maintained 99.9% SLA for REST APIs, and mentored development teams on GitOps and DevSecOps best practices.',
     about_rd_desc: 'Hardware-level programming and debugging for ARM Cortex/Linux systems at companies like NXP, Hill-Rom, Ekinops, and Itron. Pioneered early Edge architectures with Zigbee/WSN gateways.',
-    about_skills_title: 'Technical Stack'
+    about_skills_title: 'Technical Stack',
+    freelance_badge: 'Freelance — Open for missions',
+    freelance_title: 'Everything you just explored? <span class="gradient-text">I can build it for you.</span>',
+    freelance_subtitle: "I'm an independent DevOps &amp; Platform Engineer with 12+ years of experience. This site isn't a slide deck — it's a production cluster you can click through right now. That's the same rigor I bring to your platform.",
+    freelance_availability: 'Available now — remote across France &amp; Europe, on-site on request',
+    freelance_offer_1_title: 'Kubernetes Platforms',
+    freelance_offer_1_desc: 'Design, migration, and hardening of K8s clusters (EKS, AKS, OpenStack, K3s). Internal Developer Platforms and Golden Paths that let your teams ship without opening a ticket.',
+    freelance_offer_2_title: 'GitOps &amp; CI/CD',
+    freelance_offer_2_desc: 'ArgoCD App-of-Apps, GitLab CI, Gitea Actions, Terraform and Crossplane. On my last assignment: release cycles cut by 40% and deployments that stopped being an event.',
+    freelance_offer_3_title: 'Observability &amp; SRE',
+    freelance_offer_3_desc: 'Prometheus, Grafana, Loki, meaningful SLOs and alerts that actually wake the right person. From blind infrastructure to a 99.9% SLA you can prove.',
+    freelance_offer_4_title: 'DevSecOps &amp; FinOps',
+    freelance_offer_4_desc: 'Trivy/SBOM scanning built into the pipeline, network policies, secrets management — and a cloud bill audit, because the best-architected platform is also the one you can afford.',
+    freelance_proof_1: 'years from ARM firmware to Kubernetes',
+    freelance_proof_2: 'developers served by the platforms I built',
+    freelance_proof_3: 'certified — CNCF / Linux Foundation',
+    freelance_proof_4: 'SLA held in production',
+    freelance_cta_title: 'Got a platform to build, migrate, or rescue?',
+    freelance_cta_desc: "Tell me about your context in a few lines — I'll reply within 48 hours with an honest read: what I'd do, how long it takes, and whether you even need me.",
+    freelance_cta_mail: '✉️ Discuss your project',
+    freelance_cta_linkedin: '🔗 Reach me on LinkedIn',
+    freelance_cta_note: 'Time &amp; materials or fixed price · short audits as well as long-term assignments · first call always free.',
+    about_freelance_pill: 'Freelance — available',
+    about_hire_btn: '✉️ Hire me for your project',
+    about_freelance_title: 'Available as a Freelancer',
+    about_freelance_desc: "I work as an independent DevOps &amp; Platform Engineer and I'm currently taking on new assignments — remote across France &amp; Europe, on-site on request. Kubernetes platforms, GitOps and CI/CD, observability, DevSecOps and cloud cost optimization: from a two-week audit to a long-term engagement embedded in your team.",
+    about_freelance_proof: 'The best proof of what I do is one click away: <a href="index.html" style="color: var(--cyan);">this entire site</a> runs on a live Kubernetes cluster I built and operate — GitOps pipeline, monitoring stack, and public dashboards included.',
+    about_freelance_services: 'See my services →'
   },
   fr: {
     nav_home: 'Accueil', nav_architecture: 'Architecture', nav_infra: 'Infra Live',
     nav_demo: 'App Démo', nav_tools: 'Outils', nav_admin: '🔐 Admin',
+    nav_freelance: '💼 Freelance',
     hero_badge: 'Infrastructure Live — Oracle Cloud Gratuit',
+    hero_badge_freelance: 'Freelance — disponible pour vos projets',
     hero_title_1: "Je suis", hero_desc: "Toute cette infrastructure — cluster Kubernetes, pipeline GitOps, stack de monitoring et application de démo — tourne en temps réel sur un seul serveur ARM provisionné gratuitement sur Oracle Cloud.",
     hero_cta_explore: "🚀 Explorer l'Infrastructure", hero_cta_demo: '🐣 Voir la Démo',
+    hero_cta_hire: '💼 Travaillons Ensemble',
     arch_badge: 'Conception', arch_title: "Vue d'ensemble de l'Architecture",
     arch_subtitle: "Un écosystème DevOps complet sur une seule instance ARM",
     arch_infra: 'Infrastructure', arch_platform: 'Plateforme',
@@ -110,8 +147,12 @@ const i18n = {
     infra_namespaces: 'Namespaces', infra_services: 'Services',
     infra_across: 'dans tous les namespaces', infra_active: 'namespaces actifs',
     infra_endpoints: 'endpoints exposés', infra_pod_list: 'Statut des Pods par Namespace',
+    live_subtitle: "Deux façons de regarder le même cluster en production : les données brutes directement depuis l'API Kubernetes, ou les dashboards Grafana qu'elles alimentent.",
+    live_tab_k8s: '☸️ API Kubernetes', live_tab_grafana: '📈 Dashboards Grafana',
     loading: 'Chargement...',
     demo_badge: 'Démo Live',
+    demo_subtitle_short: "Des créatures virtuelles qui vivent comme des pods Kubernetes. Nourrissez-les ou elles meurent — et chaque action devient une métrique Prometheus.",
+    demo_issues_link: '🔧 Comment je l\'ai débogué →',
     demo_subtitle: "Une application 3-tiers où des créatures virtuelles vivent comme des pods Kubernetes. Nourrissez-les ou elles meurent ! Toutes les métriques remontent vers Prometheus & Grafana en temps réel.",
     demo_frontend: 'Frontend', demo_api: 'API Backend', demo_metrics: 'Pipeline de Métriques',
     demo_frontend_desc: "Interface interactive pour adopter, nourrir, jouer et surveiller vos créatures. Thème sombre avec barres de stats en temps réel.",
@@ -175,7 +216,34 @@ const i18n = {
     about_delta_title: 'Ingénieur DevOps / Cloud Tech Lead',
     about_delta_desc: 'Direction d\'initiatives DevOps et FinOps pour le leader européen de l\'IoT Smart Home. Gestion des topologies Azure AKS avec Terraform, maintien d\'un SLA de 99.9% pour les API REST, et mentorat des équipes de développement sur les bonnes pratiques GitOps et DevSecOps.',
     about_rd_desc: 'Programmation et débogage bas-niveau pour systèmes ARM Cortex/Linux (NXP, Hill-Rom, Ekinops, Itron). Pionnier des architectures Edge naissantes avec passerelles Zigbee/WSN.',
-    about_skills_title: 'Stack Technique'
+    about_skills_title: 'Stack Technique',
+    freelance_badge: 'Freelance — Ouvert aux missions',
+    freelance_title: 'Tout ce que vous venez d\'explorer ? <span class="gradient-text">Je peux le construire pour vous.</span>',
+    freelance_subtitle: "Je suis DevOps &amp; Platform Engineer indépendant, avec plus de 12 ans d'expérience. Ce site n'est pas un slide de présentation : c'est un cluster en production dans lequel vous pouvez cliquer maintenant. C'est la même exigence que j'apporte à votre plateforme.",
+    freelance_availability: 'Disponible dès maintenant — en remote partout en France &amp; en Europe, sur site à la demande',
+    freelance_offer_1_title: 'Plateformes Kubernetes',
+    freelance_offer_1_desc: "Conception, migration et durcissement de clusters K8s (EKS, AKS, OpenStack, K3s). Internal Developer Platforms et Golden Paths pour que vos équipes livrent sans ouvrir de ticket.",
+    freelance_offer_2_title: 'GitOps &amp; CI/CD',
+    freelance_offer_2_desc: "ArgoCD App-of-Apps, GitLab CI, Gitea Actions, Terraform et Crossplane. Sur ma dernière mission : des cycles de release réduits de 40% et des déploiements qui ont cessé d'être un événement.",
+    freelance_offer_3_title: 'Observabilité &amp; SRE',
+    freelance_offer_3_desc: "Prometheus, Grafana, Loki, des SLO qui ont du sens et des alertes qui réveillent la bonne personne. D'une infrastructure aveugle à un SLA de 99,9% que vous pouvez prouver.",
+    freelance_offer_4_title: 'DevSecOps &amp; FinOps',
+    freelance_offer_4_desc: "Scans Trivy/SBOM intégrés à la pipeline, network policies, gestion des secrets — et un audit de votre facture cloud, parce que la meilleure plateforme est aussi celle que vous pouvez financer.",
+    freelance_proof_1: "ans, du firmware ARM jusqu'à Kubernetes",
+    freelance_proof_2: 'développeurs servis par les plateformes que j\'ai construites',
+    freelance_proof_3: 'certifié — CNCF / Linux Foundation',
+    freelance_proof_4: 'de SLA tenu en production',
+    freelance_cta_title: 'Une plateforme à construire, migrer ou sauver ?',
+    freelance_cta_desc: "Décrivez-moi votre contexte en quelques lignes — je vous réponds sous 48h avec un avis honnête : ce que je ferais, combien de temps ça prend, et si vous avez vraiment besoin de moi.",
+    freelance_cta_mail: '✉️ Parlons de votre projet',
+    freelance_cta_linkedin: '🔗 Me contacter sur LinkedIn',
+    freelance_cta_note: 'Régie ou forfait · audits courts comme missions longues · premier échange toujours offert.',
+    about_freelance_pill: 'Freelance — disponible',
+    about_hire_btn: '✉️ Me confier votre projet',
+    about_freelance_title: 'Disponible en Freelance',
+    about_freelance_desc: "J'interviens en tant que DevOps &amp; Platform Engineer indépendant et je prends actuellement de nouvelles missions — en remote partout en France &amp; en Europe, sur site à la demande. Plateformes Kubernetes, GitOps et CI/CD, observabilité, DevSecOps et optimisation des coûts cloud : de l'audit de deux semaines à la mission longue intégrée à votre équipe.",
+    about_freelance_proof: "La meilleure preuve de ce que je fais est à un clic : <a href=\"index.html\" style=\"color: var(--cyan);\">tout ce site</a> tourne sur un cluster Kubernetes en production que j'ai construit et que j'exploite — pipeline GitOps, stack de monitoring et dashboards publics inclus.",
+    about_freelance_services: 'Voir mes prestations →'
   }
 };
 
@@ -197,7 +265,7 @@ document.querySelectorAll('.lang-btn').forEach(btn => {
 
 // ---- Typewriter Effect ----
 const typewriterLines = [
-  'DevOps Engineer',
+  'Freelance DevOps & Platform Engineer',
   'Cloud Infrastructure Architect',
   'Kubernetes & ArgoCD Enthusiast',
   'Automation is my superpower ⚡',
@@ -390,6 +458,20 @@ function initScrollAnimations() {
   });
 }
 
+// ---- Tabs (section Live) ----
+function initTabs() {
+  const tabs = document.querySelectorAll('.tab');
+  tabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      const pane = document.getElementById('tab-' + btn.dataset.tab);
+      if (pane) pane.classList.add('active');
+    });
+  });
+}
+
 // ---- Active Nav Link ----
 function initActiveNav() {
   const sections = document.querySelectorAll('section[id]');
@@ -458,6 +540,7 @@ fetchTamagotchiStats();
 setInterval(fetchTamagotchiStats, 10000);
 initScrollAnimations();
 initActiveNav();
+initTabs();
 
 // ---- Hamburger Menu ----
 function initHamburgerMenu() {
