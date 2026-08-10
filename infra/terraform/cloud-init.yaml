@@ -1,0 +1,64 @@
+#cloud-config
+# Amorcage du noeud : paquets, pare-feu, k3s, depot. La plateforme et la
+# restauration sont declenchees ensuite a la main (voir DISASTER-RECOVERY.md).
+
+package_update: true
+package_upgrade: false
+
+packages:
+  - git
+  - curl
+  - jq
+  - zstd
+  - sqlite3
+  - postgresql-client
+  - python3-pip
+  - unzip
+
+write_files:
+  - path: /etc/showroom.env
+    permissions: "0644"
+    content: |
+      DOMAIN=${domain}
+      ACME_EMAIL=${acme_email}
+      BACKUP_BUCKET=${backup_bucket}
+
+runcmd:
+  - exec > /var/log/bootstrap.log 2>&1
+  - set -x
+
+  # Ubuntu sur OCI arrive avec un iptables qui DROP tout sauf SSH. Sans ces
+  # deux regles, les ports 80 et 443 restent fermes meme si la security list
+  # les autorise, et le diagnostic est penible.
+  - iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT
+  - iptables -I INPUT 6 -m state --state NEW -p tcp --dport 443 -j ACCEPT
+  - netfilter-persistent save || true
+
+  - mkdir -p /data/oci-bv-100gb
+
+  # ---------------------------------------------------------------------
+  # k3s
+  #
+  # Deux drapeaux presents sur l'ancien serveur sont volontairement absents :
+  #   --disable-cloud-controller
+  #   --kubelet-arg=cloud-provider=external
+  #
+  # Ils ne se justifiaient que par le controleur cloud OCI, qui a ete
+  # desinstalle. Les reprendre ici poserait sur le noeud le taint
+  # node.cloudprovider.kubernetes.io/uninitialized, qu'aucun composant ne
+  # viendrait retirer : plus aucun pod ne se planifierait, et le cluster
+  # paraitrait sain tout en etant inerte.
+  # ---------------------------------------------------------------------
+  - curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.36.2+k3s1" sh -s - server
+      --disable=traefik
+      --write-kubeconfig-mode=644
+      --default-local-storage-path=/data/oci-bv-100gb
+
+  - until kubectl get node 2>/dev/null | grep -q Ready; do sleep 5; done
+
+  - git clone ${repo_url} /opt/showroom || true
+  - chmod +x /opt/showroom/infra/bootstrap/*.sh /opt/showroom/scripts/*.sh || true
+
+  - echo "=== k3s pret. Suite : /opt/showroom/infra/bootstrap/install-platform.sh ==="
+
+final_message: "Noeud amorce en $UPTIME s. Voir /var/log/bootstrap.log"

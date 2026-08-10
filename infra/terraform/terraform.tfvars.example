@@ -1,0 +1,25 @@
+// Copier en terraform.tfvars puis completer.
+// terraform.tfvars est gitignore : il ne doit jamais partir sur GitHub.
+//
+// Les OCID et l'empreinte se lisent dans ~/.oci/config.
+
+tenancy_ocid     = "ocid1.tenancy.oc1..xxxxxxxxxxxx"
+user_ocid        = "ocid1.user.oc1..xxxxxxxxxxxx"
+fingerprint      = "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99"
+private_key_path = "~/.oci/oci_api_key.pem"
+
+region              = "eu-paris-1"
+availability_domain = "xerO:EU-PARIS-1-AD-1"
+
+// Contenu de ~/.ssh/id_ed25519.pub
+ssh_public_key = "ssh-ed25519 AAAA... vous@machine"
+
+// Fortement conseille : votre IP fixe en /32 plutot que le monde entier.
+ssh_ingress_cidr = "0.0.0.0/0"
+
+domain     = "khalilaliouich.com"
+acme_email = "vous@exemple.com"
+
+// Doit rester joignable quand le serveur est mort : donc pas Gitea.
+repo_url      = "https://github.com/kaliouich/showroom.git"
+backup_bucket = "showroom-backups"

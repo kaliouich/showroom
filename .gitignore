@@ -13,6 +13,15 @@ node_modules/
 *.log
 *.tmp
 
+# Terraform — état et variables contiennent des identifiants
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform/
+.terraform.lock.hcl
+crash.log
+
 # Secrets — ne jamais commiter (dépôt public)
 *.key
 *.key.pem
