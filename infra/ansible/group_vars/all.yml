@@ -1,0 +1,112 @@
+---
+domain: khalilaliouich.com
+acme_email: khalil.aliouich@gmail.com
+repo_root: /opt/showroom
+kubeconfig: /etc/rancher/k3s/k3s.yaml
+backup_bucket: showroom-backups
+
+# Versions figees, relevees en production le 2026-08-10. Une reprise
+# d'incident n'est pas le moment de decouvrir qu'un chart a change de schema.
+versions:
+  k3s: v1.36.2+k3s1
+  gateway_api: v1.2.1
+  cert_manager: v1.20.3
+  envoy_gateway: 1.8.2
+  kube_prom: 87.10.1
+  loki: 2.10.3
+  kyverno: 3.8.1
+  trivy: 0.33.2
+  gitea: 12.6.0
+  argocd: v3.4.4
+  linkerd_edge: edge-26.6.3
+
+# ---------------------------------------------------------------------------
+# Valeurs Helm.
+#
+# Elles vivaient jusqu'ici dans l'etat des releases, invisibles et non
+# versionnees. Trois residus y trainaient : le mot de passe admin en clair, un
+# fournisseur OIDC Authelia demantele depuis, et des hotes nip.io d'une epoque
+# ou l'entree se faisait par nginx.
+# ---------------------------------------------------------------------------
+
+grafana_admin_user: admin
+
+kube_prometheus_values:
+  grafana:
+    enabled: true
+    # Le mot de passe n'est plus ici : il vient du secret existant, lui-meme
+    # hors du depot. Grafana ne lit cette valeur qu'a la toute premiere
+    # installation, ensuite le mot de passe vit dans sa propre base.
+    admin:
+      existingSecret: grafana-admin-credentials
+      userKey: admin-user
+      passwordKey: admin-password
+    assertNoLeakedSecrets: false
+    persistence:
+      enabled: true
+      existingClaim: grafana-pvc
+    resources:
+      limits:
+        memory: 512Mi
+      requests:
+        memory: 256Mi
+    grafana.ini:
+      server:
+        root_url: https://grafana.khalilaliouich.com
+      # Les dashboards sont embarques en iframe sur le site : sans lecture
+      # anonyme ni autorisation d'embarquement, un visiteur ne verrait rien.
+      auth.anonymous:
+        enabled: true
+        org_role: Viewer
+      security:
+        allow_embedding: true
+  prometheus:
+    prometheusSpec:
+      retention: 15d
+      resources:
+        limits:
+          memory: 3Gi
+        requests:
+          memory: 512Mi
+
+gitea_values:
+  global:
+    storageClass: local-path
+  persistence:
+    size: 5Gi
+    storageClass: local-path
+  gitea:
+    # Le mot de passe admin n'est pas ici : il vit dans le secret
+    # gitea-admin-credentials, hors du depot. Sans cette reference, le chart
+    # reinitialiserait le compte a chaque upgrade.
+    admin:
+      existingSecret: gitea-admin-credentials
+    config:
+      server:
+        DOMAIN: git.khalilaliouich.com
+        ROOT_URL: https://git.khalilaliouich.com/
+      service:
+        DISABLE_REGISTRATION: true
+  postgresql:
+    enabled: true
+    primary:
+      persistence:
+        storageClass: local-path
+  postgresql-ha:
+    enabled: false
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  valkey-cluster:
+    enabled: true
+    # Sans persistance, chaque recreation de pod fait perdre a Valkey son
+    # identite de cluster et met Gitea a terre. C'est exactement ce qui s'est
+    # produit le 2026-08-10. Voir k8s/RUNBOOK-valkey.md.
+    persistence:
+      enabled: true
+      size: 1Gi
+      storageClass: local-path

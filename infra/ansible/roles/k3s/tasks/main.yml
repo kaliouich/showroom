@@ -1,0 +1,39 @@
+---
+- name: K3s est-il deja installe ?
+  ansible.builtin.stat:
+    path: /usr/local/bin/k3s
+  register: k3s_bin
+
+# Deux drapeaux de l'installation d'origine sont volontairement absents :
+#   --disable-cloud-controller  et  --kubelet-arg=cloud-provider=external
+# Ils ne se justifiaient que par le controleur cloud OCI, desinstalle depuis.
+# Les reprendre poserait sur le noeud le taint
+# node.cloudprovider.kubernetes.io/uninitialized, que plus rien ne retirerait :
+# aucun pod ne se planifierait, et le cluster paraitrait sain tout en etant
+# inerte.
+- name: Installer K3s
+  ansible.builtin.shell: |
+    curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="{{ versions.k3s }}" sh -s - server \
+      --disable=traefik \
+      --write-kubeconfig-mode=644 \
+      --default-local-storage-path=/data/oci-bv-100gb
+  args:
+    creates: /usr/local/bin/k3s
+  when: not k3s_bin.stat.exists
+
+- name: Attendre que le noeud soit Ready
+  ansible.builtin.command: k3s kubectl wait --for=condition=Ready node --all --timeout=600s
+  changed_when: false
+  environment:
+    KUBECONFIG: "{{ kubeconfig }}"
+
+- name: Helm est-il present ?
+  ansible.builtin.stat:
+    path: /usr/local/bin/helm
+  register: helm_bin
+
+- name: Installer Helm
+  ansible.builtin.shell: curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+  args:
+    creates: /usr/local/bin/helm
+  when: not helm_bin.stat.exists

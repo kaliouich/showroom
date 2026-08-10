@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=13">
+  <link rel="stylesheet" href="css/style.css?v=14">
 </head>
 <body>
 
@@ -33,6 +33,7 @@
         <a href="#live" class="nav__link" data-i18n="nav_infra">Live Infra</a>
         <a href="#demo" class="nav__link" data-i18n="nav_demo">Demo App</a>
         <a href="#freelance" class="nav__link nav__link--hire" data-i18n="nav_freelance">💼 Hire Me</a>
+        <a href="#iac" class="nav__link" data-i18n="nav_iac">IaC</a>
         <a href="#tools" class="nav__link" data-i18n="nav_tools">Tools</a>
         <a href="about.html" class="nav__link" data-i18n="nav_about">👤 About</a>
         <a href="https://status.khalilaliouich.com/status/default" class="nav__link" target="_blank">🟢 Status</a>
@@ -388,7 +389,54 @@
     </div>
   </section>
 
-  <section class="section" id="tools">
+  <!-- ============================================================ -->
+  <!-- INFRASTRUCTURE AS CODE -->
+  <!-- ============================================================ -->
+  <section class="section" id="iac">
+    <div class="section__header">
+      <span class="section__badge" data-i18n="iac_badge">Infrastructure as Code</span>
+      <h2 class="section__title" data-i18n="iac_title">This cluster is <span class="gradient-text">rebuildable from zero</span></h2>
+      <p class="section__subtitle" data-i18n="iac_subtitle">Every layer is declared as code, and the code is public. If this server disappeared tonight, one <code>terraform apply</code> and one <code>ansible-playbook</code> would bring it all back in under an hour — network, cluster, GitOps, observability, applications and data.</p>
+    </div>
+
+    <div class="iac-grid">
+      <div class="iac-card">
+        <div class="iac-card__head">
+          <div class="tool-card__icon-wrap tool-card__icon-wrap--terraform">🏗️</div>
+          <div>
+            <h3 class="iac-card__title">Terraform</h3>
+            <p class="iac-card__scope" data-i18n="iac_tf_scope">stops where the Oracle API ends</p>
+          </div>
+        </div>
+        <p class="iac-card__desc" data-i18n="iac_tf_desc">VCN, subnet, internet gateway, route table, security list, the ARM instance, and a <strong>reserved public IP</strong>. Terraform is used for what it does best: cloud resources that have a state, where drift must be detected and a plan reviewed before anything changes.</p>
+        <div class="hire-chips" data-i18n="iac_tf_chips"><span class="hire-chip">VCN &amp; subnet</span><span class="hire-chip">Internet Gateway</span><span class="hire-chip">Security lists</span><span class="hire-chip">Compute ARM A1</span><span class="hire-chip">Reserved IP</span></div>
+        <a href="https://github.com/kaliouich/showroom/tree/main/infra/terraform" target="_blank" class="btn btn--ghost btn--sm" data-i18n="iac_tf_link">📂 Read the Terraform →</a>
+      </div>
+
+      <div class="iac-card">
+        <div class="iac-card__head">
+          <div class="tool-card__icon-wrap tool-card__icon-wrap--ansible">⚙️</div>
+          <div>
+            <h3 class="iac-card__title">Ansible</h3>
+            <p class="iac-card__scope" data-i18n="iac_ans_scope">everything inside the machine and the cluster</p>
+          </div>
+        </div>
+        <p class="iac-card__desc" data-i18n="iac_ans_desc">Packages, firewall, K3s, Helm releases, manifests, images, backup timer. Ansible is used where Terraform would only have <code>local-exec</code>: it is idempotent, replays on a live cluster to correct drift, and turns Helm values into versioned files instead of leaving them buried in a release's state.</p>
+        <div class="hire-chips" data-i18n="iac_ans_chips"><span class="hire-chip">K3s</span><span class="hire-chip">cert-manager</span><span class="hire-chip">Envoy Gateway</span><span class="hire-chip">ArgoCD</span><span class="hire-chip">Linkerd</span><span class="hire-chip">Prometheus</span><span class="hire-chip">Gitea</span><span class="hire-chip">Backups</span></div>
+        <a href="https://github.com/kaliouich/showroom/tree/main/infra/ansible" target="_blank" class="btn btn--ghost btn--sm" data-i18n="iac_ans_link">📂 Read the playbook →</a>
+      </div>
+    </div>
+
+    <div class="iac-cta">
+      <p class="iac-cta__text" data-i18n="iac_dr">The full recovery procedure — including the three traps that cost me hours: the K3s cloud-provider flags that silently taint the node, Linkerd breaking ArgoCD's internal gRPC, and Oracle's Ubuntu image dropping ports 80 and 443 whatever the security list says.</p>
+      <div class="hire-cta__actions">
+        <a href="https://github.com/kaliouich/showroom/blob/main/infra/DISASTER-RECOVERY.md" target="_blank" class="btn btn--primary" data-i18n="iac_dr_link">🚨 Disaster recovery runbook</a>
+        <a href="https://github.com/kaliouich/showroom" target="_blank" class="btn btn--ghost" data-i18n="iac_repo_link">🐙 The whole repository</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--dark" id="tools">
     <div class="section__header">
       <span class="section__badge" data-i18n="tools_badge">Toolbox</span>
       <h2 class="section__title" data-i18n="tools_title">DevOps Tools Portal</h2>

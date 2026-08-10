@@ -1,0 +1,197 @@
+---
+# ---------------------------------------------------------------------------
+# Socle : Gateway API, cert-manager, Envoy Gateway.
+# ---------------------------------------------------------------------------
+
+- name: CRD Gateway API
+  kubernetes.core.k8s:
+    src: "https://github.com/kubernetes-sigs/gateway-api/releases/download/{{ versions.gateway_api }}/standard-install.yaml"
+    state: present
+    kubeconfig: "{{ kubeconfig }}"
+
+- name: Depots Helm
+  kubernetes.core.helm_repository:
+    name: "{{ item.name }}"
+    repo_url: "{{ item.url }}"
+  loop:
+    - { name: jetstack, url: "https://charts.jetstack.io" }
+    - { name: gitea-charts, url: "https://dl.gitea.com/charts/" }
+    - { name: prometheus-community, url: "https://prometheus-community.github.io/helm-charts" }
+    - { name: grafana, url: "https://grafana.github.io/helm-charts" }
+    - { name: kyverno, url: "https://kyverno.github.io/kyverno/" }
+    - { name: aqua, url: "https://aquasecurity.github.io/helm-charts/" }
+
+- name: cert-manager
+  kubernetes.core.helm:
+    name: cert-manager
+    chart_ref: jetstack/cert-manager
+    chart_version: "{{ versions.cert_manager }}"
+    release_namespace: cert-manager
+    create_namespace: true
+    wait: true
+    kubeconfig: "{{ kubeconfig }}"
+    values:
+      crds:
+        enabled: true
+
+- name: Envoy Gateway
+  kubernetes.core.helm:
+    name: eg
+    chart_ref: oci://docker.io/envoyproxy/gateway-helm
+    chart_version: "v{{ versions.envoy_gateway }}"
+    release_namespace: envoy-gateway-system
+    create_namespace: true
+    wait: true
+    kubeconfig: "{{ kubeconfig }}"
+
+- name: Gateway, ClusterIssuer et certificat
+  kubernetes.core.k8s:
+    definition: "{{ lookup('template', repo_root + '/infra/bootstrap/manifests/gateway.yaml') | replace('__DOMAIN__', domain) | replace('__ACME_EMAIL__', acme_email) | from_yaml_all | list }}"
+    state: present
+    kubeconfig: "{{ kubeconfig }}"
+
+# ---------------------------------------------------------------------------
+# Service mesh, puis GitOps.
+# ---------------------------------------------------------------------------
+
+- name: Linkerd installe ?
+  kubernetes.core.k8s_info:
+    kind: Namespace
+    name: linkerd
+    kubeconfig: "{{ kubeconfig }}"
+  register: linkerd_ns
+
+- name: Installer Linkerd
+  ansible.builtin.shell: |
+    set -e
+    export PATH="$PATH:$HOME/.linkerd2/bin"
+    command -v linkerd >/dev/null || curl -sL https://run.linkerd.io/install-edge | sh
+    linkerd install --crds | kubectl apply -f -
+    linkerd install | kubectl apply -f -
+    linkerd check --wait 5m || true
+    linkerd viz install | kubectl apply -f -
+  environment:
+    KUBECONFIG: "{{ kubeconfig }}"
+  when: linkerd_ns.resources | length == 0
+
+# ArgoCD fait transiter du gRPC entre son serveur, son repo-server et son
+# application-controller. Le proxy Linkerd l'intercepte et casse les
+# handshakes TLS, rendant ArgoCD inaccessible. Le namespace doit donc porter
+# l'exclusion AVANT qu'ArgoCD n'existe.
+- name: Namespace ArgoCD, exclu du maillage
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: argocd
+        annotations:
+          linkerd.io/inject: disabled
+
+- name: ArgoCD
+  kubernetes.core.k8s:
+    src: "https://raw.githubusercontent.com/argoproj/argo-cd/{{ versions.argocd }}/manifests/install.yaml"
+    namespace: argocd
+    state: present
+    kubeconfig: "{{ kubeconfig }}"
+
+- name: Attendre ArgoCD
+  ansible.builtin.command: kubectl -n argocd rollout status deploy/argocd-server --timeout=900s
+  environment:
+    KUBECONFIG: "{{ kubeconfig }}"
+  changed_when: false
+
+- name: Configuration ArgoCD — compte invite, URL, lecture seule par defaut
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: patched
+    kind: ConfigMap
+    namespace: argocd
+    name: "{{ item.name }}"
+    definition:
+      data: "{{ item.data }}"
+  loop:
+    - name: argocd-cm
+      data:
+        accounts.guest: login
+        url: "https://argocd.{{ domain }}"
+    - name: argocd-rbac-cm
+      data:
+        policy.default: role:readonly
+
+- name: Applications ArgoCD
+  kubernetes.core.k8s:
+    src: "{{ repo_root }}/k8s/argocd/applications.yaml"
+    state: present
+    kubeconfig: "{{ kubeconfig }}"
+
+# ---------------------------------------------------------------------------
+# Observabilite, politiques, forge.
+# ---------------------------------------------------------------------------
+
+- name: kube-prometheus-stack
+  kubernetes.core.helm:
+    name: kube-prometheus
+    chart_ref: prometheus-community/kube-prometheus-stack
+    chart_version: "{{ versions.kube_prom }}"
+    release_namespace: monitoring
+    create_namespace: true
+    wait: true
+    timeout: 20m
+    kubeconfig: "{{ kubeconfig }}"
+    values: "{{ kube_prometheus_values }}"
+
+- name: Loki
+  kubernetes.core.helm:
+    name: loki
+    chart_ref: grafana/loki-stack
+    chart_version: "{{ versions.loki }}"
+    release_namespace: monitoring
+    wait: true
+    kubeconfig: "{{ kubeconfig }}"
+    values:
+      # Grafana vient deja de kube-prometheus-stack : en installer un second
+      # doublerait la consommation memoire sur un noeud de 24 Go.
+      grafana:
+        enabled: false
+      promtail:
+        enabled: true
+
+- name: Kyverno
+  kubernetes.core.helm:
+    name: kyverno
+    chart_ref: kyverno/kyverno
+    chart_version: "{{ versions.kyverno }}"
+    release_namespace: kyverno
+    create_namespace: true
+    wait: true
+    kubeconfig: "{{ kubeconfig }}"
+
+- name: Trivy Operator
+  kubernetes.core.helm:
+    name: trivy-operator
+    chart_ref: aqua/trivy-operator
+    chart_version: "{{ versions.trivy }}"
+    release_namespace: trivy-system
+    create_namespace: true
+    wait: true
+    kubeconfig: "{{ kubeconfig }}"
+
+- name: Gitea
+  kubernetes.core.helm:
+    name: gitea
+    chart_ref: gitea-charts/gitea
+    chart_version: "{{ versions.gitea }}"
+    release_namespace: gitea
+    create_namespace: true
+    wait: true
+    timeout: 20m
+    kubeconfig: "{{ kubeconfig }}"
+    values: "{{ gitea_values }}"
+
+- name: Limites de ressources par namespace
+  kubernetes.core.k8s:
+    src: "{{ repo_root }}/k8s/limitranges/limitranges.yaml"
+    state: present
+    kubeconfig: "{{ kubeconfig }}"

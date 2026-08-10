@@ -77,13 +77,12 @@ cloud-init a deja installe k3s pendant que vous configuriez le DNS.
 ssh ubuntu@<IP>
 sudo tail -f /var/log/bootstrap.log     # attendre "k3s pret"
 
-cd /opt/showroom/infra/terraform-platform
-cp terraform.tfvars.example terraform.tfvars   # completer acme_email et le mot de passe Grafana
-sudo terraform init
-sudo terraform apply
+cd /opt/showroom/infra/ansible
+ansible-galaxy collection install -r requirements.yml
+sudo ansible-playbook -i localhost, -c local site.yml
 ```
 
-Vingt ressources posent, dans l'ordre : les CRD Gateway API, cert-manager,
+Le playbook pose, dans l'ordre : les CRD Gateway API, cert-manager,
 Envoy Gateway, la Gateway et le ClusterIssuer, Linkerd, ArgoCD, kube-prometheus,
 Loki, Kyverno, Trivy, Gitea, les LimitRange, les applications, puis les routes
 HTTP en dernier — elles referencent des Services qui doivent deja exister.
@@ -92,9 +91,15 @@ Les versions sont **figees** a celles relevees en production le 2026-08-10. Une
 reprise d'incident n'est pas le moment de decouvrir qu'un chart a change de
 schema.
 
-> `infra/bootstrap/install-platform.sh` fait la meme chose en shell, sans
-> Terraform. Utile si l'etat Terraform est indisponible ou si vous voulez
-> derouler etape par etape.
+**Repartition des roles.** Terraform s'arrete ou finit l'API Oracle : reseau,
+instance, IP reservee. Tout ce qui se passe DANS la machine et DANS le cluster
+releve d'Ansible, qui est idempotent et se rejoue sur un cluster existant pour
+corriger une derive — ce que Terraform ne sait pas faire avec des
+`local-exec`. Les valeurs Helm deviennent au passage des fichiers versionnes
+(`infra/ansible/group_vars/all.yml`) au lieu de vivre dans l'etat d'une release.
+
+> `infra/bootstrap/install-platform.sh` fait la meme chose en shell pur, sans
+> Ansible. Utile pour derouler etape par etape.
 
 ---
 

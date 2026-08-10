@@ -1,0 +1,20 @@
+---
+# Terraform s'arrete ou finit l'API Oracle. Tout ce qui se passe DANS la
+# machine et DANS le cluster releve d'Ansible : c'est idempotent, ca se rejoue
+# sur un cluster existant pour corriger une derive, et les valeurs Helm
+# deviennent des fichiers versionnes au lieu de vivre dans l'etat d'une release.
+- name: Showroom DevOps — noeud et plateforme
+  hosts: showroom
+  gather_facts: true
+
+  roles:
+    - role: base
+      tags: [base]
+    - role: k3s
+      tags: [k3s]
+    - role: platform
+      tags: [platform]
+    - role: apps
+      tags: [apps]
+    - role: backup
+      tags: [backup]

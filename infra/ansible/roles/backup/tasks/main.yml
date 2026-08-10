@@ -1,0 +1,37 @@
+---
+- name: Script de sauvegarde
+  ansible.builtin.copy:
+    src: "{{ repo_root }}/scripts/backup-cluster.sh"
+    dest: /usr/local/bin/backup-cluster.sh
+    mode: "0755"
+    remote_src: true
+
+- name: Variables d'environnement de la sauvegarde
+  ansible.builtin.copy:
+    dest: /etc/showroom.env
+    mode: "0644"
+    content: |
+      DOMAIN={{ domain }}
+      ACME_EMAIL={{ acme_email }}
+      BACKUP_BUCKET={{ backup_bucket }}
+
+- name: Unite systemd
+  ansible.builtin.copy:
+    src: "{{ repo_root }}/scripts/k3s-backup.service"
+    dest: /etc/systemd/system/k3s-backup.service
+    remote_src: true
+  notify: reload systemd
+
+- name: Timer systemd
+  ansible.builtin.copy:
+    src: "{{ repo_root }}/scripts/k3s-backup.timer"
+    dest: /etc/systemd/system/k3s-backup.timer
+    remote_src: true
+  notify: reload systemd
+
+- name: Activer le timer
+  ansible.builtin.systemd:
+    name: k3s-backup.timer
+    enabled: true
+    state: started
+    daemon_reload: true

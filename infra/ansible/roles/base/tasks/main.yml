@@ -1,0 +1,27 @@
+---
+- name: Paquets necessaires au noeud et aux sauvegardes
+  ansible.builtin.apt:
+    name: [git, curl, jq, zstd, sqlite3, postgresql-client, python3-pip, python3-kubernetes, unzip]
+    state: present
+    update_cache: true
+
+# L'image Ubuntu d'Oracle arrive avec un iptables qui rejette tout sauf SSH.
+# Ouvrir 80/443 dans la security list OCI ne suffit pas : sans ces regles, rien
+# ne repond, et les security lists semblent pourtant correctes.
+- name: Ouvrir HTTP et HTTPS dans iptables
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "{{ item }}"
+    ctstate: NEW
+    jump: ACCEPT
+    action: insert
+    rule_num: 6
+  loop: [80, 443]
+  notify: persist iptables
+
+- name: Repertoire de stockage local-path
+  ansible.builtin.file:
+    path: /data/oci-bv-100gb
+    state: directory
+    mode: "0755"

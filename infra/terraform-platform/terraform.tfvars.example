@@ -1,7 +1,0 @@
-// Copier en terraform.tfvars. Gitignore : ne part jamais sur GitHub.
-kubeconfig = "/etc/rancher/k3s/k3s.yaml"
-repo_root  = "/opt/showroom"
-domain     = "khalilaliouich.com"
-acme_email = "vous@exemple.com"
-
-grafana_admin_password = "a-changer"
