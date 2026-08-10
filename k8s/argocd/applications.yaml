@@ -1,0 +1,63 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  annotations: {}
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  name: habit-game
+  namespace: argocd
+spec:
+  destination:
+    namespace: default
+    server: https://kubernetes.default.svc
+  ignoreDifferences:
+  - group: apps
+    jsonPointers:
+    - /spec/replicas
+    kind: Deployment
+  project: default
+  source:
+    helm:
+      valueFiles:
+      - values-production.yaml
+    path: helm/habit-game
+    repoURL: https://github.com/kaliouich/habit-game-saas.git
+    targetRevision: main
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      backoff:
+        duration: 15s
+        factor: 2
+        maxDuration: 3m
+      limit: 3
+    syncOptions:
+    - ServerSideApply=true
+    - RespectIgnoreDifferences=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  annotations: {}
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  name: tamagotchi-app
+  namespace: argocd
+spec:
+  destination:
+    namespace: tamagotchi
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: .
+    repoURL: http://gitea-http.gitea.svc.cluster.local:3000/khalil/tamagotchi-service.git
+    targetRevision: HEAD
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+

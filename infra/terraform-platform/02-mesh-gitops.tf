@@ -69,3 +69,52 @@ resource "null_resource" "argocd_rbac" {
 
   depends_on = [null_resource.argocd]
 }
+
+// ---------------------------------------------------------------------------
+// Configuration ArgoCD : compte guest, URL publique, lecture seule par defaut.
+//
+// En patch et non en apply : ArgoCD livre argocd-cm avec de nombreuses cles
+// par defaut qu'un apply effacerait.
+// ---------------------------------------------------------------------------
+
+resource "null_resource" "argocd_config" {
+  triggers = {
+    manifest = filesha256("${var.repo_root}/k8s/argocd/argocd-config.yaml")
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      ${local.kubectl} -n argocd patch cm argocd-cm --type merge -p \
+        '{"data":{"accounts.guest":"login","url":"https://argocd.${var.domain}"}}'
+      ${local.kubectl} -n argocd patch cm argocd-rbac-cm --type merge -p \
+        '{"data":{"policy.default":"role:readonly"}}'
+      ${local.kubectl} -n argocd rollout restart deploy/argocd-server
+    EOT
+  }
+
+  depends_on = [null_resource.argocd]
+}
+
+// ---------------------------------------------------------------------------
+// Les Applications ArgoCD : ce que la plateforme deploie toute seule.
+//
+// Sans elles, ArgoCD tourne a vide apres une reconstruction. C'est la partie
+// qui manquait : Terraform posait le moteur, pas ce qu'il pilote.
+//
+// tamagotchi-app pointe vers le Gitea interne. Au premier apply sur un cluster
+// neuf, elle restera en echec de synchronisation jusqu'a ce que la
+// restauration ait remis les depots dans Gitea. ArgoCD reessaie seul, il n'y a
+// rien a faire de particulier.
+// ---------------------------------------------------------------------------
+
+resource "null_resource" "argocd_applications" {
+  triggers = {
+    manifest = filesha256("${var.repo_root}/k8s/argocd/applications.yaml")
+  }
+
+  provisioner "local-exec" {
+    command = "${local.kubectl} apply -f ${var.repo_root}/k8s/argocd/applications.yaml"
+  }
+
+  depends_on = [null_resource.argocd_config, helm_release.gitea]
+}

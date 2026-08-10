@@ -1,0 +1,32 @@
+# Configuration ArgoCD propre au showroom.
+#
+# Appliquee en PATCH, pas en apply : argocd-cm est livre par ArgoCD avec de
+# nombreuses cles par defaut (resource.customizations, resource.exclusions...).
+# Un apply de ce fichier les effacerait.
+#
+#   kubectl -n argocd patch cm argocd-cm     --patch-file <(yq 'select(.metadata.name=="argocd-cm")' argocd-config.yaml)
+#   kubectl -n argocd patch cm argocd-rbac-cm --patch-file ...
+#
+# Le mot de passe du compte guest n'est pas ici : il vit sous forme de hash
+# bcrypt dans le secret argocd-secret, et revient par la restauration de
+# sauvegarde. Un hash n'a rien a faire dans un depot public.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+data:
+  # Compte visiteur annonce sur le portail du site.
+  accounts.guest: login
+  url: https://argocd.khalilaliouich.com
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-rbac-cm
+  namespace: argocd
+data:
+  # Tout compte non explicitement privilegie est en lecture seule : c'est ce
+  # qui permet d'exposer ArgoCD publiquement sans risque de modification.
+  policy.default: role:readonly
