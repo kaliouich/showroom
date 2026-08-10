@@ -76,16 +76,25 @@ cloud-init a deja installe k3s pendant que vous configuriez le DNS.
 ```bash
 ssh ubuntu@<IP>
 sudo tail -f /var/log/bootstrap.log     # attendre "k3s pret"
-sudo /opt/showroom/infra/bootstrap/install-platform.sh
+
+cd /opt/showroom/infra/terraform-platform
+cp terraform.tfvars.example terraform.tfvars   # completer acme_email et le mot de passe Grafana
+sudo terraform init
+sudo terraform apply
 ```
 
-Le script pose, dans cet ordre : les CRD Gateway API, cert-manager, Envoy
-Gateway, la Gateway et le ClusterIssuer, Linkerd, ArgoCD, kube-prometheus,
-Loki, Kyverno, Trivy, Gitea, les LimitRange, puis le site.
+Vingt ressources posent, dans l'ordre : les CRD Gateway API, cert-manager,
+Envoy Gateway, la Gateway et le ClusterIssuer, Linkerd, ArgoCD, kube-prometheus,
+Loki, Kyverno, Trivy, Gitea, les LimitRange, les applications, puis les routes
+HTTP en dernier — elles referencent des Services qui doivent deja exister.
 
 Les versions sont **figees** a celles relevees en production le 2026-08-10. Une
 reprise d'incident n'est pas le moment de decouvrir qu'un chart a change de
 schema.
+
+> `infra/bootstrap/install-platform.sh` fait la meme chose en shell, sans
+> Terraform. Utile si l'etat Terraform est indisponible ou si vous voulez
+> derouler etape par etape.
 
 ---
 
