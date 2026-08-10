@@ -1,0 +1,13 @@
+[Unit]
+Description=Declenche la sauvegarde quotidienne du cluster k3s
+
+[Timer]
+# 03h17 UTC : creux d'activite, et un horaire decale evite de tomber en meme
+# temps que les autres taches planifiees de la machine.
+OnCalendar=*-*-* 03:17:00
+# Rattrape la sauvegarde si la machine etait eteinte au moment prevu.
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

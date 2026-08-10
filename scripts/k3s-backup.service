@@ -1,0 +1,12 @@
+[Unit]
+Description=Sauvegarde du cluster k3s vers OCI Object Storage
+After=network-online.target k3s.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/ubuntu/showroom-vitrine/scripts/backup-cluster.sh
+# La sauvegarde ne doit jamais peser sur les charges du cluster.
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=1800
