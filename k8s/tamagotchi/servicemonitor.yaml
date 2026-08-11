@@ -1,0 +1,33 @@
+# Scraping des metriques metier du Tamagotchi.
+#
+# Il vit dans le namespace de l'application, pas dans monitoring : le
+# ServiceMonitor appartient a ce qu'il observe, et suit donc l'application
+# quand elle est deployee ou supprimee.
+#
+# Le label release=kube-prometheus est INDISPENSABLE : la ressource Prometheus
+# declare serviceMonitorSelector matchLabels release=kube-prometheus. Sans lui,
+# l'objet est ignore en silence, sans erreur ni avertissement.
+#
+# Un doublon existait dans le namespace monitoring et faisait scraper chaque
+# pod deux fois ; il a ete supprime le 2026-08-11, avec un PodMonitor qui
+# ciblait le port 8080 par son nom alors que le conteneur n'en declare aucun,
+# et ne produisait donc aucune cible.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  annotations: {}
+  labels:
+    release: kube-prometheus
+  name: tamagotchi-api-monitor
+  namespace: tamagotchi
+spec:
+  endpoints:
+  - interval: 15s
+    path: /metrics
+    port: http-api
+  namespaceSelector:
+    matchNames:
+    - tamagotchi
+  selector:
+    matchLabels:
+      app: tamagotchi-api
