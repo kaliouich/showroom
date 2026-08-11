@@ -10,6 +10,7 @@ spec:
   hostnames:
   - "showcase.khalilaliouich.com"
   - "khalilaliouich.com"
+  - "www.khalilaliouich.com"
   rules:
   - matches:
     - path:

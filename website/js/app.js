@@ -5,7 +5,7 @@
 
 const VM_IP = '<YOUR_VM_IP>';
 const NIP = 'khalilaliouich.com';
-const TAMAGOTCHI_API = `http://demo.${NIP}/api`;
+const TAMAGOTCHI_API = `https://demo.${NIP}/api`;
 const SHOWCASE_API = window.location.origin;
 const DEMO_SECRET = '<YOUR_DEMO_SECRET>';
 

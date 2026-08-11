@@ -336,9 +336,12 @@ app.get('/api/stats', async (req, res) => {
       SELECT
         COUNT(*) FILTER (WHERE is_alive = true) as alive_count,
         COUNT(*) FILTER (WHERE is_alive = false) as dead_count,
-        ROUND(AVG(hunger)::numeric, 1) FILTER (WHERE is_alive = true) as avg_hunger,
-        ROUND(AVG(happiness)::numeric, 1) FILTER (WHERE is_alive = true) as avg_happiness,
-        ROUND(AVG(energy)::numeric, 1) FILTER (WHERE is_alive = true) as avg_energy,
+        -- FILTER ne s'applique qu'a un agregat : accroche a ROUND, qui n'en
+        -- est pas un, PostgreSQL rejette toute la requete. Il doit porter sur
+        -- AVG, et l'arrondi vient ensuite.
+        ROUND(AVG(hunger) FILTER (WHERE is_alive = true)::numeric, 1) as avg_hunger,
+        ROUND(AVG(happiness) FILTER (WHERE is_alive = true)::numeric, 1) as avg_happiness,
+        ROUND(AVG(energy) FILTER (WHERE is_alive = true)::numeric, 1) as avg_energy,
         COUNT(*) FILTER (WHERE hunger > 80 AND is_alive = true) as starving_count,
         COUNT(*) FILTER (WHERE happiness < 20 AND is_alive = true) as sad_count
       FROM creatures
