@@ -27,7 +27,10 @@ spec:
       rules:
         # --- Remediation automatique -------------------------------------
         - alert: TamagotchiCreatureDied
-          expr: tamagotchi_creatures_dead_total > 0
+          # max() sans quoi chaque replique de l'API produit sa propre
+          # alerte : deux pods exposant le meme compteur global donnaient deux
+          # alertes identiques, et deux appels de remediation.
+          expr: max(tamagotchi_creatures_dead_total) > 0
           for: 1m
           labels:
             severity: warning
@@ -45,7 +48,7 @@ spec:
 
         # --- L'alerte qui merite un humain -------------------------------
         - alert: TamagotchiSelfHealingFailed
-          expr: tamagotchi_creatures_dead_total > 0
+          expr: max(tamagotchi_creatures_dead_total) > 0
           for: 10m
           labels:
             severity: critical
