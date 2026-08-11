@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=14">
+  <link rel="stylesheet" href="css/style.css?v=15">
 </head>
 <body>
 
@@ -33,6 +33,7 @@
         <a href="#live" class="nav__link" data-i18n="nav_infra">Live Infra</a>
         <a href="#demo" class="nav__link" data-i18n="nav_demo">Demo App</a>
         <a href="#freelance" class="nav__link nav__link--hire" data-i18n="nav_freelance">💼 Hire Me</a>
+        <a href="#selfhealing" class="nav__link" data-i18n="nav_heal">♻️ Self-healing</a>
         <a href="#iac" class="nav__link" data-i18n="nav_iac">IaC</a>
         <a href="#tools" class="nav__link" data-i18n="nav_tools">Tools</a>
         <a href="about.html" class="nav__link" data-i18n="nav_about">👤 About</a>
@@ -305,11 +306,73 @@
     <div class="demo-actions">
       <a href="https://demo.khalilaliouich.com" target="_blank" class="btn btn--primary" data-i18n="demo_open">Open App →</a>
       <a href="https://demo.khalilaliouich.com/api/creatures" target="_blank" class="btn btn--ghost" data-i18n="demo_api_btn">View API →</a>
+      <a href="#selfhealing" class="btn btn--ghost" data-i18n="demo_heal_link">♻️ What happens when one dies →</a>
       <a href="issues.html" class="btn btn--ghost" data-i18n="demo_issues_link">🔧 How I debugged it →</a>
     </div>
   </section>
 
-  <section class="section section--dark" id="freelance">
+  <!-- ============================================================ -->
+  <!-- AUTO-REMEDIATION -->
+  <!-- ============================================================ -->
+  <section class="section section--dark" id="selfhealing">
+    <div class="section__header">
+      <span class="section__badge" data-i18n="heal_badge">Self-healing</span>
+      <h2 class="section__title" data-i18n="heal_title">When a creature dies, <span class="gradient-text">nobody gets woken up</span></h2>
+      <p class="section__subtitle" data-i18n="heal_subtitle">Collecting metrics is the easy part. The gap between a dashboard and being on call is the alert — and what it triggers. Here is the full loop, running in production above, measured end to end.</p>
+    </div>
+
+    <div class="heal-chain">
+      <div class="heal-step">
+        <div class="heal-step__num">1</div>
+        <div class="heal-step__body">
+          <h3 class="heal-step__title">Prometheus</h3>
+          <p class="heal-step__desc" data-i18n="heal_s1">A business rule evaluates <code>max(tamagotchi_creatures_dead_total) &gt; 0</code> every 30s. The <code>for: 1m</code> is what stops a pod restart from triggering anything.</p>
+          <span class="heal-step__time">T+30s → pending · T+91s → firing</span>
+        </div>
+      </div>
+      <div class="heal-arrow">↓</div>
+
+      <div class="heal-step">
+        <div class="heal-step__num">2</div>
+        <div class="heal-step__body">
+          <h3 class="heal-step__title">Alertmanager</h3>
+          <p class="heal-step__desc" data-i18n="heal_s2">Routing is done on <strong>labels</strong>, never on alert names. The rule carries <code>remediation: auto</code>, and that single label sends it to a machine instead of a human. Ten more alerts can be added tomorrow without touching the routing.</p>
+          <span class="heal-step__time">groupWait 10s · repeat 5m</span>
+        </div>
+      </div>
+      <div class="heal-arrow">↓</div>
+
+      <div class="heal-step">
+        <div class="heal-step__num">3</div>
+        <div class="heal-step__body">
+          <h3 class="heal-step__title">n8n</h3>
+          <p class="heal-step__desc" data-i18n="heal_s3">A webhook workflow lists the creatures, keeps only the dead ones, revives them, and records what it did. A silent remediation is an outage you never learn about.</p>
+          <span class="heal-step__time">revived: 6 · HTTP 200</span>
+        </div>
+      </div>
+      <div class="heal-arrow">↓</div>
+
+      <div class="heal-step heal-step--loop">
+        <div class="heal-step__num">4</div>
+        <div class="heal-step__body">
+          <h3 class="heal-step__title" data-i18n="heal_s4_title">The metric closes the loop</h3>
+          <p class="heal-step__desc" data-i18n="heal_s4">The API updates the gauge, Prometheus scrapes it, the alert resolves on its own. Measured from death to revival, with no human involved: <strong>4 minutes 17 seconds</strong>.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="heal-insight">
+      <h3 class="heal-insight__title" data-i18n="heal_insight_title">⚠️ The alert that actually matters is the second one</h3>
+      <p class="heal-insight__text" data-i18n="heal_insight">Alerting only on the symptom is an anti-pattern: automation would repair it silently, the alert would always resolve itself, and the day the remediation breaks, nobody would know. So a second rule watches the remediation itself — if creatures are still dead ten minutes later, <code>TamagotchiSelfHealingFailed</code> goes critical and asks for a human. Knowing to alert on the failure of your automation, rather than on the incident it handles, is the difference between having read about SRE and having been on call.</p>
+      <div class="hire-chips" data-i18n="heal_chips"><span class="hire-chip">PrometheusRule</span><span class="hire-chip">AlertmanagerConfig</span><span class="hire-chip">Label routing</span><span class="hire-chip">Webhook remediation</span><span class="hire-chip">Two-level alerting</span></div>
+      <div class="hire-cta__actions" style="justify-content:flex-start;margin-top:1.5rem;">
+        <a href="https://github.com/kaliouich/showroom/blob/main/k8s/tamagotchi/prometheus-rules.yaml" target="_blank" class="btn btn--ghost btn--sm" data-i18n="heal_link_rules">📂 The alert rules →</a>
+        <a href="https://github.com/kaliouich/showroom/blob/main/k8s/tamagotchi/n8n-workflow-revive.json" target="_blank" class="btn btn--ghost btn--sm" data-i18n="heal_link_wf">🤖 The n8n workflow →</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="freelance">
     <div class="section__header">
       <span class="section__badge section__badge--hire" data-i18n="freelance_badge">Freelance — Open for missions</span>
       <h2 class="section__title" data-i18n="freelance_title">Everything you just explored? <span class="gradient-text">I can build it for you.</span></h2>
@@ -500,9 +563,9 @@
       <a href="https://n8n.khalilaliouich.com" target="_blank" class="tool-card">
         <div class="tool-card__icon-wrap">🤖</div>
         <h3 class="tool-card__name">n8n Automation</h3>
-        <p class="tool-card__desc">Powerful workflow automation tool to connect apps and APIs without coding.</p>
+        <p class="tool-card__desc" data-i18n="tool_n8n">Receives Alertmanager webhooks and revives the dead creatures. This is the remediation step of the self-healing chain, not a demo.</p>
         <div class="tool-card__creds">
-           <code>Admin Access</code>
+           <code data-i18n="tool_n8n_creds">Private instance</code>
         </div>
         <span class="tool-card__badge tool-card__badge--live">● Live</span>
       </a>
