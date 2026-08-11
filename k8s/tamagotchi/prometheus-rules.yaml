@@ -1,0 +1,88 @@
+# Regles d'alerte metier sur le Tamagotchi.
+#
+# La logique tient en deux niveaux, et c'est le second qui compte :
+#
+#   1. TamagotchiCreatureDied (warning) declenche la remediation. n8n recoit
+#      le webhook et ranime. C'est un incident mineur, traite par la machine.
+#
+#   2. TamagotchiSelfHealingFailed (critical) se declenche si des creatures
+#      sont encore mortes DIX minutes plus tard. Autrement dit : la
+#      remediation automatique n'a pas fonctionne. C'est celle-la qui merite
+#      un humain.
+#
+# Alerter uniquement sur le symptome serait un anti-pattern : la remediation
+# automatique masquerait la panne, l'alerte se resoudrait toujours seule, et
+# personne ne saurait jamais que le mecanisme est casse.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: tamagotchi-business-rules
+  namespace: monitoring
+  labels:
+    release: kube-prometheus
+spec:
+  groups:
+    - name: tamagotchi.business
+      interval: 30s
+      rules:
+        # --- Remediation automatique -------------------------------------
+        - alert: TamagotchiCreatureDied
+          expr: tamagotchi_creatures_dead_total > 0
+          for: 1m
+          labels:
+            severity: warning
+            team: platform
+            # Consomme par Alertmanager pour router vers n8n plutot que
+            # vers un humain.
+            remediation: auto
+          annotations:
+            summary: "{{ $value }} creature(s) morte(s) dans le Tamagotchi"
+            description: >-
+              Une ou plusieurs creatures sont mortes. n8n va tenter de les
+              ranimer automatiquement. Aucune action humaine attendue tant
+              que TamagotchiSelfHealingFailed ne se declenche pas.
+            runbook_url: https://khalilaliouich.com/issues.html
+
+        # --- L'alerte qui merite un humain -------------------------------
+        - alert: TamagotchiSelfHealingFailed
+          expr: tamagotchi_creatures_dead_total > 0
+          for: 10m
+          labels:
+            severity: critical
+            team: platform
+            remediation: manual
+          annotations:
+            summary: "La remediation automatique du Tamagotchi ne fonctionne plus"
+            description: >-
+              Des creatures sont mortes depuis plus de 10 minutes malgre le
+              webhook n8n et le CronJob de soins. Verifier dans l'ordre :
+              le workflow n8n, la joignabilite de l'API, puis le CronJob
+              tamagotchi-keepalive.
+            runbook_url: https://khalilaliouich.com/issues.html
+
+        # --- Signal de derive, pas de panne ------------------------------
+        - alert: TamagotchiPopulationStarving
+          expr: avg(tamagotchi_hunger_level) > 80
+          for: 15m
+          labels:
+            severity: warning
+            team: platform
+          annotations:
+            summary: "Faim moyenne a {{ $value | printf \"%.0f\" }}% depuis 15 min"
+            description: >-
+              La population entiere a faim : le CronJob de soins ne tourne
+              probablement plus. Les creatures ne sont pas encore mortes,
+              c'est le moment d'intervenir.
+
+        # --- Sante de l'API elle-meme ------------------------------------
+        - alert: TamagotchiAPIDown
+          expr: up{job=~".*tamagotchi.*"} == 0
+          for: 2m
+          labels:
+            severity: critical
+            team: platform
+          annotations:
+            summary: "L'API Tamagotchi ne repond plus au scraping"
+            description: >-
+              Prometheus n'arrive plus a collecter l'API. La demo publique
+              du site affiche probablement des tirets.

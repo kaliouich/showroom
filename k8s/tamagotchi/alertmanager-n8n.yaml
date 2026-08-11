@@ -1,0 +1,48 @@
+# Routage des alertes Tamagotchi vers n8n.
+#
+# Les alertes portant remediation=auto partent vers un webhook n8n qui ranime
+# les creatures. Celles portant remediation=manual, ou severity=critical,
+# restent sur la route par defaut : elles doivent atteindre un humain.
+#
+# Piege : par defaut l'operateur Prometheus applique la strategie
+# alertmanagerConfigMatcherStrategy=OnNamespace, qui ajoute d'office un
+# matcher namespace=<ns de l'AlertmanagerConfig> a chaque route. Les alertes
+# Tamagotchi portent namespace=tamagotchi et ne seraient jamais routees. La
+# strategie est donc passee a None sur la ressource Alertmanager.
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: tamagotchi-remediation
+  namespace: monitoring
+  labels:
+    release: kube-prometheus
+spec:
+  route:
+    receiver: "null"
+    groupBy: ["alertname"]
+    groupWait: 10s
+    groupInterval: 1m
+    repeatInterval: 15m
+    routes:
+      - receiver: n8n-remediation
+        matchers:
+          - name: remediation
+            value: auto
+            matchType: "="
+        # Court, pour que la remediation parte vite ; l'alerte critique a
+        # dix minutes devant elle avant de se declencher.
+        groupWait: 10s
+        repeatInterval: 5m
+        continue: false
+
+  receivers:
+    - name: "null"
+
+    - name: n8n-remediation
+      webhookConfigs:
+        - url: http://n8n.showcase.svc.cluster.local:80/webhook/tamagotchi-revive
+          sendResolved: true
+          # L'appel reste interne au cluster : le webhook n'est pas expose
+          # publiquement, et le trafic ne sort pas.
+          httpConfig:
+            followRedirects: true

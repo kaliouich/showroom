@@ -4,7 +4,8 @@
 # par mourir : un visiteur arrivant sur la vitrine tombait sur un cimetiere,
 # et les dashboards Grafana affichaient des courbes plates.
 #
-# Ce CronJob ranime les mortes et joue quelques actions au hasard. Effet
+# Ce CronJob assure les soins de routine : nourrir, distraire. La
+# ranimation releve de la chaine d'incident (voir prometheus-rules.yaml). Effet
 # secondaire recherche : les compteurs Prometheus (feed/play/sleep) et les
 # jauges hunger/happiness/energy bougent en permanence, ce qui rend les
 # graphiques lisibles a n'importe quelle heure.
@@ -45,13 +46,13 @@ spec:
                   total=$(echo "$creatures" | jq 'length')
                   echo "creatures: $total"
 
-                  # 1. Ranimer tout ce qui est mort.
-                  dead=$(echo "$creatures" | jq -r '.[] | select(.is_alive == false) | .id')
-                  for id in $dead; do
-                    curl -fsS -X POST "$API/creatures/$id/revive" >/dev/null && echo "revive $id"
-                  done
+                  # La ranimation n'est PAS ici. Elle appartient a la chaine
+                  # d'incident : Prometheus detecte, Alertmanager route, n8n
+                  # remedie. Si ce CronJob ranimait aussi, il masquerait les
+                  # pannes de cette chaine et l'alerte critique ne se
+                  # declencherait jamais.
 
-                  # 2. Nourrir celles qui ont faim, distraire celles qui s'ennuient.
+                  # 1. Nourrir celles qui ont faim, distraire celles qui s'ennuient.
                   hungry=$(echo "$creatures" | jq -r '.[] | select(.hunger > 50) | .id')
                   for id in $hungry; do
                     curl -fsS -X POST "$API/creatures/$id/feed" >/dev/null && echo "feed $id"
@@ -62,7 +63,7 @@ spec:
                     curl -fsS -X POST "$API/creatures/$id/play" >/dev/null && echo "play $id"
                   done
 
-                  # 3. Une action au hasard, pour que les compteurs ne soient
+                  # 2. Une action au hasard, pour que les compteurs ne soient
                   #    pas parfaitement periodiques.
                   id=$(echo "$creatures" | jq -r '.[].id' | shuf -n 1)
                   action=$(printf 'feed\nplay\nsleep\n' | shuf -n 1)

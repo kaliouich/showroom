@@ -1,0 +1,92 @@
+{
+  "name": "Tamagotchi — remediation automatique",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tamagotchi-revive",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-alertmanager",
+      "name": "Alertmanager",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-200, 0],
+      "webhookId": "tamagotchi-revive"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "version": 2 },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.body.status }}",
+              "rightValue": "firing",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "only-firing",
+      "name": "Seulement si firing",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [20, 0]
+    },
+    {
+      "parameters": {
+        "url": "http://tamagotchi-api.tamagotchi.svc.cluster.local:8080/api/creatures",
+        "options": {}
+      },
+      "id": "list-creatures",
+      "name": "Lister les creatures",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [240, -100]
+    },
+    {
+      "parameters": {
+        "jsCode": "// On ne ranime que ce qui est mort : inutile de marteler l'API.\nconst creatures = $input.first().json;\nconst dead = (Array.isArray(creatures) ? creatures : []).filter(c => c.is_alive === false);\nif (dead.length === 0) {\n  return [{ json: { revived: 0, note: 'aucune creature morte a la reception du webhook' } }];\n}\nreturn dead.map(c => ({ json: { id: c.id, name: c.name } }));"
+      },
+      "id": "filter-dead",
+      "name": "Filtrer les mortes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, -100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://tamagotchi-api.tamagotchi.svc.cluster.local:8080/api/creatures/{{ $json.id }}/revive",
+        "options": {}
+      },
+      "id": "revive",
+      "name": "Ranimer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, -100]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Trace de la remediation. En production, cette sortie irait vers un\n// canal d'equipe ou un journal d'incidents : une remediation silencieuse\n// est une panne qu'on n'apprend jamais.\nconst n = $input.all().length;\nreturn [{ json: {\n  remediation: 'tamagotchi-revive',\n  revived: n,\n  at: new Date().toISOString()\n}}];"
+      },
+      "id": "trace",
+      "name": "Tracer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, -100]
+    }
+  ],
+  "connections": {
+    "Alertmanager": { "main": [[{ "node": "Seulement si firing", "type": "main", "index": 0 }]] },
+    "Seulement si firing": { "main": [[{ "node": "Lister les creatures", "type": "main", "index": 0 }]] },
+    "Lister les creatures": { "main": [[{ "node": "Filtrer les mortes", "type": "main", "index": 0 }]] },
+    "Filtrer les mortes": { "main": [[{ "node": "Ranimer", "type": "main", "index": 0 }]] },
+    "Ranimer": { "main": [[{ "node": "Tracer", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}
