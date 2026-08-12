@@ -6,14 +6,11 @@
     mode: "0755"
     remote_src: true
 
-- name: Variables d'environnement de la sauvegarde
-  ansible.builtin.copy:
-    dest: /etc/showroom.env
-    mode: "0644"
-    content: |
-      DOMAIN={{ domain }}
-      ACME_EMAIL={{ acme_email }}
-      BACKUP_BUCKET={{ backup_bucket }}
+# /etc/showroom.env est ecrit une fois par cloud-init (infra/terraform/cloud-init.yaml),
+# a partir des variables du plan Terraform. Le reecrire ici en double aurait ete
+# exactement le probleme inverse : deux endroits pour la meme donnee, cette
+# fois-ci a l'envers (Ansible dupliquant Terraform). backup-cluster.sh continue
+# de le lire tel quel.
 
 - name: Unite systemd
   ansible.builtin.copy:

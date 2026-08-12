@@ -1,21 +1,25 @@
 #cloud-config
-# Amorcage du noeud : paquets, pare-feu, k3s, depot. La plateforme et la
-# restauration sont declenchees ensuite a la main (voir DISASTER-RECOVERY.md).
+# Amorce minimale : juste de quoi permettre a "ansible-playbook site.yml" de
+# tourner. Paquets, pare-feu et k3s appartenaient ici avant, en double avec
+# les roles Ansible base/k3s — exactement le probleme a eviter : deux
+# endroits a tenir a jour pour la meme chose (version de k3s, regles
+# iptables...). Ce fichier ne possede plus que ce qui vient reellement de
+# Terraform : les variables du plan (domain, acme_email, backup_bucket) et
+# le point d'entree vers le depot.
 
 package_update: true
 package_upgrade: false
 
 packages:
   - git
-  - curl
-  - jq
-  - zstd
-  - sqlite3
-  - postgresql-client
-  - python3-pip
-  - unzip
+  - ansible
 
 write_files:
+  # Seul consommateur : les scripts shell (backup-cluster.sh et le chemin de
+  # secours install-platform.sh / restore-from-backup.sh), qui ne tournent
+  # pas sous Ansible et ont besoin de ces valeurs sur disque. Les roles
+  # Ansible utilisent directement group_vars/all.yml, ils ne relisent pas ce
+  # fichier.
   - path: /etc/showroom.env
     permissions: "0644"
     content: |
@@ -27,38 +31,13 @@ runcmd:
   - exec > /var/log/bootstrap.log 2>&1
   - set -x
 
-  # Ubuntu sur OCI arrive avec un iptables qui DROP tout sauf SSH. Sans ces
-  # deux regles, les ports 80 et 443 restent fermes meme si la security list
-  # les autorise, et le diagnostic est penible.
-  - iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT
-  - iptables -I INPUT 6 -m state --state NEW -p tcp --dport 443 -j ACCEPT
-  - netfilter-persistent save || true
-
-  - mkdir -p /data/oci-bv-100gb
-
-  # ---------------------------------------------------------------------
-  # k3s
-  #
-  # Deux drapeaux presents sur l'ancien serveur sont volontairement absents :
-  #   --disable-cloud-controller
-  #   --kubelet-arg=cloud-provider=external
-  #
-  # Ils ne se justifiaient que par le controleur cloud OCI, qui a ete
-  # desinstalle. Les reprendre ici poserait sur le noeud le taint
-  # node.cloudprovider.kubernetes.io/uninitialized, qu'aucun composant ne
-  # viendrait retirer : plus aucun pod ne se planifierait, et le cluster
-  # paraitrait sain tout en etant inerte.
-  # ---------------------------------------------------------------------
-  - curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.36.2+k3s1" sh -s - server
-      --disable=traefik
-      --write-kubeconfig-mode=644
-      --default-local-storage-path=/data/oci-bv-100gb
-
-  - until kubectl get node 2>/dev/null | grep -q Ready; do sleep 5; done
-
   - git clone ${repo_url} /opt/showroom || true
   - chmod +x /opt/showroom/infra/bootstrap/*.sh /opt/showroom/scripts/*.sh || true
 
-  - echo "=== k3s pret. Suite : /opt/showroom/infra/bootstrap/install-platform.sh ==="
+  - |
+    echo "=== Depot clone. Suite (voir infra/DISASTER-RECOVERY.md) : ==="
+    echo "    cd /opt/showroom/infra/ansible"
+    echo "    ansible-galaxy collection install -r requirements.yml"
+    echo "    sudo ansible-playbook -i localhost, -c local site.yml"
 
 final_message: "Noeud amorce en $UPTIME s. Voir /var/log/bootstrap.log"
