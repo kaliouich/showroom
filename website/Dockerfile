@@ -13,7 +13,11 @@ COPY issues.html ./public/
 COPY about.html ./public/
 COPY css/ ./public/css/
 COPY js/ ./public/js/
-COPY assets/ ./public/assets/
+# assets/ n'est pas copie : c'est un repertoire vide, jamais suivi par git
+# (git ne suit pas les repertoires vides). Le build local reussissait car il
+# existait sur le disque de ce serveur ; la CI, elle, part d'un clone frais du
+# depot et echoue sur "assets: not found" — exactement ce que la CI est censee
+# attraper.
 
 # Le serveur ne fait que lire ses fichiers et ecoute sur 3000 : aucun besoin
 # de root. L'image node fournit l'utilisateur non privilegie "node" (uid 1000).
