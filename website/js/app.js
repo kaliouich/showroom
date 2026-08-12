@@ -86,7 +86,7 @@ const i18n = {
     tool_tamagotchi: 'The live 3-tier demo app. Adopt creatures, see metrics flow through the entire stack.',
     tool_readonly: 'Read Only', tool_viewer: 'Viewer', tool_noauth: 'No authentication',
     tool_public: 'Public repos', tool_interactive: 'Interactive!',
-    tool_gitea_actions: 'Native Continuous Integration pipeline compatible with GitHub Actions.', tool_sonarqube: 'Static code analysis to detect bugs, vulnerabilities, and code smells.', tool_linkerd: 'Ultralight Service Mesh providing observability, reliability, and security.', tool_public_login: 'Login via Gitea',
+    tool_gitea_actions: 'Native Continuous Integration pipeline compatible with GitHub Actions.', tool_linkerd: 'Ultralight Service Mesh providing observability, reliability, and security.', tool_public_login: 'Login via Gitea',
     footer_text: 'Built with K3s, ArgoCD, Prometheus, Grafana, Loki & Gitea — hosted on Oracle Cloud Always Free (ARM Ampere A1).',
     footer_powered: 'Powered by determination & free cloud credits',
     nav_about: '👤 About', nav_back: '← Back to Home',
@@ -241,7 +241,7 @@ const i18n = {
     tool_tamagotchi: "L'application démo 3-tiers live. Adoptez des créatures et voyez les métriques traverser toute la stack.",
     tool_readonly: 'Lecture seule', tool_viewer: 'Visualiseur', tool_noauth: "Sans authentification",
     tool_public: 'Repos publics', tool_interactive: 'Interactif !',
-    tool_gitea_actions: "Pipeline d'intégration continue native compatible avec GitHub Actions.", tool_sonarqube: "Analyse statique du code pour détecter bugs, vulnérabilités et mauvaises pratiques.", tool_linkerd: "Service Mesh ultra-léger offrant observabilité, fiabilité et sécurité.", tool_public_login: 'Connexion via Gitea',
+    tool_gitea_actions: "Pipeline d'intégration continue native compatible avec GitHub Actions.", tool_linkerd: "Service Mesh ultra-léger offrant observabilité, fiabilité et sécurité.", tool_public_login: 'Connexion via Gitea',
     footer_text: "Construit avec K3s, ArgoCD, Prometheus, Grafana, Loki & Gitea — hébergé sur Oracle Cloud Always Free (ARM Ampere A1).",
     footer_powered: 'Propulsé par la détermination et des crédits cloud gratuits',
     nav_about: '👤 À propos', nav_back: '← Retour à l\'Accueil',
@@ -323,7 +323,20 @@ const i18n = {
   }
 };
 
-let currentLang = 'en';
+const SUPPORTED_LANGS = Object.keys(i18n); // ['en', 'fr']
+
+// Choisir la langue au premier chargement : le choix precedent de ce
+// visiteur d'abord, sinon la langue du navigateur, sinon l'anglais. Sans
+// persistance, passer en francais puis naviguer vers about.html repassait
+// tout en anglais — deroutant, et invisible tant qu'on ne change pas de page.
+function detectInitialLang() {
+  const saved = localStorage.getItem('lang');
+  if (saved && SUPPORTED_LANGS.includes(saved)) return saved;
+  const browserLang = (navigator.language || 'en').slice(0, 2);
+  return SUPPORTED_LANGS.includes(browserLang) ? browserLang : 'en';
+}
+
+let currentLang = detectInitialLang();
 
 function t(key) {
   return (i18n[currentLang] && i18n[currentLang][key]) || i18n.en[key] || key;
@@ -334,7 +347,10 @@ function t(key) {
 let onLangChange = null;
 
 function setLang(lang) {
+  if (!SUPPORTED_LANGS.includes(lang)) return;
   currentLang = lang;
+  localStorage.setItem('lang', lang);
+  document.documentElement.lang = lang;
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
   document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = t(el.dataset.i18n); });
   if (onLangChange) onLangChange();
@@ -343,6 +359,11 @@ function setLang(lang) {
 document.querySelectorAll('.lang-btn').forEach(btn => {
   btn.addEventListener('click', () => setLang(btn.dataset.lang));
 });
+
+// Applique tout de suite la langue detectee : sans cet appel, currentLang
+// pouvait valoir 'fr' en interne alors que le HTML restait en anglais
+// jusqu'au premier clic sur le selecteur.
+setLang(currentLang);
 
 // ---- Typewriter Effect ----
 const typewriterLines = [

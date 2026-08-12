@@ -13,31 +13,34 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // K8s API config
-const K8S_HOST = 'https://kubernetes.default.svc';
-let token = '';
+const TOKEN_PATH = '/var/run/secrets/kubernetes.io/serviceaccount/token';
+const CA_PATH = '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt';
+
+// Projected ServiceAccount tokens expire (1h by default) and kubelet refreshes
+// the file on disk in place. Caching the token once at startup meant every
+// request after the first hour of pod uptime failed with a silent 401. The
+// fix is simply to read the file fresh on every call — it's a local tmpfs
+// read, not worth caching.
+function readToken() {
+  try {
+    return fs.readFileSync(TOKEN_PATH, 'utf8');
+  } catch (e) {
+    return null;
+  }
+}
+
+// The CA rotates far less often than the token, and a stale CA fails closed
+// (connection error) rather than silently — safe to read once at startup.
+let caCert = null;
 try {
-  token = fs.readFileSync('/var/run/secrets/kubernetes.io/serviceaccount/token', 'utf8');
+  caCert = fs.readFileSync(CA_PATH);
 } catch (e) {
-  console.log('Not running inside K8s, API calls will fail or use mock data');
+  console.log('Not running inside K8s: no ServiceAccount CA, API calls will fail');
 }
 
-const httpsAgent = new https.Agent({
-  rejectUnauthorized: false // In-cluster K8s certs are self-signed
-});
-
-async function k8sGet(path) {
-  if (!token) return null;
-  const res = await fetch(`${K8S_HOST}${path}`, {
-    headers: { 'Authorization': `Bearer ${token}` },
-    agent: httpsAgent // note: node 18+ native fetch doesn't use agent easily, wait
-  });
-  return res.json();
-}
-
-// Fallback for Node 18+ native fetch with custom agent
-const fetchWithAgent = require('https').request;
 function k8sRequest(apiPath) {
   return new Promise((resolve, reject) => {
+    const token = readToken();
     if (!token) return resolve(null);
     const options = {
       hostname: 'kubernetes.default.svc',
@@ -45,9 +48,9 @@ function k8sRequest(apiPath) {
       path: apiPath,
       method: 'GET',
       headers: { 'Authorization': `Bearer ${token}` },
-      rejectUnauthorized: false
+      ca: caCert, // validates the in-cluster API server's cert instead of skipping TLS verification
     };
-    const req = fetchWithAgent(options, (res) => {
+    const req = https.request(options, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
@@ -152,6 +155,13 @@ app.get('/api/infra', async (req, res) => {
     console.error(err);
     res.status(500).json({ error: err.message });
   }
+});
+
+// Deliberately dependency-free: a liveness check must answer even if
+// Prometheus or the K8s API are unreachable, otherwise a monitoring outage
+// would also take down the probe that's supposed to report it.
+app.get('/healthz', (req, res) => {
+  res.json({ status: 'ok', uptimeSeconds: Math.round(process.uptime()) });
 });
 
 app.listen(port, () => {

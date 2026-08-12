@@ -14,19 +14,18 @@ echo "=========================================="
 
 $SSH_CMD << OUTER_EOF
 export KUBECONFIG=~/.kube/config
-echo "[1/6] 📥 Adding Helm repositories..."
+echo "[1/5] 📥 Adding Helm repositories..."
 helm repo add kyverno https://kyverno.github.io/kyverno/
 helm repo add aqua https://aquasecurity.github.io/helm-charts/
 helm repo add kubecost https://kubecost.github.io/cost-analyzer/
 helm repo add woodpecker https://woodpecker-ci.org/
-helm repo add sonarqube https://SonarSource.github.io/helm-chart-sonarqube
 helm repo update
 
 # ==========================================
 # 1. KYVERNO (Policy as Code)
 # ==========================================
 echo ""
-echo "[2/6] 🛡️ Installing Kyverno..."
+echo "[2/5] 🛡️ Installing Kyverno..."
 kubectl create ns kyverno 2>/dev/null || true
 helm upgrade --install kyverno kyverno/kyverno -n kyverno \
   --set replicaCount=1 \
@@ -39,7 +38,7 @@ helm upgrade --install kyverno kyverno/kyverno -n kyverno \
 # 2. TRIVY OPERATOR (Security Scanning)
 # ==========================================
 echo ""
-echo "[3/6] 🔍 Installing Trivy Operator..."
+echo "[3/5] 🔍 Installing Trivy Operator..."
 kubectl create ns trivy-system 2>/dev/null || true
 helm upgrade --install trivy-operator aqua/trivy-operator -n trivy-system \
   --set operator.replicas=1 \
@@ -49,7 +48,7 @@ helm upgrade --install trivy-operator aqua/trivy-operator -n trivy-system \
 # 3. KUBECOST (FinOps)
 # ==========================================
 echo ""
-echo "[4/6] 💸 Installing Kubecost..."
+echo "[4/5] 💸 Installing Kubecost..."
 kubectl create ns kubecost 2>/dev/null || true
 # We use our existing Prometheus to save RAM
 helm upgrade --install kubecost kubecost/cost-analyzer -n kubecost \
@@ -81,45 +80,10 @@ spec:
 YAML
 
 # ==========================================
-# 4. SONARQUBE (Code Quality)
+# 4. LINKERD (Service Mesh)
 # ==========================================
 echo ""
-echo "[5/6] 📊 Installing SonarQube (Reduced RAM config)..."
-kubectl create ns sonarqube 2>/dev/null || true
-helm upgrade --install sonarqube sonarqube/sonarqube -n sonarqube \
-  --set postgresql.enabled=true \
-  --set postgresql.primary.resources.requests.memory=128Mi \
-  --set postgresql.primary.resources.requests.cpu=50m \
-  --set resources.requests.memory=1Gi \
-  --set resources.limits.memory=2Gi \
-  --set jvmOpts="-Xmx1G -Xms1G"
-
-cat <<YAML | kubectl apply -f -
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: sonarqube-ingress
-  namespace: sonarqube
-spec:
-  ingressClassName: nginx
-  rules:
-  - host: sonar.${NIP_DOMAIN}
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: sonarqube-sonarqube
-            port:
-              number: 9000
-YAML
-
-# ==========================================
-# 5. LINKERD (Service Mesh)
-# ==========================================
-echo ""
-echo "[6/6] 🕸️ Installing Linkerd..."
+echo "[5/5] 🕸️ Installing Linkerd..."
 if ! command -v linkerd &> /dev/null; then
   curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install | sh
   sudo cp ~/.linkerd2/bin/linkerd /usr/local/bin/

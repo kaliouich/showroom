@@ -44,25 +44,33 @@ Habit Game.
 
 ## Déploiement
 
-Toute la plateforme est déclarée en Terraform, en deux couches appliquées dans
-l'ordre.
+Toute la plateforme est déclarée en code, en deux couches à la frontière
+nette : Terraform s'arrête où finit l'API Oracle, Ansible possède tout ce qui
+vit dans la machine et dans le cluster.
 
 **`infra/terraform/`** — la couche Oracle Cloud : VCN, sous-réseau, Internet
 Gateway, table de routage, security list, instance ARM, et une **IP publique
-réservée** pour que le DNS n'ait jamais à être retouché. cloud-init installe
-K3s au premier démarrage.
+réservée** pour que le DNS n'ait jamais à être retouché. cloud-init n'installe
+plus que `git` et `ansible` — k3s, le pare-feu et les paquets appartenaient ici
+avant, en double avec les rôles Ansible, et ont été retirés le 2026-08-11.
 
-**`infra/terraform-platform/`** — la couche cluster : 20 ressources qui posent
-les CRD Gateway API, cert-manager, Envoy Gateway, la Gateway et le
-ClusterIssuer, Linkerd, ArgoCD, kube-prometheus, Loki, Kyverno, Trivy, Gitea,
-les LimitRange, puis les applications et les routes HTTP.
+**`infra/ansible/`** — la couche cluster, en 5 rôles : `base` (paquets,
+pare-feu), `k3s`, `platform` (CRD Gateway API, cert-manager, Envoy Gateway, la
+Gateway et le ClusterIssuer, Linkerd, ArgoCD, kube-prometheus, Loki, Kyverno,
+Trivy, Gitea, les LimitRange), `apps` (le site, Tamagotchi, n8n, les routes
+HTTP), `backup`. Contrairement à Terraform, il est idempotent et se rejoue sur
+un cluster existant pour corriger une dérive. Les valeurs Helm sont des
+fichiers versionnés (`infra/ansible/group_vars/all.yml`) plutôt qu'enfouies
+dans l'état d'une release.
 
 Les versions sont figées, pas flottantes : une reprise d'incident n'est pas le
 moment de découvrir qu'un chart a changé de schéma de valeurs.
 
 ```bash
-cd infra/terraform          && terraform apply    # infrastructure
-cd ../terraform-platform    && terraform apply    # plateforme
+cd infra/terraform && terraform apply                          # infrastructure
+
+cd ../ansible && ansible-galaxy collection install -r requirements.yml
+sudo ansible-playbook -i localhost, -c local site.yml           # plateforme
 ```
 
 Reconstruction complète depuis zéro : 45 à 60 minutes, dont l'essentiel en
@@ -112,9 +120,10 @@ mettait Gitea à terre. Corrigé par un PVC — voir
 website/          le site vitrine (Node.js, i18n FR/EN)
 tamagotchi/       l'application de démonstration
 k8s/              manifestes : RBAC, LimitRange, applications, runbooks
-infra/terraform/          couche Oracle Cloud
-infra/terraform-platform/ couche Kubernetes
-infra/bootstrap/          cloud-init, installation, restauration
+infra/terraform/  couche Oracle Cloud
+infra/ansible/    couche Kubernetes, 5 rôles
+infra/bootstrap/  cloud-init, installation shell de secours, restauration
 infra/DISASTER-RECOVERY.md
 scripts/          sauvegarde, détection de secrets
+.github/workflows/ci.yml  scan de secrets, build + Trivy, validation kubeconform
 ```

@@ -68,6 +68,12 @@ spec:
   issuerRef:
     name: letsencrypt-prod
     kind: ClusterIssuer
+  # Cle neuve a chaque renouvellement plutot que la meme reconduite : une cle
+  # privee a deja fuite depuis ce depot public, autant limiter sa duree de vie.
+  privateKey:
+    rotationPolicy: Always
+  duration: 2160h # 90 jours (defaut Let's Encrypt, explicite ici)
+  renewBefore: 720h # renouvellement a J-30
   dnsNames:
     - "__DOMAIN__"
     - "www.__DOMAIN__"

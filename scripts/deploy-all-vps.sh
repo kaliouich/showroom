@@ -55,7 +55,7 @@ echo "▶️  Running Phase 4: Premium Showcase Website..."
 "${SCRIPT_DIR}/phase4-website-v2.sh" "$VM_IP" "$SSH_KEY"
 pause_or_continue
 
-# --- Phase 6: Masterclass (Linkerd, SonarQube, Kyverno, etc) ---
+# --- Phase 6: Masterclass (Linkerd, Kyverno, etc) ---
 echo "▶️  Running Phase 6: Masterclass DevOps Tooling..."
 "${SCRIPT_DIR}/phase6-masterclass.sh" "$VM_IP" "$SSH_KEY"
 
@@ -69,5 +69,4 @@ echo "   🐣 Tamagotchi:  http://demo.khalilaliouich.com"
 echo "   🔄 ArgoCD:      https://argocd.khalilaliouich.com  (guest / <YOUR_GUEST_PASSWORD>)"
 echo "   📈 Grafana:     http://grafana.khalilaliouich.com   (admin / <YOUR_ADMIN_PASSWORD>)"
 echo "   🐙 Gitea:       http://git.khalilaliouich.com       (khalil / <YOUR_ADMIN_PASSWORD>)"
-echo "   📊 SonarQube:   http://sonar.khalilaliouich.com     (admin / <YOUR_ADMIN_PASSWORD>)"
 echo "=================================================================="

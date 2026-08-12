@@ -22,11 +22,26 @@ node_modules/
 .terraform.lock.hcl
 crash.log
 
-# Secrets — ne jamais commiter (dépôt public)
+# Secrets & matériel cryptographique — ne jamais commiter (dépôt public).
+# Une clé privée TLS a déjà fuité via une archive .zip commitée ici : les
+# archives sont opaques aux scanners de secrets, d'où leur exclusion en bloc
+# plutôt qu'un motif au cas par cas.
 *.key
 *.key.pem
+*.pem
+*.p12
+*.pfx
+*.crt
 *-ssl-bundle.zip
 *-ssl-bundle/
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+.env
+.env.*
+!.env.example
 kubeconfig
+*.kubeconfig
 .claude/
 .claude-flow/

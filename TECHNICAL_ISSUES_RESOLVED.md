@@ -93,20 +93,7 @@ The `kube-prometheus-stack` deploys standard Ingress resources by default. Grafa
 
 ---
 
-## 8. SonarQube Resource Exhaustion on ARM64
-**Issue:**
-Deploying SonarQube natively via Helm resulted in severe `OOMKilled` (Out Of Memory) errors, pod crash loops, and degraded performance across the entire K3s cluster. Elasticsearch (the search engine internal to SonarQube) failed to initialize on the ARM architecture.
-**Root Cause:**
-SonarQube is a heavy enterprise Java application composed of a Web server, a Compute Engine, and an Elasticsearch node. By default, it allocates massive JVM heap sizes (e.g., `-Xmx2G` for each component) and requires high `vm.max_map_count` kernel settings for Elasticsearch.
-**Resolution:**
-1. **Kernel Optimization:** Applied `sysctl -w vm.max_map_count=262144` on the Oracle Cloud VM host to allow Elasticsearch memory mapping.
-2. **JVM Tuning (Helm Values):** Aggressively tuned the `sonar.web.javaOpts`, `sonar.ce.javaOpts`, and `sonar.search.javaOpts` to restrict heap sizes (`-Xmx512m -Xms128m`) to keep the total memory footprint under 1.5GB.
-3. **Database Constraints:** Configured the bundled PostgreSQL pod with explicit `resources.limits` to prevent query cache inflation.
-4. **CI Integration:** Adjusted the `sonar-scanner` parameters in Gitea Actions to analyze the repository shallowly, reducing CPU spikes during continuous integration sweeps.
-
----
-
-## 9. UI Translation Race Condition (i18n Bug)
+## 8. UI Translation Race Condition (i18n Bug)
 **Issue:**
 The showcase website occasionally rendered raw translation keys (e.g., `issues_title`) instead of the actual English or French text when a user changed the language.
 **Root Cause:**
@@ -116,7 +103,7 @@ The missing translation keys were added to the `en` and `fr` dictionaries in `ap
 
 ---
 
-## 10. K3s `ErrImageNeverPull` & Local Containerd Sockets
+## 9. K3s `ErrImageNeverPull` & Local Containerd Sockets
 **Issue:**
 After rebuilding the showcase website Docker image locally to apply frontend updates, the Kubernetes deployment failed with `ErrImageNeverPull` indicating the image did not exist locally.
 **Root Cause:**
@@ -129,7 +116,7 @@ sudo nerdctl --address /run/k3s/containerd/containerd.sock --namespace k8s.io bu
 
 ---
 
-## 11. Git Commit Hanging indefinitely (GPG Signing)
+## 10. Git Commit Hanging indefinitely (GPG Signing)
 **Issue:**
 Automated Git operations via the IDE terminal stalled indefinitely when running `git commit`, causing background tasks to time out.
 **Root Cause:**
