@@ -32,6 +32,17 @@ spec:
         # Court, pour que la remediation parte vite ; l'alerte critique a
         # dix minutes devant elle avant de se declencher.
         groupWait: 10s
+        # groupInterval par defaut (1m, herite de la route parente) est pense
+        # pour eviter une tempete de notifications vers un humain. Ca n'a pas
+        # de sens ici : n8n traite toutes les creatures mortes du groupe en
+        # un seul passage idempotent, peu importe combien en rejoignent le
+        # groupe entre deux flush. Le seul effet du 1m herite etait de
+        # retarder la remediation d'une mort survenant peu apres la
+        # precedente (meme groupe alertname deja actif) — observe en direct :
+        # jusqu'a ~3 minutes au pire cas (for: 1m + jusqu'a 1m d'alignement
+        # + latence d'evaluation), mesure a 186s. Aligne sur groupWait pour
+        # que ce delai cesse d'exister comme variable separee.
+        groupInterval: 10s
         repeatInterval: 5m
         continue: false
 
