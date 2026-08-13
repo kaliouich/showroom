@@ -30,7 +30,7 @@ spec:
           value: http://kube-prometheus-kube-prome-prometheus.monitoring.svc.cluster.local:9090
         - name: PUBLIC_NAMESPACES
           value: '*'
-        image: showcase-website:v60
+        image: showcase-website:v61
         imagePullPolicy: Never
         name: website
         ports:

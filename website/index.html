@@ -337,7 +337,7 @@
         <div class="heal-step__body">
           <h3 class="heal-step__title">Alertmanager</h3>
           <p class="heal-step__desc" data-i18n="heal_s2">Routing is done on <strong>labels</strong>, never on alert names. The rule carries <code>remediation: auto</code>, and that single label sends it to a machine instead of a human. Ten more alerts can be added tomorrow without touching the routing.</p>
-          <span class="heal-step__time">groupWait 10s · repeat 5m</span>
+          <span class="heal-step__time">groupWait 10s · groupInterval 10s · repeat 5m</span>
         </div>
       </div>
       <div class="heal-arrow">↓</div>
@@ -356,7 +356,7 @@
         <div class="heal-step__num">4</div>
         <div class="heal-step__body">
           <h3 class="heal-step__title" data-i18n="heal_s4_title">The metric closes the loop</h3>
-          <p class="heal-step__desc" data-i18n="heal_s4">The API updates the gauge, Prometheus scrapes it, the alert resolves on its own. Measured from death to revival, with no human involved: <strong>4 minutes 17 seconds</strong>.</p>
+          <p class="heal-step__desc" data-i18n="heal_s4">The API updates the gauge, Prometheus scrapes it, the alert resolves on its own. Measured end to end, no human involved: <strong>91 seconds</strong> for a fresh incident — and near-instant when a death lands while the alert group is already active, since tuning the routing below.</p>
         </div>
       </div>
     </div>
@@ -368,6 +368,14 @@
       <div class="hire-cta__actions" style="justify-content:flex-start;margin-top:1.5rem;">
         <a href="https://github.com/kaliouich/showroom/blob/main/k8s/tamagotchi/prometheus-rules.yaml" target="_blank" class="btn btn--ghost btn--sm" data-i18n="heal_link_rules">📂 The alert rules →</a>
         <a href="https://github.com/kaliouich/showroom/blob/main/k8s/tamagotchi/n8n-workflow-revive.json" target="_blank" class="btn btn--ghost btn--sm" data-i18n="heal_link_wf">🤖 The n8n workflow →</a>
+      </div>
+    </div>
+
+    <div class="heal-insight">
+      <h3 class="heal-insight__title" data-i18n="heal_insight2_title">⏱️ Alertmanager's batching is built for humans, not scripts</h3>
+      <p class="heal-insight__text" data-i18n="heal_insight2">Alertmanager groups related alerts to protect a human from notification spam: <code>groupWait</code> holds a brand-new group briefly to batch it, <code>groupInterval</code> then throttles how often it re-notifies about new alerts joining an already-active group, and <code>repeatInterval</code> resends the same notification periodically so nobody forgets it's still broken. Every Tamagotchi death shares one alert group (<code>groupBy: [alertname]</code>), so a death landing shortly after a previous one skipped the fast <code>groupWait</code> path entirely and paid the inherited <code>groupInterval</code> instead — measured at up to 186 seconds of pure batching delay before Alertmanager would even attempt delivery, on top of the alert's own <code>for: 1m</code>. That protection is pointless here: n8n reprocesses every currently-dead creature in one idempotent pass regardless of how many joined the group, so there's no notification-storm risk to guard against. Fixed by scoping <code>groupInterval: 10s</code> to the automated route alone — the parent route keeps the human-appropriate default for anything routed to a person later.</p>
+      <div class="hire-cta__actions" style="justify-content:flex-start;margin-top:1.5rem;">
+        <a href="https://github.com/kaliouich/showroom/blob/main/k8s/tamagotchi/alertmanager-n8n.yaml" target="_blank" class="btn btn--ghost btn--sm" data-i18n="heal_link_routing">📂 The routing config →</a>
       </div>
     </div>
   </section>
