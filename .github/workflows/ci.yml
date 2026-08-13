@@ -1,6 +1,7 @@
-# CI du showroom. Trois verifications independantes plutot qu'une seule
+# CI du showroom. Cinq verifications independantes plutot qu'une seule
 # grosse etape : un echec pointe directement vers la cause (secret, image,
-# manifeste) au lieu d'un job monolithique a deplier pour savoir quoi a rate.
+# manifeste, Terraform, Ansible) au lieu d'un job monolithique a deplier pour
+# savoir quoi a rate.
 name: CI
 
 on:
@@ -88,3 +89,71 @@ jobs:
           # runbooks en Markdown que kubeconform n'a pas a essayer de parser.
           ./kubeconform -summary -ignore-missing-schemas -strict \
             $(find k8s infra/bootstrap/manifests -name '*.yaml' -o -name '*.yml')
+
+  terraform:
+    name: Validation Terraform (infra/terraform)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/terraform
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.9.8'
+
+      - name: terraform fmt
+        run: terraform fmt -check -recursive
+
+      # -backend=false : aucun backend n'est configure (etat local, gitignore,
+      # voir infra/DISASTER-RECOVERY.md). Le provider OCI se telecharge depuis
+      # le registry public Terraform, sans le moindre identifiant.
+      - name: terraform init (sans backend ni identifiants)
+        run: terraform init -backend=false -input=false
+
+      # validate ne resout jamais les data sources a distance (contrairement a
+      # plan) : c'est ce qui permet de tourner sans identifiants OCI. Un vrai
+      # `terraform plan` demanderait tenancy/user/fingerprint + cle privee en
+      # secrets GitHub — hors scope ici : le runbook de reprise est explicite,
+      # cette cle doit rester hors de ce serveur, donc hors CI tant que ca
+      # n'a pas ete tranche explicitement.
+      - name: terraform validate
+        run: terraform validate
+
+      - uses: terraform-linters/setup-tflint@v4
+
+      - name: tflint
+        run: |
+          tflint --init
+          tflint
+
+  ansible:
+    name: Lint Ansible (infra/ansible)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/ansible
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Installer ansible-lint et les collections
+        run: |
+          pip install ansible-lint
+          ansible-galaxy collection install -r requirements.yml
+
+      # Profil "basic" (voir .ansible-lint) : les 4 ecarts de nommage de
+      # variables pre-existants sont geles dans .ansible-lint-ignore plutot
+      # qu'ignores en bloc — une nouvelle occurrence ailleurs reste bloquante.
+      - name: ansible-lint
+        run: ansible-lint site.yml
+
+      # --syntax-check n'ouvre aucune connexion reseau : inventory.ini garde
+      # volontairement un hote CHANGEME, ce job ne cible jamais de machine
+      # reelle.
+      - name: Verification syntaxique du playbook
+        run: ansible-playbook -i inventory.ini site.yml --syntax-check

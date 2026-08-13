@@ -18,7 +18,7 @@
     action: insert
     rule_num: 6
   loop: [80, 443]
-  notify: persist iptables
+  notify: Persist iptables
 
 - name: Repertoire de stockage local-path
   ansible.builtin.file:

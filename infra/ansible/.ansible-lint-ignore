@@ -1,0 +1,13 @@
+# Ecarts pre-existants au profil "basic", geles ici plutot que corriges a
+# l'aveugle. Une nouvelle occurrence de la meme regle ailleurs continue de
+# faire echouer le lint : ceci ne baisse pas la garde, ca borne une dette
+# deja identifiee.
+
+# site_image_tag/build/helm_bin/linkerd_ns : prefixer ces variables du nom du
+# role casserait leurs references croisees entre defaults/ et tasks/ (et un
+# eventuel -e site_image_tag=... passe en ligne de commande au deploiement)
+# pour un gain purement stylistique.
+roles/apps/defaults/main.yml var-naming[no-role-prefix]
+roles/apps/tasks/main.yml var-naming[no-role-prefix]
+roles/k3s/tasks/main.yml var-naming[no-role-prefix]
+roles/platform/tasks/main.yml var-naming[no-role-prefix]

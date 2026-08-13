@@ -21,7 +21,7 @@
     - { name: kyverno, url: "https://kyverno.github.io/kyverno/" }
     - { name: aqua, url: "https://aquasecurity.github.io/helm-charts/" }
 
-- name: cert-manager
+- name: Installer cert-manager
   kubernetes.core.helm:
     name: cert-manager
     chart_ref: jetstack/cert-manager
@@ -46,7 +46,8 @@
 
 - name: Gateway, ClusterIssuer et certificat
   kubernetes.core.k8s:
-    definition: "{{ lookup('template', repo_root + '/infra/bootstrap/manifests/gateway.yaml') | replace('__DOMAIN__', domain) | replace('__ACME_EMAIL__', acme_email) | from_yaml_all | list }}"
+    definition: "{{ lookup('template', repo_root + '/infra/bootstrap/manifests/gateway.yaml') |
+      replace('__DOMAIN__', domain) | replace('__ACME_EMAIL__', acme_email) | from_yaml_all | list }}"
     state: present
     kubeconfig: "{{ kubeconfig }}"
 
@@ -63,16 +64,19 @@
 
 - name: Installer Linkerd
   ansible.builtin.shell: |
-    set -e
+    set -eo pipefail
     export PATH="$PATH:$HOME/.linkerd2/bin"
     command -v linkerd >/dev/null || curl -sL https://run.linkerd.io/install-edge | sh
     linkerd install --crds | kubectl apply -f -
     linkerd install | kubectl apply -f -
     linkerd check --wait 5m || true
     linkerd viz install | kubectl apply -f -
+  args:
+    executable: /bin/bash
   environment:
     KUBECONFIG: "{{ kubeconfig }}"
   when: linkerd_ns.resources | length == 0
+  changed_when: true
 
 # ArgoCD fait transiter du gRPC entre son serveur, son repo-server et son
 # application-controller. Le proxy Linkerd l'intercepte et casse les
@@ -130,7 +134,7 @@
 # Observabilite, politiques, forge.
 # ---------------------------------------------------------------------------
 
-- name: kube-prometheus-stack
+- name: Installer kube-prometheus-stack
   kubernetes.core.helm:
     name: kube-prometheus
     chart_ref: prometheus-community/kube-prometheus-stack

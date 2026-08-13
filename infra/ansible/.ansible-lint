@@ -1,0 +1,10 @@
+# Profil "basic" : couvre la syntaxe, l'idempotence et les pieges de shell
+# (pipefail, permissions de fichiers, changed_when). Les regles de nommage de
+# variables ("production") sont volontairement hors scope : les renommer
+# casserait des references croisees entre roles pour un gain cosmetique.
+profile: basic
+
+# La baseline des ecarts pre-existants vit dans .ansible-lint-ignore (nom
+# reconnu automatiquement) : fichier par fichier, regle par regle. Toute
+# NOUVELLE violation, meme regle mais autre fichier, continue de faire
+# echouer le lint.

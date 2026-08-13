@@ -16,15 +16,17 @@
   ansible.builtin.copy:
     src: "{{ repo_root }}/scripts/k3s-backup.service"
     dest: /etc/systemd/system/k3s-backup.service
+    mode: "0644"
     remote_src: true
-  notify: reload systemd
+  notify: Reload systemd
 
 - name: Timer systemd
   ansible.builtin.copy:
     src: "{{ repo_root }}/scripts/k3s-backup.timer"
     dest: /etc/systemd/system/k3s-backup.timer
+    mode: "0644"
     remote_src: true
-  notify: reload systemd
+  notify: Reload systemd
 
 - name: Activer le timer
   ansible.builtin.systemd:
