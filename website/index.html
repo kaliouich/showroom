@@ -356,7 +356,7 @@
         <div class="heal-step__num">4</div>
         <div class="heal-step__body">
           <h3 class="heal-step__title" data-i18n="heal_s4_title">The metric closes the loop</h3>
-          <p class="heal-step__desc" data-i18n="heal_s4">The API updates the gauge, Prometheus scrapes it, the alert resolves on its own. Measured end to end, no human involved: <strong>91 seconds</strong> for a fresh incident — and near-instant when a death lands while the alert group is already active, since tuning the routing below.</p>
+          <p class="heal-step__desc" data-i18n="heal_s4">The API updates the gauge, Prometheus scrapes it, the alert resolves on its own. Measured end to end, no human involved: <strong>91 seconds</strong> for a fresh incident, near-instant when a death lands while the alert group is already active.</p>
         </div>
       </div>
     </div>
@@ -368,14 +368,6 @@
       <div class="hire-cta__actions" style="justify-content:flex-start;margin-top:1.5rem;">
         <a href="https://github.com/kaliouich/showroom/blob/main/k8s/tamagotchi/prometheus-rules.yaml" target="_blank" class="btn btn--ghost btn--sm" data-i18n="heal_link_rules">📂 The alert rules →</a>
         <a href="https://github.com/kaliouich/showroom/blob/main/k8s/tamagotchi/n8n-workflow-revive.json" target="_blank" class="btn btn--ghost btn--sm" data-i18n="heal_link_wf">🤖 The n8n workflow →</a>
-      </div>
-    </div>
-
-    <div class="heal-insight">
-      <h3 class="heal-insight__title" data-i18n="heal_insight2_title">⏱️ Alertmanager's batching is built for humans, not scripts</h3>
-      <p class="heal-insight__text" data-i18n="heal_insight2">Alertmanager groups related alerts to protect a human from notification spam: <code>groupWait</code> holds a brand-new group briefly to batch it, <code>groupInterval</code> then throttles how often it re-notifies about new alerts joining an already-active group, and <code>repeatInterval</code> resends the same notification periodically so nobody forgets it's still broken. Every Tamagotchi death shares one alert group (<code>groupBy: [alertname]</code>), so a death landing shortly after a previous one skipped the fast <code>groupWait</code> path entirely and paid the inherited <code>groupInterval</code> instead — measured at up to 186 seconds of pure batching delay before Alertmanager would even attempt delivery, on top of the alert's own <code>for: 1m</code>. That protection is pointless here: n8n reprocesses every currently-dead creature in one idempotent pass regardless of how many joined the group, so there's no notification-storm risk to guard against. Fixed by scoping <code>groupInterval: 10s</code> to the automated route alone — the parent route keeps the human-appropriate default for anything routed to a person later.</p>
-      <div class="hire-cta__actions" style="justify-content:flex-start;margin-top:1.5rem;">
-        <a href="https://github.com/kaliouich/showroom/blob/main/k8s/tamagotchi/alertmanager-n8n.yaml" target="_blank" class="btn btn--ghost btn--sm" data-i18n="heal_link_routing">📂 The routing config →</a>
       </div>
     </div>
   </section>
@@ -418,7 +410,7 @@
     </div>
 
     <div class="chaos-panel">
-      <p class="chaos-panel__text" data-i18n="chaos_explainer_poison"><strong>☄️ Send a Meteor</strong> calls <code>POST /creatures/:id/kill</code> on <code>tamagotchi-api</code> for every currently living creature, setting each one's <code>is_alive</code> to <code>false</code> — the same state natural decay reaches on its own. That's what feeds <code>tamagotchi_creatures_dead_total</code>, which is exactly what <code>TamagotchiCreatureDied</code> watches. A full wipe makes the alert impossible to miss. Nothing here touches a pod: what heals it is the automation described above — Prometheus notices within a minute, Alertmanager routes on the <code>remediation: auto</code> label, and n8n revives every one of them. Typically <strong>a few minutes</strong>, not instant on purpose.</p>
+      <p class="chaos-panel__text" data-i18n="chaos_explainer_poison"><strong>☄️ Send a Meteor</strong> calls <code>POST /creatures/:id/kill</code> on <code>tamagotchi-api</code> for every currently living creature, setting each one's <code>is_alive</code> to <code>false</code> — the same state natural decay reaches on its own. That's what feeds <code>tamagotchi_creatures_dead_total</code>, which is exactly what <code>TamagotchiCreatureDied</code> watches. A full wipe makes the alert impossible to miss. Nothing here touches a pod: what heals it is the automation described above — Prometheus notices within a minute, Alertmanager routes on the <code>remediation: auto</code> label, and n8n revives every one of them. Usually under <strong>90 seconds</strong>, not instant on purpose — the full chain runs for real, no shortcut.</p>
 
       <div class="chaos-panel__action">
         <button id="poisonBtn" class="btn btn--danger" data-i18n="poison_btn_label">☄️ Send a Meteor</button>
@@ -437,7 +429,7 @@
       </div>
     </div>
 
-    <p class="chaos-panel__note" style="max-width:860px;margin:1.5rem auto 0;" data-i18n="chaos_note">Rate-limited to one strike per minute, capped per hour — this kills every creature at once, it needs room to actually recover before it can fire again. Watch the counts above, or the Tamagotchi dashboard in the Live Infra tab, to see a meteor strike land and, a few minutes later, get reversed. Want to remove a creature permanently instead? That's a per-creature action in <a href="https://demo.khalilaliouich.com" target="_blank" data-i18n="chaos_demo_link">the app itself</a> — the opposite of Adopt, not a chaos event.</p>
+    <p class="chaos-panel__note" style="max-width:860px;margin:1.5rem auto 0;" data-i18n="chaos_note">Rate-limited to one strike per minute, capped per hour — this kills every creature at once, it needs room to actually recover before it can fire again. Watch the counts above, or the Tamagotchi dashboard in the Live Infra tab, to see a meteor strike land and, a few minutes later, get reversed. Want to remove a creature permanently instead? That's a per-creature action in <a href="https://demo.khalilaliouich.com" target="_blank">the app itself</a> — the opposite of Adopt, not a chaos event.</p>
   </section>
 
   <section class="section" id="freelance">
