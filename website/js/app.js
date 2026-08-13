@@ -66,13 +66,12 @@ const i18n = {
     slo_explainer: 'The SLI is request-based, not just <code>up</code>: <code>1 - (failed requests / total requests)</code>, summed over the window rather than averaged, because averaging ratios lies when traffic isn\'t flat. Two Prometheus recording rules compute it continuously — <code>tamagotchi:availability:ratio30d</code> and <code>tamagotchi:error_budget:consumed_ratio30d</code> — so Grafana only ever reads a pre-computed number, never re-runs a 30-day range query per dashboard load. The 30-day window is real, not decorative: Prometheus\'s own retention was bumped from 15 days to 30, and — since it turned out to be running on ephemeral storage — given a persistent volume so a pod restart doesn\'t reset the clock.',
     slo_link_rules: '📂 The recording rules →', slo_dashboard_label: 'Live SLO Dashboard',
     chaos_badge: 'Chaos Button', chaos_title: 'Break it yourself. <span class="gradient-text">Watch it heal.</span>',
-    chaos_subtitle: 'Reading about the self-healing chain above is not the same as watching it fire. These buttons act on a real creature in the live database — not a pod, not a Kubernetes object.',
-    chaos_explainer_poison: '<strong>☄️ Send a Meteor</strong> calls <code>POST /creatures/:id/kill</code> on <code>tamagotchi-api</code>, setting a random living creature\'s <code>is_alive</code> to <code>false</code> — the same state natural decay reaches on its own. That\'s what feeds <code>tamagotchi_creatures_dead_total</code>, which is exactly what <code>TamagotchiCreatureDied</code> watches. Nothing here touches a pod: what heals it is the automation described above — Prometheus notices within a minute, Alertmanager routes on the <code>remediation: auto</code> label, and n8n revives the creature. Typically <strong>a few minutes</strong>, not instant on purpose.',
-    chaos_explainer_delete: '<strong>🗑️ Delete a Creature</strong> calls <code>POST /creatures/:id/delete</code>, which removes a creature\'s row entirely and hatches a replacement immediately. This deliberately does <em>not</em> touch the dead gauge or the alert chain — it\'s a different resilience layer, the application defending its own roster rather than relying on monitoring automation. That\'s also why it\'s instant instead of taking minutes: a public, unauthenticated action that only ever shrinks a table needs its own safety net, not n8n\'s.',
-    poison_btn_label: '☄️ Send a Meteor', delete_btn_label: '🗑️ Delete a Creature',
-    chaos_note: "Each button is rate-limited independently (cooldown + hourly cap) — clicking one doesn't lock out the other. Watch the counts above, or the Tamagotchi dashboard in the Live Infra tab, to see a meteor strike land and, a few minutes later, get reversed.",
-    poison_status_working: 'Calling down a meteor…', poison_status_done: '{name} was poisoned ☄️ — watch for the revival in a few minutes',
-    delete_status_working: 'Deleting a creature…', delete_status_done: '{name} deleted, {replacement} hatched to replace it 🥚',
+    chaos_subtitle: 'Reading about the self-healing chain above is not the same as watching it fire. This button wipes out every living creature in the live database — not a pod, not a Kubernetes object.',
+    chaos_explainer_poison: '<strong>☄️ Send a Meteor</strong> calls <code>POST /creatures/:id/kill</code> on <code>tamagotchi-api</code> for every currently living creature, setting each one\'s <code>is_alive</code> to <code>false</code> — the same state natural decay reaches on its own. That\'s what feeds <code>tamagotchi_creatures_dead_total</code>, which is exactly what <code>TamagotchiCreatureDied</code> watches. A full wipe makes the alert impossible to miss. Nothing here touches a pod: what heals it is the automation described above — Prometheus notices within a minute, Alertmanager routes on the <code>remediation: auto</code> label, and n8n revives every one of them. Typically <strong>a few minutes</strong>, not instant on purpose.',
+    poison_btn_label: '☄️ Send a Meteor',
+    chaos_note: "Rate-limited to one strike per minute, capped per hour — this kills every creature at once, it needs room to actually recover before it can fire again. Watch the counts above, or the Tamagotchi dashboard in the Live Infra tab, to see a meteor strike land and, a few minutes later, get reversed. Want to remove a creature permanently instead? That's a per-creature action in the app itself — the opposite of Adopt, not a chaos event.",
+    chaos_demo_link: 'the app itself',
+    poison_status_working: 'Calling down a meteor…', poison_status_done: '{count} creature(s) poisoned ☄️ — watch for the revival in a few minutes',
     chaos_status_cooldown: 'Cooling down, try again in a few seconds', chaos_status_error: "Couldn't reach tamagotchi-api",
     tool_n8n: "Receives Alertmanager webhooks and revives the dead creatures. This is the remediation step of the self-healing chain, not a demo.",
     tool_n8n_creds: "Private instance",
@@ -278,13 +277,12 @@ const i18n = {
     slo_explainer: "Le SLI est basé sur les requêtes, pas seulement sur <code>up</code> : <code>1 - (requêtes échouées / requêtes totales)</code>, sommé sur la fenêtre plutôt que moyenné, parce que moyenner des ratios ment quand le trafic n'est pas plat. Deux règles d'enregistrement Prometheus le calculent en continu — <code>tamagotchi:availability:ratio30d</code> et <code>tamagotchi:error_budget:consumed_ratio30d</code> — donc Grafana ne fait jamais que lire un nombre déjà calculé, sans jamais rejouer une requête sur 30 jours à chaque chargement du dashboard. La fenêtre de 30 jours est réelle, pas décorative : la rétention de Prometheus est passée de 15 à 30 jours, et — comme il s'est avéré qu'il tournait sur du stockage éphémère — il a reçu un volume persistant pour qu'un redémarrage de pod ne remette plus le compteur à zéro.",
     slo_link_rules: "📂 Les règles d'enregistrement →", slo_dashboard_label: 'Dashboard SLO en direct',
     chaos_badge: 'Bouton Chaos', chaos_title: 'Casse-le toi-même. <span class="gradient-text">Regarde-le guérir.</span>',
-    chaos_subtitle: "Lire sur la chaîne d'auto-réparation ci-dessus, ce n'est pas la même chose que la voir se déclencher. Ces boutons agissent sur une vraie créature dans la base en production — pas un pod, pas un objet Kubernetes.",
-    chaos_explainer_poison: "<strong>☄️ Envoyer une Météorite</strong> appelle <code>POST /creatures/:id/kill</code> sur <code>tamagotchi-api</code>, qui met <code>is_alive</code> à <code>false</code> pour une créature vivante au hasard — le même état que la décroissance naturelle atteint toute seule. C'est ce qui alimente <code>tamagotchi_creatures_dead_total</code>, exactement ce que surveille <code>TamagotchiCreatureDied</code>. Rien ici ne touche un pod : ce qui guérit la créature, c'est l'automatisation décrite plus haut — Prometheus le remarque en moins d'une minute, Alertmanager route sur le label <code>remediation: auto</code>, et n8n ranime la créature. Typiquement <strong>quelques minutes</strong>, pas instantané, exprès.",
-    chaos_explainer_delete: "<strong>🗑️ Supprimer une Créature</strong> appelle <code>POST /creatures/:id/delete</code>, qui retire entièrement la ligne d'une créature et fait éclore un remplacement immédiatement. Ça ne touche délibérément <em>pas</em> à la jauge des morts ni à la chaîne d'alerte — c'est une couche de résilience différente, l'application qui défend son propre effectif plutôt que de compter sur l'automatisation de monitoring. C'est aussi pour ça que c'est instantané plutôt que de prendre des minutes : une action publique et non authentifiée qui ne fait que réduire une table a besoin de son propre filet de sécurité, pas de celui de n8n.",
-    poison_btn_label: '☄️ Envoyer une Météorite', delete_btn_label: '🗑️ Supprimer une Créature',
-    chaos_note: "Chaque bouton est limité en fréquence indépendamment (temps de recharge + plafond horaire) — cliquer sur l'un ne bloque pas l'autre. Observe les compteurs ci-dessus, ou le dashboard Tamagotchi dans l'onglet Live Infra, pour voir une météorite frapper puis, quelques minutes plus tard, être annulée.",
-    poison_status_working: "Appel d'une météorite…", poison_status_done: '{name} a été empoisonné ☄️ — surveille la résurrection dans quelques minutes',
-    delete_status_working: "Suppression d'une créature…", delete_status_done: '{name} supprimé, {replacement} a éclos pour le remplacer 🥚',
+    chaos_subtitle: "Lire sur la chaîne d'auto-réparation ci-dessus, ce n'est pas la même chose que la voir se déclencher. Ce bouton élimine toutes les créatures vivantes de la base en production — pas un pod, pas un objet Kubernetes.",
+    chaos_explainer_poison: "<strong>☄️ Envoyer une Météorite</strong> appelle <code>POST /creatures/:id/kill</code> sur <code>tamagotchi-api</code> pour chaque créature actuellement vivante, mettant <code>is_alive</code> à <code>false</code> pour chacune — le même état que la décroissance naturelle atteint toute seule. C'est ce qui alimente <code>tamagotchi_creatures_dead_total</code>, exactement ce que surveille <code>TamagotchiCreatureDied</code>. Une élimination totale rend l'alerte impossible à manquer. Rien ici ne touche un pod : ce qui guérit les créatures, c'est l'automatisation décrite plus haut — Prometheus le remarque en moins d'une minute, Alertmanager route sur le label <code>remediation: auto</code>, et n8n les ranime toutes. Typiquement <strong>quelques minutes</strong>, pas instantané, exprès.",
+    poison_btn_label: '☄️ Envoyer une Météorite',
+    chaos_note: "Limité à une frappe par minute, plafonné par heure — ça tue toutes les créatures d'un coup, il faut le temps que la population se refasse avant de pouvoir refrapper. Observe les compteurs ci-dessus, ou le dashboard Tamagotchi dans l'onglet Live Infra, pour voir une météorite frapper puis, quelques minutes plus tard, être annulée. Envie de supprimer une créature définitivement plutôt ? C'est une action par créature dans l'application elle-même — l'opposé d'Adopter, pas un événement chaos.",
+    chaos_demo_link: "l'application elle-même",
+    poison_status_working: "Appel d'une météorite…", poison_status_done: '{count} créature(s) empoisonnée(s) ☄️ — surveille la résurrection dans quelques minutes',
     chaos_status_cooldown: 'Recharge en cours, réessaie dans quelques secondes', chaos_status_error: "Impossible de joindre tamagotchi-api",
     tool_n8n: "Reçoit les webhooks d'Alertmanager et ranime les créatures mortes. C'est l'étage de remédiation de la chaîne d'auto-réparation, pas une démo.",
     tool_n8n_creds: "Instance privée",
@@ -665,23 +663,21 @@ async function populateInfraData() {
 }
 
 // ---- Chaos Button ----
-// Matches the 15s cooldown in website/server.js's makeChaosLimiter() — the
+// Matches the 60s cooldown in website/server.js's poisonLimiter — the
 // button stays disabled client-side for the same window the backend
 // actually enforces, so a click during cooldown never round-trips just to
-// be told no. Poison and delete are independent: each has its own button,
-// endpoint, and cooldown, wired through this same generic handler.
-const CHAOS_CLIENT_COOLDOWN_MS = 15000;
+// be told no.
+const CHAOS_CLIENT_COOLDOWN_MS = 60000;
 
-function wireChaosButton({ buttonId, statusId, endpoint, workingKey, doneKey, resultKey, replacementKey }) {
-  const btn = document.getElementById(buttonId);
-  if (!btn) return;
-  btn.addEventListener('click', async () => {
-    const statusEl = document.getElementById(statusId);
-    btn.disabled = true;
+const poisonBtn = document.getElementById('poisonBtn');
+if (poisonBtn) {
+  poisonBtn.addEventListener('click', async () => {
+    const statusEl = document.getElementById('poisonStatus');
+    poisonBtn.disabled = true;
     statusEl.className = 'chaos-panel__status';
-    statusEl.textContent = t(workingKey);
+    statusEl.textContent = t('poison_status_working');
     try {
-      const res = await fetch(endpoint, { method: 'POST' });
+      const res = await fetch('/api/chaos/poison-creature', { method: 'POST' });
       const data = await res.json().catch(() => ({}));
       if (res.status === 429) {
         statusEl.textContent = t('chaos_status_cooldown');
@@ -689,9 +685,7 @@ function wireChaosButton({ buttonId, statusId, endpoint, workingKey, doneKey, re
       } else if (!res.ok) {
         throw new Error(data.error || `HTTP ${res.status}`);
       } else {
-        let msg = t(doneKey).replace('{name}', data[resultKey]);
-        if (replacementKey) msg = msg.replace('{replacement}', (data[replacementKey] && data[replacementKey].name) || '?');
-        statusEl.textContent = msg;
+        statusEl.textContent = t('poison_status_done').replace('{count}', data.count ?? 0);
         statusEl.className = 'chaos-panel__status chaos-panel__status--ok';
         setTimeout(fetchTamagotchiStats, 1500);
       }
@@ -699,19 +693,10 @@ function wireChaosButton({ buttonId, statusId, endpoint, workingKey, doneKey, re
       statusEl.textContent = t('chaos_status_error');
       statusEl.className = 'chaos-panel__status chaos-panel__status--err';
     } finally {
-      setTimeout(() => { btn.disabled = false; }, CHAOS_CLIENT_COOLDOWN_MS);
+      setTimeout(() => { poisonBtn.disabled = false; }, CHAOS_CLIENT_COOLDOWN_MS);
     }
   });
 }
-
-wireChaosButton({
-  buttonId: 'poisonBtn', statusId: 'poisonStatus', endpoint: '/api/chaos/poison-creature',
-  workingKey: 'poison_status_working', doneKey: 'poison_status_done', resultKey: 'poisoned'
-});
-wireChaosButton({
-  buttonId: 'deleteBtn', statusId: 'deleteStatus', endpoint: '/api/chaos/delete-creature',
-  workingKey: 'delete_status_working', doneKey: 'delete_status_done', resultKey: 'deleted', replacementKey: 'replacement'
-});
 
 // ---- Scroll Animations ----
 function initScrollAnimations() {

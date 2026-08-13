@@ -186,10 +186,11 @@ app.get('/api/infra', async (req, res) => {
 // Chaos Button (website/index.html#chaos). Public and unauthenticated by
 // design, acting on tamagotchi-api's own HTTP endpoints rather than the
 // Kubernetes API — no ServiceAccount permissions needed at all for this
-// feature. Rate limiting is the actual safety mechanism, not RBAC. Two
-// independent buckets on purpose: clicking one button shouldn't cool down
-// the other. In-memory state is fine only because showcase-website runs a
-// single replica — this would need a shared store the moment that changes.
+// feature. Rate limiting is the actual safety mechanism, not RBAC. A longer
+// cooldown than a single-creature action would need: this wipes the whole
+// population, so it needs room to actually recover before it can fire again.
+// In-memory state is fine only because showcase-website runs a single
+// replica — this would need a shared store the moment that changes.
 function makeChaosLimiter(cooldownMs, hourlyCap) {
   let lastAt = 0;
   let timestamps = [];
@@ -209,16 +210,18 @@ function makeChaosLimiter(cooldownMs, hourlyCap) {
     return { blocked: false, countThisHour: timestamps.length };
   };
 }
-const poisonLimiter = makeChaosLimiter(15 * 1000, 30);
-const deleteLimiter = makeChaosLimiter(15 * 1000, 30);
+const poisonLimiter = makeChaosLimiter(60 * 1000, 15);
 
-// Poisons a random living creature: is_alive -> false, the same state
-// natural decay reaches. That's what tamagotchi-api's own decay loop counts
-// into tamagotchi_creatures_dead_total, which is what TamagotchiCreatureDied
-// actually watches — this click feeds the real alert chain (Prometheus ->
-// Alertmanager -> n8n), not a Kubernetes-level action. Revival is not
+// Poisons every currently living creature: is_alive -> false for each, the
+// same state natural decay reaches on its own. That's what tamagotchi-api's
+// decay loop counts into tamagotchi_creatures_dead_total, which is what
+// TamagotchiCreatureDied actually watches — a full population wipe feeds
+// the real alert chain (Prometheus -> Alertmanager -> n8n) hard enough to
+// be unmistakable, not a Kubernetes-level action. Revival is not
 // synchronous: it follows the same ~1-10 minute path documented in the
-// self-healing section, on its own schedule.
+// self-healing section, on its own schedule. Sequential, not
+// Promise.all — tamagotchi-api's decay loop holds one DB connection from
+// its own pool, no need to hammer it with a burst of concurrent writes.
 app.post('/api/chaos/poison-creature', async (req, res) => {
   const claim = poisonLimiter();
   if (claim.blocked) return res.status(429).json(claim);
@@ -227,37 +230,21 @@ app.post('/api/chaos/poison-creature', async (req, res) => {
     const creatures = await tamagotchiRequest('/api/creatures');
     const alive = (creatures || []).filter(c => c.is_alive);
     if (alive.length === 0) return res.status(503).json({ error: 'no_target_creature' });
-    const target = alive[Math.floor(Math.random() * alive.length)];
 
-    const result = await tamagotchiRequest(`/api/creatures/${target.id}/kill`, 'POST');
+    const poisoned = [];
+    for (const c of alive) {
+      try {
+        await tamagotchiRequest(`/api/creatures/${c.id}/kill`, 'POST');
+        poisoned.push(c.name);
+      } catch (e) {
+        console.error(`[chaos] failed to poison ${c.name}:`, e.message);
+      }
+    }
 
-    console.log(`[chaos] poisoned creature ${target.name} (${target.id}) (${claim.countThisHour}/30 this hour)`);
-    res.json({ poisoned: target.name, creature: result && result.creature, timestamp: Date.now() });
+    console.log(`[chaos] meteor strike: poisoned ${poisoned.length}/${alive.length} creatures (${claim.countThisHour}/15 this hour)`);
+    res.json({ poisoned, count: poisoned.length, timestamp: Date.now() });
   } catch (err) {
     console.error('[chaos] poison-creature failed:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Permanently removes a random creature and lets tamagotchi-api reseed a
-// replacement immediately. Does not touch the dead gauge — this shows the
-// app defending its own roster, a different resilience layer than the
-// monitoring-driven revival above, not a shortcut around it.
-app.post('/api/chaos/delete-creature', async (req, res) => {
-  const claim = deleteLimiter();
-  if (claim.blocked) return res.status(429).json(claim);
-
-  try {
-    const creatures = await tamagotchiRequest('/api/creatures');
-    if (!creatures || creatures.length === 0) return res.status(503).json({ error: 'no_target_creature' });
-    const target = creatures[Math.floor(Math.random() * creatures.length)];
-
-    const result = await tamagotchiRequest(`/api/creatures/${target.id}/delete`, 'POST');
-
-    console.log(`[chaos] deleted creature ${target.name} (${target.id}), reseeded (${claim.countThisHour}/30 this hour)`);
-    res.json({ deleted: target.name, replacement: result && result.creature, timestamp: Date.now() });
-  } catch (err) {
-    console.error('[chaos] delete-creature failed:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

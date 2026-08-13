@@ -29,6 +29,8 @@ const i18n = {
     play: '🎮 Play',
     sleep: '💤 Sleep',
     revive: '✨ Revive',
+    delete: '🗑️',
+    delete_title: 'Delete permanently — the opposite of Adopt',
     alive: 'Alive',
     dead: 'Dead',
     empty_title: 'No creatures yet!',
@@ -47,6 +49,8 @@ const i18n = {
     play: '🎮 Jouer',
     sleep: '💤 Dormir',
     revive: '✨ Ressusciter',
+    delete: '🗑️',
+    delete_title: "Supprimer definitivement — l'oppose d'Adopter",
     alive: 'Vivant',
     dead: 'Mort',
     empty_title: 'Pas encore de créatures !',
@@ -226,6 +230,7 @@ function renderCreatures() {
           ` : `
             <button class="action-btn revive" onclick="creatureAction('${c.id}', 'revive')">${t('revive')}</button>
           `}
+          <button class="action-btn delete" title="${t('delete_title')}" onclick="creatureAction('${c.id}', 'delete')">${t('delete')}</button>
         </div>
       </div>
     `;

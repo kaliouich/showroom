@@ -295,6 +295,14 @@ body::before {
   color: var(--accent-green);
 }
 
+.action-btn.delete {
+  background: rgba(255, 68, 102, 0.1);
+  border-color: rgba(255, 68, 102, 0.2);
+  color: var(--accent-red);
+  flex: 0 0 auto;
+  width: 44px;
+}
+
 /* ---- FAB ---- */
 .fab {
   position: fixed;

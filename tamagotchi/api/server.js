@@ -368,14 +368,11 @@ app.post('/api/creatures/:id/kill', async (req, res) => {
   }
 });
 
-// POST /creatures/:id/delete — Permanently delete a creature (Chaos Button
-// demo). Unlike /kill, this never touches tamagotchi_creatures_dead_total —
-// the row is gone, not marked dead — so it does NOT trigger the Prometheus
-// alert or n8n. That's intentional: it demonstrates a different resilience
-// layer, the app defending its own roster instead of relying on external
-// monitoring automation. A public, unauthenticated action that only ever
-// shrinks the roster would eventually empty it, so a replacement hatches
-// immediately.
+// POST /creatures/:id/delete — Permanently delete a creature. The exact
+// inverse of POST /creatures (adopt): adopt inserts a row with no side
+// effects on anything else, delete removes one the same way — no reseed,
+// no gauge update. It never touches tamagotchi_creatures_dead_total, so it
+// does not trigger the Prometheus alert or n8n; deleting is not dying.
 app.post('/api/creatures/:id/delete', async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM creatures WHERE id = $1', [req.params.id]);
@@ -385,18 +382,7 @@ app.post('/api/creatures/:id/delete', async (req, res) => {
 
     await pool.query('DELETE FROM creatures WHERE id = $1', [req.params.id]);
 
-    const seedNames = ['Pixel', 'Nimbus', 'Sprocket', 'Blossom', 'Byte', 'Echo', 'Flux', 'Glitch'];
-    const allowedTypes = ['dragon', 'cat', 'robot', 'plant', 'alien'];
-    const newId = uuidv4();
-    const newName = seedNames[Math.floor(Math.random() * seedNames.length)];
-    const newType = allowedTypes[Math.floor(Math.random() * allowedTypes.length)];
-    await pool.query('INSERT INTO creatures (id, name, type) VALUES ($1, $2, $3)', [newId, newName, newType]);
-
-    const result = await pool.query('SELECT * FROM creatures WHERE id = $1', [newId]);
-    res.json({
-      message: `${deletedName} was deleted permanently. ${newName} the ${newType} hatched to take its place 🥚`,
-      creature: result.rows[0]
-    });
+    res.json({ message: `${deletedName} has been deleted permanently 🗑️` });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
