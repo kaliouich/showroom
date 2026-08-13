@@ -60,6 +60,17 @@ const i18n = {
     heal_chips: "<span class=\"hire-chip\">PrometheusRule</span><span class=\"hire-chip\">AlertmanagerConfig</span><span class=\"hire-chip\">Label routing</span><span class=\"hire-chip\">Webhook remediation</span><span class=\"hire-chip\">Two-level alerting</span>",
     heal_link_rules: "📂 The alert rules →",
     heal_link_wf: "🤖 The n8n workflow →",
+    slo_badge: 'SLO Board', slo_title: 'The <span class="gradient-text">99.9%</span> everyone claims, actually measured',
+    slo_subtitle: "The alert chain above tells you when something breaks. An SLO tells you how much broken you can afford before it matters — and how much of that budget is already spent.",
+    slo_explainer_title: '🎯 99.9% over 30 days = 43.2 minutes of budget, no more',
+    slo_explainer: 'The SLI is request-based, not just <code>up</code>: <code>1 - (failed requests / total requests)</code>, summed over the window rather than averaged, because averaging ratios lies when traffic isn\'t flat. Two Prometheus recording rules compute it continuously — <code>tamagotchi:availability:ratio30d</code> and <code>tamagotchi:error_budget:consumed_ratio30d</code> — so Grafana only ever reads a pre-computed number, never re-runs a 30-day range query per dashboard load. The 30-day window is real, not decorative: Prometheus\'s own retention was bumped from 15 days to 30, and — since it turned out to be running on ephemeral storage — given a persistent volume so a pod restart doesn\'t reset the clock.',
+    slo_link_rules: '📂 The recording rules →', slo_dashboard_label: 'Live SLO Dashboard',
+    chaos_badge: 'Chaos Button', chaos_title: 'Break it yourself. <span class="gradient-text">Watch it heal.</span>',
+    chaos_subtitle: 'Reading about resilience is not the same as watching it happen. This button deletes one real pod on the live cluster.',
+    chaos_explainer: '<code>tamagotchi-api</code> runs 2 replicas behind a Kubernetes Service. Click the button and the backend deletes one pod by name through the Kubernetes API, using a Role scoped to exactly one verb (<code>delete</code>), one resource (<code>pods</code>), and one namespace (<code>tamagotchi</code>) — it cannot touch anything else in the cluster. The Deployment controller notices immediately and schedules a replacement. Watch the replica count dip and recover on the dashboard above, in the same window where the availability line doesn\'t move: that\'s the actual point — one replica absorbs the gap while the other is rescheduled, so nobody using the app notices.',
+    chaos_btn_label: '💥 Kill a tamagotchi-api pod', chaos_ready_label: 'Ready replicas', chaos_desired_label: 'Desired replicas',
+    chaos_note: 'Rate-limited to one kill per 30 seconds, capped per hour. This targets a stateless API pod only — not the database, not the frontend.',
+    chaos_status_killing: 'Deleting a pod…', chaos_status_killed: 'Killed {pod} — watch it come back ↑', chaos_status_cooldown: 'Cooling down, try again in a few seconds', chaos_status_error: "Couldn't reach the cluster API",
     tool_n8n: "Receives Alertmanager webhooks and revives the dead creatures. This is the remediation step of the self-healing chain, not a demo.",
     tool_n8n_creds: "Private instance",
     nav_iac: "⚙️ IaC",
@@ -94,24 +105,66 @@ const i18n = {
     issues_hero_badge: 'Deep Dive Post-Mortem', issues_hero_title: 'Technical <span class="gradient-text">Issues Resolved</span>',
     issues_hero_desc: 'An in-depth look at the engineering challenges faced while deploying the microservices architecture on Oracle Cloud (ARM64). Discover the root causes, the exact error logs, and the terminal commands used to fix them.',
     issue_1_title: 'CI/CD Runner Network Isolation (Gitea Actions)',
-    issue_1_desc: 'The CI/CD pipeline steps (using Docker containers via <code>act-runner</code>) were failing to execute <code>git clone</code> or push Docker images. The standard Docker bridge network created by <code>act-runner</code> suffered from MTU fragmentation and NAT translation issues when communicating with K3s Pod IPs and Services on this specific Oracle Cloud virtualized network.',
-    issue_1_sol: 'We configured the Gitea <code>act-runner</code> to force all CI job containers to run on the host\'s network namespace, allowing ephemeral CI containers to seamlessly resolve <code>.svc.cluster.local</code> domains without NAT overhead.',
+    issue_1_symptom: 'CI job containers (via <code>act-runner</code>) failed to <code>git clone</code> or push Docker images, throwing what looked like an authentication error against the internal Gitea service.',
+    issue_1_discarded: 'The error read <code>Invalid username or password</code>, so we first regenerated the Gitea token — no change. Then suspected DNS resolution of <code>.svc.cluster.local</code> and patched <code>/etc/hosts</code> in the runner — the timeouts softened but never fully cleared, which was the tell that DNS wasn\'t the real story.',
+    issue_1_cause: 'The standard Docker bridge network created by <code>act-runner</code> suffered from MTU fragmentation and NAT translation issues when communicating with K3s Pod IPs and Services on this specific Oracle Cloud virtualized network — the auth-shaped error was just how the connection drop surfaced.',
+    issue_1_fix: 'We configured the Gitea <code>act-runner</code> to force all CI job containers onto the host\'s network namespace, letting ephemeral CI containers resolve <code>.svc.cluster.local</code> domains directly, without NAT overhead.',
+    issue_1_lesson: 'An authentication-shaped error message doesn\'t mean an authentication problem. When the same credentials work fine outside the automated environment, check the transport layer — MTU, routing, NAT — before touching tokens again.',
     issue_2_title: 'ArgoCD gRPC Interference with Linkerd',
-    issue_2_desc: 'ArgoCD became completely inaccessible. The <code>argocd-server</code> logs were filled with TLS handshake failures. The installation of the Linkerd Service Mesh globally injected sidecars into the ArgoCD namespace, which aggressively intercepts gRPC traffic. ArgoCD heavily relies on internal gRPC between its server, repo-server, and application-controller.',
-    issue_2_sol: 'We disabled Linkerd proxy injection specifically for the ArgoCD namespace and restarted the controllers to restore internal communication.',
+    issue_2_symptom: 'ArgoCD became completely inaccessible, returning <code>502 Bad Gateway</code>. The <code>argocd-server</code> logs were filled with TLS handshake failures.',
+    issue_2_discarded: 'A 502 usually means a routing problem, so we first re-checked the Gateway/HTTPRoute config and the certificate — both correct. Then suspected <code>argocd-server</code> itself was crash-looping — but every ArgoCD pod was <code>Running</code> and <code>Ready</code>.',
+    issue_2_cause: 'Installing the Linkerd service mesh had globally auto-injected sidecars into the ArgoCD namespace. Linkerd aggressively intercepts gRPC traffic, and ArgoCD relies heavily on internal gRPC between its server, repo-server, and application-controller — the proxy was breaking their TLS handshakes.',
+    issue_2_fix: 'We disabled Linkerd proxy injection specifically for the ArgoCD namespace and recreated the pods to restore internal communication.',
+    issue_2_lesson: 'Sidecar injection is a namespace-level decision to make before installing anything into that namespace, not a bug to fix afterward. The Ansible role now annotates <code>argocd</code> with <code>linkerd.io/inject=disabled</code> before ArgoCD is ever installed, so this can\'t recur by ordering alone.',
     issue_3_title: 'GitOps Manifest Push Authentication',
-    issue_3_desc: 'After successfully building the Docker image, the pipeline failed during the deployment manifest update phase. The default <code>GITHUB_TOKEN</code> injected by Gitea Actions was insufficient for pushing back to the repository within the specific job context over HTTPS.',
-    issue_3_sol: 'We modified the <code>.gitea/workflows/deploy.yaml</code> to inject a dedicated access token directly into the remote URL before executing the push.',
+    issue_3_symptom: 'Right after a successful image build, the pipeline failed at the manifest-update step with <code>Invalid username or password. fatal: Authentication failed</code>.',
+    issue_3_discarded: 'We first assumed the token had expired and regenerated it — same failure. Then suspected a branch-protection rule blocking the push — none was configured on that repository.',
+    issue_3_cause: 'The default token injected by Gitea Actions was insufficient for pushing back to the repository from within that specific job\'s context over HTTPS — a scope problem, not an expiry or policy one.',
+    issue_3_fix: 'We modified <code>.gitea/workflows/deploy.yaml</code> to inject a dedicated access token directly into the remote URL before executing the push.',
+    issue_3_lesson: 'A token being present and valid isn\'t the same as a token being scoped for the operation you\'re about to run. Check what the credential is actually allowed to do, not just whether it exists.',
     issue_4_title: 'ImagePullPolicy Stale Caching',
-    issue_4_desc: 'ArgoCD successfully synced the new <code>k8s.yaml</code> manifest, but the K3s worker nodes refused to pull it. Initially, the registry URL was configured as the internal service <code>gitea-http.gitea.svc.cluster.local:3000</code>. K3s containerd daemon resolves DNS differently than pods and couldn\'t authenticate properly without specific registry mirrors.',
-    issue_4_sol: 'We switched the registry target to the external proxy domain and forced strict layer hash validation.',
+    issue_4_symptom: 'ArgoCD reported the new manifest as <code>Synced</code>, but the running pods kept serving an old image — no error, just stale behavior.',
+    issue_4_discarded: 'We first assumed ArgoCD hadn\'t actually synced and re-triggered it manually — no change. Then diffed the image tag in the manifest against what was built — they matched exactly.',
+    issue_4_cause: 'The registry was configured as the internal service <code>gitea-http.gitea.svc.cluster.local:3000</code>, which K3s\'s containerd resolved and authenticated inconsistently. With <code>imagePullPolicy: IfNotPresent</code>, once any pull had ever succeeded, later pulls silently kept the cached layer instead of failing loudly.',
+    issue_4_fix: 'We switched the registry target to the external, reliably resolvable domain and set <code>imagePullPolicy: Always</code> to force strict layer validation on every deploy.',
+    issue_4_lesson: '<code>IfNotPresent</code> is an availability optimization, not a correctness guarantee. For anything still iterating fast, the extra pull time <code>Always</code> costs is cheap insurance against an entire class of "it deployed but didn\'t actually update" incidents.',
     issue_5_title: 'ArgoCD RBAC "Guest" Credentials',
-    issue_5_desc: 'The showcase website advertised <code>guest</code> / <code><YOUR_GUEST_PASSWORD></code> as the credentials for ArgoCD, but ArgoCD rejected the login despite proper RBAC mapping in the ConfigMap.',
-    issue_5_sol: 'We generated a raw bcrypt hash manually via Python and directly patched the <code>argocd-secret</code> to inject the guest password securely.',
+    issue_5_symptom: 'The showcase site advertised <code>guest</code> / a demo password for ArgoCD, but every login attempt was rejected.',
+    issue_5_discarded: 'We first suspected the <code>argocd-rbac-cm</code> policy mapping itself — read it line by line, syntax was correct. Then checked whether the guest account was even enabled — it was.',
+    issue_5_cause: 'RBAC and the account definition were both fine; the bcrypt password hash for <code>accounts.guest.password</code> in the separate <code>argocd-secret</code> object was missing.',
+    issue_5_fix: 'We generated a bcrypt hash manually via Python, base64-encoded it, and patched <code>argocd-secret</code> directly.',
+    issue_5_lesson: 'ArgoCD splits "is this account allowed to exist and what can it do" (the RBAC ConfigMap) from "can it prove who it is" (the Secret). A login failure is ambiguous between the two until both are checked — RBAC looking correct doesn\'t clear the second one.',
     issue_6_title: 'Node.js vs Nginx Port Bindings',
-    issue_6_desc: 'A frontend CSS update accidentally reverted the container build to an old Nginx Dockerfile, causing a port mismatch (80 vs 3000) for the live metrics backend since the Kubernetes Service was still routing to 3000.',
-    issue_6_sol: 'Restored the <code>server.js</code> Node.js proxy architecture, rebuilt the image via nerdctl, and executed a rolling K8s deployment update with proper ServiceAccount bindings.',
-    badge_issue: 'Issue', badge_resolution: 'Resolution',
+    issue_6_symptom: 'A routine CSS update brought down the entire site with <code>502 Bad Gateway</code>, including the live cluster metrics normally embedded on the homepage.',
+    issue_6_discarded: 'Since the change that triggered it was CSS, we first suspected the content itself — but a 502 happens before any HTML is served, which ruled that out as soon as we actually looked at where the error originated.',
+    issue_6_cause: 'The build had picked up an older Nginx-based Dockerfile (listening on port 80) instead of the Node.js one, while the Kubernetes Service still targeted port 3000 — a silent mismatch between what got built and what the Service expected.',
+    issue_6_fix: 'We restored the Node.js <code>server.js</code> proxy architecture, rebuilt via <code>nerdctl</code>, and rolled out the corrected image.',
+    issue_6_lesson: 'The real fix wasn\'t restoring the right file once — it was removing the alternate Dockerfile so it can\'t be picked up by accident again. <code>website/nginx.conf</code> still exists in this repo as a reference, but nothing in the build path touches it.',
+    issue_7_title: 'Grafana Persistence & Legacy Ingress Cleanup',
+    issue_7_symptom: 'Dashboards, users, and settings created by hand in the Grafana UI vanished on every pod restart. Separately, stray <code>Ingress</code> objects from Helm chart defaults were still routing traffic outside the intended Gateway API path.',
+    issue_7_discarded: 'We first assumed a Helm values change had been silently reverted — reviewed release history, values were consistent across upgrades. Then suspected the dashboards-as-code sidecar (the same <code>grafana_dashboard: "1"</code> ConfigMap pattern used for Tamagotchi and Loki) was overwriting manually-created dashboards — but the provisioned ones always survived restarts fine; only the hand-made ones vanished, which pointed at storage, not provisioning.',
+    issue_7_cause: 'Grafana\'s chart defaults to an ephemeral <code>emptyDir</code> volume: every pod restart started from a blank <code>data.db</code>, wiping anything not defined as versioned config.',
+    issue_7_fix: 'We deployed a dedicated <code>hostPath</code> PersistentVolume and PVC for Grafana and pointed the Helm release at it (<code>helm upgrade --reuse-values</code>), then separately deleted the ghost <code>Ingress</code> objects to fully hand routing to <code>HTTPRoute</code>.',
+    issue_7_lesson: 'Dashboards-as-code never needed this fix at all — it doesn\'t depend on Grafana\'s own storage. This was the first of what turned out to be a recurring pattern on this cluster: a stateful workload quietly running on ephemeral storage. The Valkey/Gitea outage of 2026-08-08 was the same bug in a different pod — see the runbook.',
+    issue_8_title: 'UI Translation Race Condition (i18n Bug)',
+    issue_8_symptom: 'Switching language on the site sometimes rendered raw keys like <code>issues_title</code> instead of actual text.',
+    issue_8_discarded: 'The name we gave the bug shaped the first hypothesis: a load-order race between <code>setLang()</code> and the dictionaries being defined. We added a <code>DOMContentLoaded</code> guard — the affected strings still broke. Then suspected stale cached JS — hard-refreshed, same result.',
+    issue_8_cause: 'There was no timing bug at all. The keys were simply never defined in one or both dictionaries for that section of the page, so <code>setLang()</code> had nothing to find and fell back to printing the raw key.',
+    issue_8_fix: 'We added the missing keys to both the <code>en</code> and <code>fr</code> dictionaries in <code>app.js</code>.',
+    issue_8_lesson: 'The incident\'s own name was the first, misleading hypothesis, and it stuck as the title even after the real cause turned out to be simpler than a race. Worth naming a postmortem after the root cause is known, not before.',
+    issue_9_title: 'K3s ErrImageNeverPull & Local Containerd Sockets',
+    issue_9_symptom: 'After rebuilding the website image locally to ship a frontend change, the deployment failed with <code>ErrImageNeverPull</code> — as if the image had never been built at all.',
+    issue_9_discarded: 'We first assumed the build itself had silently failed — reran it, watched it complete, confirmed the tag existed locally. Then diffed the build tag against the Deployment\'s <code>image:</code> field — they matched exactly.',
+    issue_9_cause: '<code>nerdctl build</code> had run against the default containerd socket and namespace. K3s runs its own isolated containerd, at <code>/run/k3s/containerd/containerd.sock</code> in the <code>k8s.io</code> namespace — the kubelet simply couldn\'t see an image built anywhere else.',
+    issue_9_fix: 'We rebuilt the image directly into K3s\'s containerd: <code>nerdctl --address /run/k3s/containerd/containerd.sock --namespace k8s.io build ...</code>.',
+    issue_9_lesson: '"The image doesn\'t exist" and "the image exists somewhere the kubelet can\'t see" produce the exact same error. Worth checking which containerd socket a build actually landed in before assuming the build is broken — this is the exact command now used for every website rebuild on this cluster.',
+    issue_10_title: 'Git Commit Hanging Indefinitely (GPG Signing)',
+    issue_10_symptom: 'Automated <code>git commit</code> calls from a headless terminal session hung indefinitely — no error, no visible prompt, until the surrounding task eventually timed out.',
+    issue_10_discarded: 'We first suspected a network hang — a pre-commit hook reaching out somewhere. There were no hooks installed. Then checked whether the process was deadlocked or spinning — it was idle, just blocked waiting on input.',
+    issue_10_cause: '<code>commit.gpgsign=true</code> was set globally. Git was waiting on a GPG passphrase prompt that had nowhere to render in that headless context.',
+    issue_10_fix: 'Documented as <code>--no-gpg-sign</code> per commit, to unblock the immediate incident.',
+    issue_10_lesson: 'This is a workaround, not a fix, and worth naming as such: bypassing signing per-command trades a hang for a silent gap in provenance. The durable version of this fix is a signing setup built for non-interactive contexts — an agent-cached key or SSH-based commit signing — or an explicit decision that automated commits on this repo are unsigned, made once, not re-decided on every hang.',
+    badge_symptom: 'Symptom', badge_discarded: 'Discarded Hypotheses', badge_cause: 'Root Cause', badge_fix: 'Fix', badge_lesson: 'Lesson',
     issues_connection_refused: 'Connection Refused / Network Unreachable', issues_host_network: 'Host Network Namespace',
     issues_502: '502 Bad Gateway / gRPC Connection Error', issues_disable_sidecar: 'Disable Sidecar Injection',
     issues_context_limit: 'Context Limitations', issues_oauth: 'OAuth Token Injection',
@@ -216,6 +269,17 @@ const i18n = {
     heal_chips: "<span class=\"hire-chip\">PrometheusRule</span><span class=\"hire-chip\">AlertmanagerConfig</span><span class=\"hire-chip\">Routage par label</span><span class=\"hire-chip\">Remédiation par webhook</span><span class=\"hire-chip\">Alerte à deux niveaux</span>",
     heal_link_rules: "📂 Les règles d'alerte →",
     heal_link_wf: "🤖 Le workflow n8n →",
+    slo_badge: 'Tableau SLO', slo_title: 'Les <span class="gradient-text">99,9%</span> que tout le monde revendique, enfin mesurés',
+    slo_subtitle: "La chaîne d'alerte ci-dessus dit quand quelque chose casse. Un SLO dit combien de casse on peut se permettre avant que ça compte — et combien de ce budget est déjà dépensé.",
+    slo_explainer_title: '🎯 99,9% sur 30 jours = 43,2 minutes de budget, pas plus',
+    slo_explainer: "Le SLI est basé sur les requêtes, pas seulement sur <code>up</code> : <code>1 - (requêtes échouées / requêtes totales)</code>, sommé sur la fenêtre plutôt que moyenné, parce que moyenner des ratios ment quand le trafic n'est pas plat. Deux règles d'enregistrement Prometheus le calculent en continu — <code>tamagotchi:availability:ratio30d</code> et <code>tamagotchi:error_budget:consumed_ratio30d</code> — donc Grafana ne fait jamais que lire un nombre déjà calculé, sans jamais rejouer une requête sur 30 jours à chaque chargement du dashboard. La fenêtre de 30 jours est réelle, pas décorative : la rétention de Prometheus est passée de 15 à 30 jours, et — comme il s'est avéré qu'il tournait sur du stockage éphémère — il a reçu un volume persistant pour qu'un redémarrage de pod ne remette plus le compteur à zéro.",
+    slo_link_rules: "📂 Les règles d'enregistrement →", slo_dashboard_label: 'Dashboard SLO en direct',
+    chaos_badge: 'Bouton Chaos', chaos_title: 'Casse-le toi-même. <span class="gradient-text">Regarde-le guérir.</span>',
+    chaos_subtitle: "Lire sur la résilience, ce n'est pas la même chose que la voir se produire. Ce bouton supprime un vrai pod sur le cluster en production.",
+    chaos_explainer: "<code>tamagotchi-api</code> tourne en 2 réplicas derrière un Service Kubernetes. Cliquer sur le bouton fait supprimer un pod par son nom, par le backend, via l'API Kubernetes, avec un Role scopé à exactement un verbe (<code>delete</code>), une ressource (<code>pods</code>) et un namespace (<code>tamagotchi</code>) — il ne peut toucher à rien d'autre sur le cluster. Le contrôleur du Deployment le remarque immédiatement et planifie un remplaçant. Regarde le compteur de réplicas plonger puis remonter sur le dashboard ci-dessus, dans la même fenêtre où la ligne de disponibilité ne bouge pas : c'est exactement le point — un réplica absorbe l'écart pendant que l'autre est replanifié, donc personne qui utilise l'app ne remarque rien.",
+    chaos_btn_label: '💥 Supprimer un pod tamagotchi-api', chaos_ready_label: 'Réplicas prêts', chaos_desired_label: 'Réplicas désirés',
+    chaos_note: "Limité à une suppression toutes les 30 secondes, plafonné par heure. Cible uniquement un pod d'API sans état — jamais la base de données, jamais le frontend.",
+    chaos_status_killing: 'Suppression d\'un pod…', chaos_status_killed: '{pod} supprimé — regarde-le revenir ↑', chaos_status_cooldown: 'Recharge en cours, réessaie dans quelques secondes', chaos_status_error: "Impossible de joindre l'API du cluster",
     tool_n8n: "Reçoit les webhooks d'Alertmanager et ranime les créatures mortes. C'est l'étage de remédiation de la chaîne d'auto-réparation, pas une démo.",
     tool_n8n_creds: "Instance privée",
     iac_badge: "Infrastructure as Code",
@@ -249,24 +313,66 @@ const i18n = {
     issues_hero_badge: 'Analyse Approfondie Post-Mortem', issues_hero_title: 'Problèmes Techniques <span class="gradient-text">Résolus</span>',
     issues_hero_desc: 'Un regard approfondi sur les défis d\'ingénierie rencontrés lors du déploiement de l\'architecture microservices sur Oracle Cloud (ARM64). Découvrez les causes racines, les logs d\'erreurs exacts et les commandes terminales utilisées pour les corriger.',
     issue_1_title: 'Isolation Réseau du Runner CI/CD (Gitea Actions)',
-    issue_1_desc: 'Les étapes de la pipeline CI/CD (utilisant des conteneurs via <code>act-runner</code>) échouaient à exécuter <code>git clone</code> ou à push les images Docker. Le réseau bridge Docker standard créé par <code>act-runner</code> souffrait de fragmentation MTU et de problèmes de traduction NAT lors de la communication avec les IP de Pods et Services K3s sur ce réseau virtualisé Oracle Cloud.',
-    issue_1_sol: 'Nous avons configuré le <code>act-runner</code> de Gitea pour forcer tous les conteneurs de job CI à s\'exécuter sur le namespace réseau de l\'hôte, permettant aux conteneurs CI éphémères de résoudre de manière transparente les domaines <code>.svc.cluster.local</code> sans surcharge NAT.',
+    issue_1_symptom: 'Les conteneurs de job CI (via <code>act-runner</code>) échouaient à <code>git clone</code> ou à push les images Docker, avec une erreur qui ressemblait à un problème d\'authentification contre le service Gitea interne.',
+    issue_1_discarded: 'L\'erreur affichait <code>Invalid username or password</code>, donc nous avons d\'abord régénéré le token Gitea — aucun changement. Puis suspecté la résolution DNS de <code>.svc.cluster.local</code> et patché <code>/etc/hosts</code> dans le runner — les timeouts se sont adoucis sans jamais disparaître complètement, ce qui indiquait que le DNS n\'était pas la vraie histoire.',
+    issue_1_cause: 'Le réseau bridge Docker standard créé par <code>act-runner</code> souffrait de fragmentation MTU et de problèmes de traduction NAT lors de la communication avec les IP de Pods et Services K3s sur ce réseau virtualisé Oracle Cloud — l\'erreur en forme d\'authentification n\'était que la façon dont la coupure de connexion remontait.',
+    issue_1_fix: 'Nous avons configuré le <code>act-runner</code> de Gitea pour forcer tous les conteneurs de job CI sur le namespace réseau de l\'hôte, permettant aux conteneurs CI éphémères de résoudre directement les domaines <code>.svc.cluster.local</code>, sans surcharge NAT.',
+    issue_1_lesson: 'Une erreur en forme d\'authentification ne veut pas dire un problème d\'authentification. Quand les mêmes identifiants fonctionnent sans problème hors de l\'environnement automatisé, vérifier la couche transport — MTU, routage, NAT — avant de retoucher aux tokens.',
     issue_2_title: 'Interférence gRPC d\'ArgoCD avec Linkerd',
-    issue_2_desc: 'ArgoCD est devenu complètement inaccessible. Les logs <code>argocd-server</code> étaient remplis d\'échecs de handshake TLS. L\'installation du Service Mesh Linkerd a injecté globalement des sidecars dans le namespace ArgoCD, ce qui intercepte agressivement le trafic gRPC. Or, ArgoCD s\'appuie fortement sur le gRPC interne entre son server, repo-server et application-controller.',
-    issue_2_sol: 'Nous avons désactivé l\'injection proxy Linkerd spécifiquement pour le namespace ArgoCD et redémarré les contrôleurs pour restaurer la communication interne.',
+    issue_2_symptom: 'ArgoCD est devenu complètement inaccessible, renvoyant <code>502 Bad Gateway</code>. Les logs <code>argocd-server</code> étaient remplis d\'échecs de handshake TLS.',
+    issue_2_discarded: 'Un 502 signifie généralement un problème de routage, donc nous avons d\'abord revérifié la config Gateway/HTTPRoute et le certificat — tous deux corrects. Puis suspecté que <code>argocd-server</code> lui-même crashait en boucle — mais tous les pods ArgoCD étaient <code>Running</code> et <code>Ready</code>.',
+    issue_2_cause: 'L\'installation du service mesh Linkerd avait injecté globalement des sidecars dans le namespace ArgoCD. Linkerd intercepte agressivement le trafic gRPC, et ArgoCD s\'appuie fortement sur du gRPC interne entre son server, repo-server et application-controller — le proxy cassait leurs handshakes TLS.',
+    issue_2_fix: 'Nous avons désactivé l\'injection de proxy Linkerd spécifiquement pour le namespace ArgoCD et recréé les pods pour restaurer la communication interne.',
+    issue_2_lesson: 'L\'injection de sidecar est une décision à prendre au niveau du namespace avant d\'y installer quoi que ce soit, pas un bug à corriger après coup. Le rôle Ansible annote désormais <code>argocd</code> avec <code>linkerd.io/inject=disabled</code> avant même qu\'ArgoCD soit installé, pour que ça ne puisse plus se reproduire, par simple ordre d\'exécution.',
     issue_3_title: 'Authentification Push Manifeste GitOps',
-    issue_3_desc: 'Après avoir réussi à build l\'image Docker, la pipeline a échoué pendant la phase de mise à jour du manifeste de déploiement. Le <code>GITHUB_TOKEN</code> par défaut injecté par Gitea Actions était insuffisant pour repousser (push) vers le dépôt dans le contexte spécifique du job via HTTPS.',
-    issue_3_sol: 'Nous avons modifié <code>.gitea/workflows/deploy.yaml</code> pour injecter un jeton d\'accès dédié directement dans l\'URL distante avant d\'exécuter le push.',
-    issue_4_title: 'Mise en Cache Obsolète ImagePullPolicy',
-    issue_4_desc: 'ArgoCD a réussi à synchroniser le nouveau manifeste <code>k8s.yaml</code>, mais les nœuds workers K3s ont refusé de le tirer. Initialement, l\'URL du registre était configurée comme le service interne <code>gitea-http.gitea.svc.cluster.local:3000</code>. Le daemon containerd de K3s résout les DNS différemment des pods et n\'a pas pu s\'authentifier correctement.',
-    issue_4_sol: 'Nous avons basculé la cible du registre vers le domaine proxy externe et forcé la validation stricte du hash des couches avec <code>imagePullPolicy: Always</code>.',
+    issue_3_symptom: 'Juste après un build d\'image réussi, la pipeline échouait à l\'étape de mise à jour du manifeste avec <code>Invalid username or password. fatal: Authentication failed</code>.',
+    issue_3_discarded: 'Nous avons d\'abord supposé que le token avait expiré et l\'avons régénéré — même échec. Puis suspecté une règle de protection de branche bloquant le push — aucune n\'était configurée sur ce dépôt.',
+    issue_3_cause: 'Le token par défaut injecté par Gitea Actions était insuffisant pour repousser vers le dépôt depuis le contexte de ce job précis en HTTPS — un problème de scope, pas d\'expiration ni de politique.',
+    issue_3_fix: 'Nous avons modifié <code>.gitea/workflows/deploy.yaml</code> pour injecter un token d\'accès dédié directement dans l\'URL distante avant d\'exécuter le push.',
+    issue_3_lesson: 'Qu\'un token soit présent et valide n\'est pas la même chose qu\'un token dont le scope couvre l\'opération qu\'on s\'apprête à lancer. Vérifier ce que l\'identifiant a le droit de faire, pas seulement s\'il existe.',
+    issue_4_title: 'Mise en Cache Obsolète ImagePullPolicy',
+    issue_4_symptom: 'ArgoCD annonçait le nouveau manifeste comme <code>Synced</code>, mais les pods en cours servaient toujours une ancienne image — aucune erreur, juste un comportement obsolète.',
+    issue_4_discarded: 'Nous avons d\'abord supposé qu\'ArgoCD n\'avait pas réellement synchronisé et redéclenché manuellement — aucun changement. Puis comparé le tag d\'image du manifeste avec celui du build — ils étaient identiques.',
+    issue_4_cause: 'Le registre était configuré comme le service interne <code>gitea-http.gitea.svc.cluster.local:3000</code>, que le containerd de K3s résolvait et authentifiait de façon incohérente. Avec <code>imagePullPolicy: IfNotPresent</code>, une fois qu\'un pull avait réussi une fois, les suivants gardaient silencieusement la couche en cache au lieu d\'échouer bruyamment.',
+    issue_4_fix: 'Nous avons basculé la cible du registre vers le domaine externe, résolu de façon fiable, et défini <code>imagePullPolicy: Always</code> pour forcer une validation stricte des couches à chaque déploiement.',
+    issue_4_lesson: '<code>IfNotPresent</code> est une optimisation de disponibilité, pas une garantie de correction. Pour tout ce qui itère encore vite, le temps de pull supplémentaire coûté par <code>Always</code> est une assurance bon marché contre toute une classe d\'incidents du type « c\'est déployé mais ça n\'a pas vraiment changé ».',
     issue_5_title: 'Identifiants "Guest" RBAC ArgoCD',
-    issue_5_desc: 'Le site vitrine annonçait <code>guest</code> / <code><YOUR_GUEST_PASSWORD></code> comme identifiants pour ArgoCD, mais ArgoCD a rejeté la connexion malgré un mapping RBAC correct dans le ConfigMap.',
-    issue_5_sol: 'Nous avons généré un hash bcrypt brut manuellement via Python et directement patché le <code>argocd-secret</code> pour injecter le mot de passe invité en toute sécurité.',
+    issue_5_symptom: 'Le site vitrine annonçait <code>guest</code> / un mot de passe de démo pour ArgoCD, mais chaque tentative de connexion était rejetée.',
+    issue_5_discarded: 'Nous avons d\'abord suspecté le mapping de policy <code>argocd-rbac-cm</code> lui-même — relu ligne par ligne, syntaxe correcte. Puis vérifié si le compte guest était même activé — il l\'était.',
+    issue_5_cause: 'Le RBAC et la définition du compte étaient corrects tous les deux ; c\'est le hash bcrypt du mot de passe pour <code>accounts.guest.password</code>, dans l\'objet <code>argocd-secret</code> séparé, qui manquait.',
+    issue_5_fix: 'Nous avons généré un hash bcrypt manuellement via Python, l\'avons encodé en base64, et avons patché <code>argocd-secret</code> directement.',
+    issue_5_lesson: 'ArgoCD sépare « ce compte a-t-il le droit d\'exister et de faire quoi » (le ConfigMap RBAC) de « peut-il prouver qui il est » (le Secret). Un échec de connexion reste ambigu entre les deux tant qu\'on n\'a pas vérifié les deux — un RBAC qui semble correct ne dédouane pas le second.',
     issue_6_title: 'Conflits de Ports Node.js vs Nginx',
-    issue_6_desc: 'Une mise à jour CSS front-end a accidentellement ramené le build du conteneur à un ancien Dockerfile Nginx, provoquant une incompatibilité de port (80 vs 3000) pour le backend de métriques en direct puisque le Service Kubernetes routait toujours vers 3000.',
-    issue_6_sol: 'Nous avons restauré l\'architecture proxy Node.js <code>server.js</code>, reconstruit l\'image via nerdctl, et exécuté une mise à jour de déploiement rolling K8s avec les bonnes liaisons ServiceAccount.',
-    badge_issue: 'Problème', badge_resolution: 'Résolution',
+    issue_6_symptom: 'Une mise à jour CSS de routine a fait tomber tout le site avec <code>502 Bad Gateway</code>, y compris les métriques cluster en direct normalement intégrées sur la page d\'accueil.',
+    issue_6_discarded: 'Comme le changement déclencheur était du CSS, nous avons d\'abord suspecté le contenu lui-même — mais un 502 survient avant que le moindre HTML soit servi, ce qui a écarté cette piste dès qu\'on a regardé où l\'erreur naissait réellement.',
+    issue_6_cause: 'Le build avait repris un ancien Dockerfile basé sur Nginx (écoutant sur le port 80) au lieu de celui en Node.js, alors que le Service Kubernetes ciblait toujours le port 3000 — une incohérence silencieuse entre ce qui avait été construit et ce que le Service attendait.',
+    issue_6_fix: 'Nous avons restauré l\'architecture proxy Node.js <code>server.js</code>, reconstruit via <code>nerdctl</code>, et déployé l\'image corrigée.',
+    issue_6_lesson: 'Le vrai fix n\'était pas de restaurer le bon fichier une fois — c\'était de supprimer le Dockerfile alternatif pour qu\'il ne puisse plus être repris par accident. <code>website/nginx.conf</code> existe toujours dans ce dépôt comme référence, mais rien dans le chemin de build n\'y touche.',
+    issue_7_title: 'Persistance Grafana & Nettoyage des Ingress Historiques',
+    issue_7_symptom: 'Les dashboards, utilisateurs et réglages créés à la main dans l\'UI Grafana disparaissaient à chaque redémarrage de pod. Séparément, des objets <code>Ingress</code> résiduels issus des valeurs par défaut d\'un chart Helm continuaient de router du trafic en dehors du chemin Gateway API prévu.',
+    issue_7_discarded: 'Nous avons d\'abord supposé qu\'un changement de valeurs Helm avait été silencieusement annulé — revu l\'historique des releases, les valeurs étaient cohérentes d\'une mise à jour à l\'autre. Puis suspecté que le sidecar de dashboards-as-code (le même pattern de ConfigMap <code>grafana_dashboard: "1"</code> utilisé pour Tamagotchi et Loki) écrasait les dashboards créés à la main — mais ceux provisionnés survivaient toujours aux redémarrages sans problème ; seuls ceux faits à la main disparaissaient, ce qui pointait vers le stockage, pas le provisioning.',
+    issue_7_cause: 'Le chart Grafana utilise par défaut un volume <code>emptyDir</code> éphémère : chaque redémarrage de pod repartait d\'un <code>data.db</code> vierge, effaçant tout ce qui n\'était pas défini comme config versionnée.',
+    issue_7_fix: 'Nous avons déployé un PersistentVolume et une PVC <code>hostPath</code> dédiés pour Grafana et pointé la release Helm dessus (<code>helm upgrade --reuse-values</code>), puis séparément supprimé les objets <code>Ingress</code> fantômes pour rendre le routage entièrement à <code>HTTPRoute</code>.',
+    issue_7_lesson: 'Le dashboards-as-code n\'a jamais eu besoin de ce fix — il ne dépend pas du stockage propre de Grafana. Ça a été le premier épisode d\'un pattern qui s\'est révélé récurrent sur ce cluster : une charge avec état tournant discrètement sur du stockage éphémère. La panne Valkey/Gitea du 2026-08-08 était exactement le même bug, dans un autre pod — voir le runbook.',
+    issue_8_title: 'Race Condition de Traduction UI (Bug i18n)',
+    issue_8_symptom: 'Changer de langue sur le site affichait parfois des clés brutes comme <code>issues_title</code> au lieu du texte réel.',
+    issue_8_discarded: 'Le nom donné au bug a orienté la première hypothèse : une race de timing entre <code>setLang()</code> et la définition des dictionnaires. Nous avons ajouté une garde <code>DOMContentLoaded</code> — les chaînes concernées restaient cassées. Puis suspecté un JS mis en cache par le navigateur — rechargement forcé, même résultat.',
+    issue_8_cause: 'Il n\'y avait aucun bug de timing. Les clés n\'étaient tout simplement jamais définies dans l\'un des deux dictionnaires (ou les deux) pour cette section de la page, donc <code>setLang()</code> n\'avait rien à trouver et retombait sur l\'affichage de la clé brute.',
+    issue_8_fix: 'Nous avons ajouté les clés manquantes aux deux dictionnaires <code>en</code> et <code>fr</code> dans <code>app.js</code>.',
+    issue_8_lesson: 'Le nom de l\'incident était lui-même la première hypothèse, trompeuse, et il est resté comme titre même après que la vraie cause se soit révélée plus simple qu\'une race. Mieux vaut nommer un post-mortem une fois la cause racine connue, pas avant.',
+    issue_9_title: 'ErrImageNeverPull K3s & Sockets Containerd Locaux',
+    issue_9_symptom: 'Après avoir reconstruit l\'image du site localement pour livrer un changement frontend, le déploiement a échoué avec <code>ErrImageNeverPull</code> — comme si l\'image n\'avait jamais été construite.',
+    issue_9_discarded: 'Nous avons d\'abord supposé que le build lui-même avait silencieusement échoué — relancé, observé qu\'il se terminait, confirmé que le tag existait localement. Puis comparé le tag du build avec le champ <code>image:</code> du Deployment — ils étaient identiques.',
+    issue_9_cause: '<code>nerdctl build</code> avait tourné contre le socket et le namespace containerd par défaut. K3s fait tourner son propre containerd isolé, sur <code>/run/k3s/containerd/containerd.sock</code> dans le namespace <code>k8s.io</code> — le kubelet ne pouvait tout simplement pas voir une image construite ailleurs.',
+    issue_9_fix: 'Nous avons reconstruit l\'image directement dans le containerd de K3s : <code>nerdctl --address /run/k3s/containerd/containerd.sock --namespace k8s.io build ...</code>.',
+    issue_9_lesson: '« L\'image n\'existe pas » et « l\'image existe quelque part que le kubelet ne voit pas » produisent exactement la même erreur. Mieux vaut vérifier dans quel socket containerd un build a réellement atterri avant de supposer que le build est cassé — c\'est exactement la commande utilisée aujourd\'hui pour chaque reconstruction du site sur ce cluster.',
+    issue_10_title: 'Git Commit Bloqué Indéfiniment (Signature GPG)',
+    issue_10_symptom: 'Des appels <code>git commit</code> automatisés depuis une session terminal headless restaient bloqués indéfiniment — aucune erreur, aucun prompt visible, jusqu\'à ce que la tâche englobante finisse par timeout.',
+    issue_10_discarded: 'Nous avons d\'abord suspecté un blocage réseau — un hook pre-commit contactant quelque chose. Aucun hook n\'était installé. Puis vérifié si le process était en deadlock ou en boucle active — il était inactif, simplement bloqué en attente d\'une entrée.',
+    issue_10_cause: '<code>commit.gpgsign=true</code> était configuré globalement. Git attendait un prompt de passphrase GPG qui n\'avait nulle part où s\'afficher dans ce contexte headless.',
+    issue_10_fix: 'Documenté comme <code>--no-gpg-sign</code> par commit, pour débloquer l\'incident dans l\'immédiat.',
+    issue_10_lesson: 'C\'est un contournement, pas un fix, et ça mérite d\'être nommé comme tel : bypasser la signature à chaque commande échange un blocage contre un trou silencieux dans la provenance. La version durable de ce fix est une configuration de signature pensée pour un contexte non interactif — une clé mise en cache par un agent, ou une signature de commit basée SSH — ou une décision explicite, prise une fois, que les commits automatisés sur ce dépôt restent non signés, plutôt que re-décidée à chaque blocage.',
+    badge_symptom: 'Symptôme', badge_discarded: 'Hypothèses écartées', badge_cause: 'Cause racine', badge_fix: 'Fix', badge_lesson: 'Enseignement',
     issues_connection_refused: 'Connexion Refusée / Réseau Inaccessible', issues_host_network: 'Namespace Réseau Hôte',
     issues_502: '502 Bad Gateway / Erreur Connexion gRPC', issues_disable_sidecar: 'Désactiver Injection Sidecar',
     issues_context_limit: 'Limites de Contexte', issues_oauth: 'Injection Jeton OAuth',
@@ -532,6 +638,19 @@ async function populateInfraData() {
     document.getElementById('nsCount').textContent = data.nsCount;
     document.getElementById('svcCount').textContent = data.svcCount;
 
+    // Chaos Button replica counters piggyback on this same /api/infra call
+    // rather than polling separately: /api/infra already lists every pod,
+    // "ready" = tamagotchi-api pods currently Running, "desired" = all of
+    // them regardless of phase (Kubernetes keeps a Pending/ContainerCreating
+    // replacement pod object alive within moments of a delete, so the total
+    // count stays ~2 almost continuously even while "ready" briefly dips).
+    const chaosReadyEl = document.getElementById('chaosReady');
+    if (chaosReadyEl && data.pods) {
+      const apiPods = data.pods.filter(p => p.ns === 'tamagotchi' && p.name.startsWith('tamagotchi-api-'));
+      chaosReadyEl.textContent = apiPods.filter(p => p.status === 'Running').length;
+      document.getElementById('chaosDesired').textContent = apiPods.length || '—';
+    }
+
     const podList = document.getElementById('podList');
     podList.innerHTML = data.pods.map(p => {
       const statusClass = p.status === 'Running' ? 'running' : p.status === 'Pending' ? 'pending' : 'failed';
@@ -547,6 +666,54 @@ async function populateInfraData() {
   } catch (err) {
     document.getElementById('podList').innerHTML = `<div class="pod-list__loading">Failed to load data</div>`;
   }
+}
+
+// ---- Chaos Button ----
+// Matches CHAOS_COOLDOWN_MS in website/server.js — the button stays disabled
+// client-side for the same window the backend actually enforces, so a click
+// during cooldown never round-trips just to be told no.
+const CHAOS_COOLDOWN_MS = 30000;
+let chaosPollTimer = null;
+
+// A short fast-polling burst right after a kill, not a permanent interval:
+// this is the only moment the replica dip/recovery is worth refreshing more
+// than once. Piggybacks on populateInfraData() rather than a second endpoint.
+function pollChaosReplicasBurst(durationMs = 20000, everyMs = 2000) {
+  if (chaosPollTimer) clearInterval(chaosPollTimer);
+  const stopAt = Date.now() + durationMs;
+  chaosPollTimer = setInterval(() => {
+    populateInfraData();
+    if (Date.now() >= stopAt) { clearInterval(chaosPollTimer); chaosPollTimer = null; }
+  }, everyMs);
+}
+
+const chaosBtn = document.getElementById('chaosBtn');
+if (chaosBtn) {
+  chaosBtn.addEventListener('click', async () => {
+    const statusEl = document.getElementById('chaosStatus');
+    chaosBtn.disabled = true;
+    statusEl.className = 'chaos-panel__status';
+    statusEl.textContent = t('chaos_status_killing');
+    try {
+      const res = await fetch('/api/chaos/kill-pod', { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 429) {
+        statusEl.textContent = t('chaos_status_cooldown');
+        statusEl.className = 'chaos-panel__status chaos-panel__status--err';
+      } else if (!res.ok) {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      } else {
+        statusEl.textContent = t('chaos_status_killed').replace('{pod}', data.killed);
+        statusEl.className = 'chaos-panel__status chaos-panel__status--ok';
+        pollChaosReplicasBurst();
+      }
+    } catch (e) {
+      statusEl.textContent = t('chaos_status_error');
+      statusEl.className = 'chaos-panel__status chaos-panel__status--err';
+    } finally {
+      setTimeout(() => { chaosBtn.disabled = false; }, CHAOS_COOLDOWN_MS);
+    }
+  });
 }
 
 // ---- Scroll Animations ----

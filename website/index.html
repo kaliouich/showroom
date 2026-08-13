@@ -372,6 +372,66 @@
     </div>
   </section>
 
+  <!-- ============================================================ -->
+  <!-- SLO BOARD -->
+  <!-- ============================================================ -->
+  <section class="section" id="slo">
+    <div class="section__header">
+      <span class="section__badge" data-i18n="slo_badge">SLO Board</span>
+      <h2 class="section__title" data-i18n="slo_title">The <span class="gradient-text">99.9%</span> everyone claims, actually measured</h2>
+      <p class="section__subtitle" data-i18n="slo_subtitle">The alert chain above tells you when something breaks. An SLO tells you how much broken you can afford before it matters — and how much of that budget is already spent.</p>
+    </div>
+
+    <div class="heal-insight" style="margin-top:0;">
+      <h3 class="heal-insight__title" data-i18n="slo_explainer_title">🎯 99.9% over 30 days = 43.2 minutes of budget, no more</h3>
+      <p class="heal-insight__text" data-i18n="slo_explainer">The SLI is request-based, not just <code>up</code>: <code>1 - (failed requests / total requests)</code>, summed over the window rather than averaged, because averaging ratios lies when traffic isn't flat. Two Prometheus recording rules compute it continuously — <code>tamagotchi:availability:ratio30d</code> and <code>tamagotchi:error_budget:consumed_ratio30d</code> — so Grafana only ever reads a pre-computed number, never re-runs a 30-day range query per dashboard load. The 30-day window is real, not decorative: Prometheus's own retention was bumped from 15 days to 30, and — since it turned out to be running on ephemeral storage — given a persistent volume so a pod restart doesn't reset the clock.</p>
+      <div class="hire-chips"><span class="hire-chip">Recording rules</span><span class="hire-chip">Request-based SLI</span><span class="hire-chip">Error budget</span><span class="hire-chip">30d persistent retention</span></div>
+      <div class="hire-cta__actions" style="justify-content:flex-start;margin-top:1.5rem;">
+        <a href="https://github.com/kaliouich/showroom/blob/main/k8s/tamagotchi/slo-rules.yaml" target="_blank" class="btn btn--ghost btn--sm" data-i18n="slo_link_rules">📂 The recording rules →</a>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 2rem; max-width: 1200px; margin: 2.5rem auto 0; padding: 0 1rem;">
+      <div style="background: rgba(255,255,255,0.05); padding: 0.5rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+        <h3 style="margin: 0.5rem 0 1rem 1rem; color: #fff; font-size: 1.1rem; font-weight: 500;" data-i18n="slo_dashboard_label">Live SLO Dashboard</h3>
+        <iframe src="https://grafana.khalilaliouich.com/d/tamagotchi-slo?orgId=1&kiosk&theme=dark&transparent=true" width="100%" height="640" frameborder="0" style="border-radius: 8px;"></iframe>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- CHAOS BUTTON -->
+  <!-- ============================================================ -->
+  <section class="section section--dark" id="chaos">
+    <div class="section__header">
+      <span class="section__badge" data-i18n="chaos_badge">Chaos Button</span>
+      <h2 class="section__title" data-i18n="chaos_title">Break it yourself. <span class="gradient-text">Watch it heal.</span></h2>
+      <p class="section__subtitle" data-i18n="chaos_subtitle">Reading about resilience is not the same as watching it happen. This button deletes one real pod on the live cluster.</p>
+    </div>
+
+    <div class="chaos-panel">
+      <p class="chaos-panel__text" data-i18n="chaos_explainer"><code>tamagotchi-api</code> runs 2 replicas behind a Kubernetes Service. Click the button and the backend deletes one pod by name through the Kubernetes API, using a Role scoped to exactly one verb (<code>delete</code>), one resource (<code>pods</code>), and one namespace (<code>tamagotchi</code>) — it cannot touch anything else in the cluster. The Deployment controller notices immediately and schedules a replacement. Watch the replica count dip and recover on the dashboard above, in the same window where the availability line doesn't move: that's the actual point — one replica absorbs the gap while the other is rescheduled, so nobody using the app notices.</p>
+
+      <div class="chaos-panel__action">
+        <button id="chaosBtn" class="btn btn--danger" data-i18n="chaos_btn_label">💥 Kill a tamagotchi-api pod</button>
+        <div class="chaos-panel__status" id="chaosStatus"></div>
+      </div>
+
+      <div class="chaos-panel__replicas">
+        <div class="demo-stat">
+          <span class="demo-stat__value" id="chaosReady">—</span>
+          <span class="demo-stat__label" data-i18n="chaos_ready_label">Ready replicas</span>
+        </div>
+        <div class="demo-stat">
+          <span class="demo-stat__value" id="chaosDesired">—</span>
+          <span class="demo-stat__label" data-i18n="chaos_desired_label">Desired replicas</span>
+        </div>
+      </div>
+
+      <p class="chaos-panel__note" data-i18n="chaos_note">Rate-limited to one kill per 30 seconds, capped per hour. This targets a stateless API pod only — not the database, not the frontend.</p>
+    </div>
+  </section>
+
   <section class="section" id="freelance">
     <div class="section__header">
       <span class="section__badge section__badge--hire" data-i18n="freelance_badge">Freelance — Open for missions</span>

@@ -1,0 +1,30 @@
+# RBAC du Chaos Button (website/index.html#chaos -> website/server.js
+# POST /api/chaos/kill-pod). Deliberement un Role namespace, pas une
+# extension du ClusterRole showcase-reader existant (k8s/rbac.yaml) : ce
+# dernier est deja get/list cluster-wide, y ajouter delete l'etendrait a tous
+# les namespaces. Ici : un seul verbe, une seule ressource, un seul
+# namespace — le blast radius d'un bug ou d'un abus du bouton public est
+# borne a "un pod tamagotchi peut disparaitre", jamais plus.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tamagotchi-chaos-killer
+  namespace: tamagotchi
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tamagotchi-chaos-killer-binding
+  namespace: tamagotchi
+subjects:
+  - kind: ServiceAccount
+    name: showcase-sa
+    namespace: showcase
+roleRef:
+  kind: Role
+  name: tamagotchi-chaos-killer
+  apiGroup: rbac.authorization.k8s.io

@@ -151,6 +151,46 @@
       font-weight: 600;
       border: 1px solid rgba(255, 0, 85, 0.2);
     }
+
+    /* Format post-mortem complet : Symptome (badge-error) -> Hypotheses
+       ecartees -> Cause racine -> Fix (badge-success) -> Enseignement.
+       Meme boite que badge-success/badge-error, juste la couleur qui change,
+       pour rester dans le meme vocabulaire visuel. */
+    .badge-discarded {
+      background: rgba(255, 204, 0, 0.1);
+      color: #ffcc00;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 1px solid rgba(255, 204, 0, 0.2);
+    }
+
+    .badge-cause {
+      background: rgba(138, 43, 226, 0.12);
+      color: #b57bff;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 1px solid rgba(138, 43, 226, 0.25);
+    }
+
+    .badge-lesson {
+      background: rgba(0, 240, 255, 0.1);
+      color: #00f0ff;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 1px solid rgba(0, 240, 255, 0.2);
+    }
+
+    .issue-section--lesson {
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px dashed var(--glass-border);
+    }
   </style>
 </head>
 <body>
@@ -204,19 +244,31 @@
       <div class="accordion-body">
         <div class="accordion-content">
           <div class="issue-section">
-            <h4><span class="badge-error" data-i18n="badge_issue">Issue</span> Connection Refused / Network Unreachable</h4>
-            <p data-i18n="issue_1_desc">The CI/CD pipeline steps (using Docker containers via <code>act-runner</code>) were failing to execute <code>git clone</code> or push Docker images. The standard Docker bridge network created by <code>act-runner</code> suffered from MTU fragmentation and NAT translation issues when communicating with K3s Pod IPs and Services on this specific Oracle Cloud virtualized network.</p>
+            <h4><span class="badge-error" data-i18n="badge_symptom">Symptom</span></h4>
+            <p data-i18n="issue_1_symptom">CI job containers (via <code>act-runner</code>) failed to <code>git clone</code> or push Docker images, throwing what looked like an authentication error against the internal Gitea service.</p>
             <pre><code>remote: Invalid username or password.
 fatal: Authentication failed for 'http://git.khalilaliouich.com/...'
 curl: (7) Failed to connect to gitea-http.gitea.svc.cluster.local port 3000</code></pre>
           </div>
           <div class="issue-section">
-            <h4><span class="badge-success" data-i18n="badge_resolution">Resolution</span> Host Network Namespace</h4>
-            <p>We configured the Gitea <code>act-runner</code> to force all CI job containers to run on the host's network namespace, allowing ephemeral CI containers to seamlessly resolve <code>.svc.cluster.local</code> domains without NAT overhead.</p>
+            <h4><span class="badge-discarded" data-i18n="badge_discarded">Discarded Hypotheses</span></h4>
+            <p data-i18n="issue_1_discarded">The error read <code>Invalid username or password</code>, so we first regenerated the Gitea token — no change. Then suspected DNS resolution of <code>.svc.cluster.local</code> and patched <code>/etc/hosts</code> in the runner — the timeouts softened but never fully cleared, which was the tell that DNS wasn't the real story.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-cause" data-i18n="badge_cause">Root Cause</span></h4>
+            <p data-i18n="issue_1_cause">The standard Docker bridge network created by <code>act-runner</code> suffered from MTU fragmentation and NAT translation issues when communicating with K3s Pod IPs and Services on this specific Oracle Cloud virtualized network — the auth-shaped error was just how the connection drop surfaced.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-success" data-i18n="badge_fix">Fix</span></h4>
+            <p data-i18n="issue_1_fix">We configured the Gitea <code>act-runner</code> to force all CI job containers onto the host's network namespace, letting ephemeral CI containers resolve <code>.svc.cluster.local</code> domains directly, without NAT overhead.</p>
             <pre><code># /data/gitea-runner/config.yaml
 container:
   network: "host"
   options: "--add-host=gitea-http.gitea.svc.cluster.local:10.43.0.10"</code></pre>
+          </div>
+          <div class="issue-section issue-section--lesson">
+            <h4><span class="badge-lesson" data-i18n="badge_lesson">Lesson</span></h4>
+            <p data-i18n="issue_1_lesson">An authentication-shaped error message doesn't mean an authentication problem. When the same credentials work fine outside the automated environment, check the transport layer — MTU, routing, NAT — before touching tokens again.</p>
           </div>
         </div>
       </div>
@@ -234,15 +286,27 @@ container:
       <div class="accordion-body">
         <div class="accordion-content">
           <div class="issue-section">
-            <h4><span class="badge-error" data-i18n="badge_issue">Issue</span> 502 Bad Gateway / gRPC Connection Error</h4>
-            <p data-i18n="issue_2_desc">ArgoCD became completely inaccessible. The <code>argocd-server</code> logs were filled with TLS handshake failures. The installation of the Linkerd Service Mesh globally injected sidecars into the ArgoCD namespace, which aggressively intercepts gRPC traffic. ArgoCD heavily relies on internal gRPC between its server, repo-server, and application-controller.</p>
+            <h4><span class="badge-error" data-i18n="badge_symptom">Symptom</span></h4>
+            <p data-i18n="issue_2_symptom">ArgoCD became completely inaccessible, returning <code>502 Bad Gateway</code>. The <code>argocd-server</code> logs were filled with TLS handshake failures.</p>
             <pre><code>rpc error: code = Unavailable desc = connection error: desc = "transport: authentication handshake failed"</code></pre>
           </div>
           <div class="issue-section">
-            <h4><span class="badge-success" data-i18n="badge_resolution">Resolution</span> Disable Sidecar Injection</h4>
-            <p data-i18n="issue_2_sol">We disabled Linkerd proxy injection specifically for the ArgoCD namespace and restarted the controllers to restore internal communication.</p>
+            <h4><span class="badge-discarded" data-i18n="badge_discarded">Discarded Hypotheses</span></h4>
+            <p data-i18n="issue_2_discarded">A 502 usually means a routing problem, so we first re-checked the Gateway/HTTPRoute config and the certificate — both correct. Then suspected <code>argocd-server</code> itself was crash-looping — but every ArgoCD pod was <code>Running</code> and <code>Ready</code>.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-cause" data-i18n="badge_cause">Root Cause</span></h4>
+            <p data-i18n="issue_2_cause">Installing the Linkerd service mesh had globally auto-injected sidecars into the ArgoCD namespace. Linkerd aggressively intercepts gRPC traffic, and ArgoCD relies heavily on internal gRPC between its server, repo-server, and application-controller — the proxy was breaking their TLS handshakes.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-success" data-i18n="badge_fix">Fix</span></h4>
+            <p data-i18n="issue_2_fix">We disabled Linkerd proxy injection specifically for the ArgoCD namespace and recreated the pods to restore internal communication.</p>
             <pre><code>kubectl annotate namespace argocd linkerd.io/inject=disabled --overwrite
 kubectl delete pods --all -n argocd</code></pre>
+          </div>
+          <div class="issue-section issue-section--lesson">
+            <h4><span class="badge-lesson" data-i18n="badge_lesson">Lesson</span></h4>
+            <p data-i18n="issue_2_lesson">Sidecar injection is a namespace-level decision to make before installing anything into that namespace, not a bug to fix afterward. The Ansible role now annotates <code>argocd</code> with <code>linkerd.io/inject=disabled</code> before ArgoCD is ever installed, so this can't recur by ordering alone.</p>
           </div>
         </div>
       </div>
@@ -260,15 +324,27 @@ kubectl delete pods --all -n argocd</code></pre>
       <div class="accordion-body">
         <div class="accordion-content">
           <div class="issue-section">
-            <h4><span class="badge-error" data-i18n="badge_issue">Issue</span> Context Limitations</h4>
-            <p data-i18n="issue_3_desc">After successfully building the Docker image, the pipeline failed during the deployment manifest update phase. The default <code>GITHUB_TOKEN</code> injected by Gitea Actions was insufficient for pushing back to the repository within the specific job context over HTTPS.</p>
+            <h4><span class="badge-error" data-i18n="badge_symptom">Symptom</span></h4>
+            <p data-i18n="issue_3_symptom">Right after a successful image build, the pipeline failed at the manifest-update step with <code>Invalid username or password. fatal: Authentication failed</code>.</p>
           </div>
           <div class="issue-section">
-            <h4><span class="badge-success" data-i18n="badge_resolution">Resolution</span> OAuth Token Injection</h4>
-            <p data-i18n="issue_3_sol">We modified the <code>.gitea/workflows/deploy.yaml</code> to inject a dedicated access token directly into the remote URL before executing the push.</p>
+            <h4><span class="badge-discarded" data-i18n="badge_discarded">Discarded Hypotheses</span></h4>
+            <p data-i18n="issue_3_discarded">We first assumed the token had expired and regenerated it — same failure. Then suspected a branch-protection rule blocking the push — none was configured on that repository.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-cause" data-i18n="badge_cause">Root Cause</span></h4>
+            <p data-i18n="issue_3_cause">The default token injected by Gitea Actions was insufficient for pushing back to the repository from within that specific job's context over HTTPS — a scope problem, not an expiry or policy one.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-success" data-i18n="badge_fix">Fix</span></h4>
+            <p data-i18n="issue_3_fix">We modified <code>.gitea/workflows/deploy.yaml</code> to inject a dedicated access token directly into the remote URL before executing the push.</p>
             <pre><code># Inside the CI/CD Pipeline step:
 git remote set-url origin "http://oauth2:${{ secrets.GITEA_TOKEN }}@git.khalilaliouich.com/khalil/tamagotchi-service.git"
 git push origin HEAD:main</code></pre>
+          </div>
+          <div class="issue-section issue-section--lesson">
+            <h4><span class="badge-lesson" data-i18n="badge_lesson">Lesson</span></h4>
+            <p data-i18n="issue_3_lesson">A token being present and valid isn't the same as a token being scoped for the operation you're about to run. Check what the credential is actually allowed to do, not just whether it exists.</p>
           </div>
         </div>
       </div>
@@ -286,18 +362,30 @@ git push origin HEAD:main</code></pre>
       <div class="accordion-body">
         <div class="accordion-content">
           <div class="issue-section">
-            <h4><span class="badge-error" data-i18n="badge_issue">Issue</span> ErrImagePull / Stale Deployments</h4>
-            <p data-i18n="issue_4_desc">ArgoCD successfully synced the new <code>k8s.yaml</code> manifest, but the K3s worker nodes refused to pull it. Initially, the registry URL was configured as the internal service <code>gitea-http.gitea.svc.cluster.local:3000</code>. K3s containerd daemon resolves DNS differently than pods and couldn\'t authenticate properly without specific registry mirrors.</p>
+            <h4><span class="badge-error" data-i18n="badge_symptom">Symptom</span></h4>
+            <p data-i18n="issue_4_symptom">ArgoCD reported the new manifest as <code>Synced</code>, but the running pods kept serving an old image — no error, just stale behavior.</p>
           </div>
           <div class="issue-section">
-            <h4><span class="badge-success" data-i18n="badge_resolution">Resolution</span> External Domain & Always Pull</h4>
-            <p data-i18n="issue_4_sol">We switched the registry target to the external proxy domain and forced strict layer hash validation.</p>
+            <h4><span class="badge-discarded" data-i18n="badge_discarded">Discarded Hypotheses</span></h4>
+            <p data-i18n="issue_4_discarded">We first assumed ArgoCD hadn't actually synced and re-triggered it manually — no change. Then diffed the image tag in the manifest against what was built — they matched exactly.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-cause" data-i18n="badge_cause">Root Cause</span></h4>
+            <p data-i18n="issue_4_cause">The registry was configured as the internal service <code>gitea-http.gitea.svc.cluster.local:3000</code>, which K3s's containerd resolved and authenticated inconsistently. With <code>imagePullPolicy: IfNotPresent</code>, once any pull had ever succeeded, later pulls silently kept the cached layer instead of failing loudly.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-success" data-i18n="badge_fix">Fix</span></h4>
+            <p data-i18n="issue_4_fix">We switched the registry target to the external, reliably resolvable domain and set <code>imagePullPolicy: Always</code> to force strict layer validation on every deploy.</p>
             <pre><code># k8s.yaml
 spec:
   containers:
     - name: api
       image: git.khalilaliouich.com/khalil/tamagotchi-api:v2
       imagePullPolicy: Always</code></pre>
+          </div>
+          <div class="issue-section issue-section--lesson">
+            <h4><span class="badge-lesson" data-i18n="badge_lesson">Lesson</span></h4>
+            <p data-i18n="issue_4_lesson"><code>IfNotPresent</code> is an availability optimization, not a correctness guarantee. For anything still iterating fast, the extra pull time <code>Always</code> costs is cheap insurance against an entire class of "it deployed but didn't actually update" incidents.</p>
           </div>
         </div>
       </div>
@@ -315,16 +403,28 @@ spec:
       <div class="accordion-body">
         <div class="accordion-content">
           <div class="issue-section">
-            <h4><span class="badge-error" data-i18n="badge_issue">Issue</span> Rejected Login</h4>
-            <p data-i18n="issue_5_desc">The showcase website advertised <code>guest</code> / <code><YOUR_GUEST_PASSWORD></code> as the credentials for ArgoCD, but ArgoCD rejected the login despite proper RBAC mapping in the ConfigMap.</p>
+            <h4><span class="badge-error" data-i18n="badge_symptom">Symptom</span></h4>
+            <p data-i18n="issue_5_symptom">The showcase site advertised <code>guest</code> / a demo password for ArgoCD, but every login attempt was rejected.</p>
           </div>
           <div class="issue-section">
-            <h4><span class="badge-success" data-i18n="badge_resolution">Resolution</span> Bcrypt Secret Patching</h4>
-            <p data-i18n="issue_5_sol">We generated a raw bcrypt hash manually via Python and directly patched the <code>argocd-secret</code> to inject the guest password securely.</p>
-            <pre><code>BCRYPT_HASH=$(python3 -c "import bcrypt; print(bcrypt.hashpw(b'<YOUR_GUEST_PASSWORD>', bcrypt.gensalt()).decode())")
+            <h4><span class="badge-discarded" data-i18n="badge_discarded">Discarded Hypotheses</span></h4>
+            <p data-i18n="issue_5_discarded">We first suspected the <code>argocd-rbac-cm</code> policy mapping itself — read it line by line, syntax was correct. Then checked whether the guest account was even enabled — it was.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-cause" data-i18n="badge_cause">Root Cause</span></h4>
+            <p data-i18n="issue_5_cause">RBAC and the account definition were both fine; the bcrypt password hash for <code>accounts.guest.password</code> in the separate <code>argocd-secret</code> object was missing.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-success" data-i18n="badge_fix">Fix</span></h4>
+            <p data-i18n="issue_5_fix">We generated a bcrypt hash manually via Python, base64-encoded it, and patched <code>argocd-secret</code> directly.</p>
+            <pre><code>BCRYPT_HASH=$(python3 -c "import bcrypt; print(bcrypt.hashpw(b'&lt;YOUR_GUEST_PASSWORD&gt;', bcrypt.gensalt()).decode())")
 BASE64_HASH=$(echo -n "$BCRYPT_HASH" | base64 -w 0)
 
 kubectl patch secret argocd-secret -n argocd -p '{"data": {"accounts.guest.password": "'$BASE64_HASH'"}}'</code></pre>
+          </div>
+          <div class="issue-section issue-section--lesson">
+            <h4><span class="badge-lesson" data-i18n="badge_lesson">Lesson</span></h4>
+            <p data-i18n="issue_5_lesson">ArgoCD splits "is this account allowed to exist and what can it do" (the RBAC ConfigMap) from "can it prove who it is" (the Secret). A login failure is ambiguous between the two until both are checked — RBAC looking correct doesn't clear the second one.</p>
           </div>
         </div>
       </div>
@@ -342,15 +442,170 @@ kubectl patch secret argocd-secret -n argocd -p '{"data": {"accounts.guest.passw
       <div class="accordion-body">
         <div class="accordion-content">
           <div class="issue-section">
-            <h4><span class="badge-error" data-i18n="badge_issue">Issue</span> 502 Bad Gateway</h4>
-            <p data-i18n="issue_6_desc">A frontend CSS update accidentally reverted the container build to an old Nginx Dockerfile, causing a port mismatch (80 vs 3000) for the live metrics backend since the Kubernetes Service was still routing to 3000.</p>
+            <h4><span class="badge-error" data-i18n="badge_symptom">Symptom</span></h4>
+            <p data-i18n="issue_6_symptom">A routine CSS update brought down the entire site with <code>502 Bad Gateway</code>, including the live cluster metrics normally embedded on the homepage.</p>
           </div>
           <div class="issue-section">
-            <h4><span class="badge-success" data-i18n="badge_resolution">Resolution</span> Architecture Restoration</h4>
-            <p data-i18n="issue_6_sol">Restored the <code>server.js</code> Node.js proxy architecture, rebuilt the image via nerdctl, and executed a rolling K8s deployment update with proper ServiceAccount bindings.</p>
+            <h4><span class="badge-discarded" data-i18n="badge_discarded">Discarded Hypotheses</span></h4>
+            <p data-i18n="issue_6_discarded">Since the change that triggered it was CSS, we first suspected the content itself — but a 502 happens before any HTML is served, which ruled that out as soon as we actually looked at where the error originated.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-cause" data-i18n="badge_cause">Root Cause</span></h4>
+            <p data-i18n="issue_6_cause">The build had picked up an older Nginx-based Dockerfile (listening on port 80) instead of the Node.js one, while the Kubernetes Service still targeted port 3000 — a silent mismatch between what got built and what the Service expected.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-success" data-i18n="badge_fix">Fix</span></h4>
+            <p data-i18n="issue_6_fix">We restored the Node.js <code>server.js</code> proxy architecture, rebuilt via <code>nerdctl</code>, and rolled out the corrected image.</p>
             <pre><code>sudo nerdctl build -t showcase-website:latest .
 kubectl set image deployment/showcase-website website=showcase-website:latest -n showcase
 kubectl rollout restart deployment/showcase-website -n showcase</code></pre>
+          </div>
+          <div class="issue-section issue-section--lesson">
+            <h4><span class="badge-lesson" data-i18n="badge_lesson">Lesson</span></h4>
+            <p data-i18n="issue_6_lesson">The real fix wasn't restoring the right file once — it was removing the alternate Dockerfile so it can't be picked up by accident again. <code>website/nginx.conf</code> still exists in this repo as a reference, but nothing in the build path touches it.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Issue 7 -->
+    <div class="accordion-item">
+      <div class="accordion-header">
+        <div class="accordion-header__title">
+          <div class="accordion-header__icon">💾</div>
+          <h3 data-i18n="issue_7_title">Grafana Persistence & Legacy Ingress Cleanup</h3>
+        </div>
+        <div class="accordion-icon">▼</div>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-content">
+          <div class="issue-section">
+            <h4><span class="badge-error" data-i18n="badge_symptom">Symptom</span></h4>
+            <p data-i18n="issue_7_symptom">Dashboards, users, and settings created by hand in the Grafana UI vanished on every pod restart. Separately, stray <code>Ingress</code> objects from Helm chart defaults were still routing traffic outside the intended Gateway API path.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-discarded" data-i18n="badge_discarded">Discarded Hypotheses</span></h4>
+            <p data-i18n="issue_7_discarded">We first assumed a Helm values change had been silently reverted — reviewed release history, values were consistent across upgrades. Then suspected the dashboards-as-code sidecar (the same <code>grafana_dashboard: "1"</code> ConfigMap pattern used for Tamagotchi and Loki) was overwriting manually-created dashboards — but the provisioned ones always survived restarts fine; only the hand-made ones vanished, which pointed at storage, not provisioning.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-cause" data-i18n="badge_cause">Root Cause</span></h4>
+            <p data-i18n="issue_7_cause">Grafana's chart defaults to an ephemeral <code>emptyDir</code> volume: every pod restart started from a blank <code>data.db</code>, wiping anything not defined as versioned config.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-success" data-i18n="badge_fix">Fix</span></h4>
+            <p data-i18n="issue_7_fix">We deployed a dedicated <code>hostPath</code> PersistentVolume and PVC for Grafana and pointed the Helm release at it (<code>helm upgrade --reuse-values</code>), then separately deleted the ghost <code>Ingress</code> objects to fully hand routing to <code>HTTPRoute</code>.</p>
+          </div>
+          <div class="issue-section issue-section--lesson">
+            <h4><span class="badge-lesson" data-i18n="badge_lesson">Lesson</span></h4>
+            <p data-i18n="issue_7_lesson">Dashboards-as-code never needed this fix at all — it doesn't depend on Grafana's own storage. This was the first of what turned out to be a recurring pattern on this cluster: a stateful workload quietly running on ephemeral storage. The Valkey/Gitea outage of 2026-08-08 was the same bug in a different pod — see the runbook.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Issue 8 -->
+    <div class="accordion-item">
+      <div class="accordion-header">
+        <div class="accordion-header__title">
+          <div class="accordion-header__icon">🌐</div>
+          <h3 data-i18n="issue_8_title">UI Translation Race Condition (i18n Bug)</h3>
+        </div>
+        <div class="accordion-icon">▼</div>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-content">
+          <div class="issue-section">
+            <h4><span class="badge-error" data-i18n="badge_symptom">Symptom</span></h4>
+            <p data-i18n="issue_8_symptom">Switching language on the site sometimes rendered raw keys like <code>issues_title</code> instead of actual text.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-discarded" data-i18n="badge_discarded">Discarded Hypotheses</span></h4>
+            <p data-i18n="issue_8_discarded">The name we gave the bug shaped the first hypothesis: a load-order race between <code>setLang()</code> and the dictionaries being defined. We added a <code>DOMContentLoaded</code> guard — the affected strings still broke. Then suspected stale cached JS — hard-refreshed, same result.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-cause" data-i18n="badge_cause">Root Cause</span></h4>
+            <p data-i18n="issue_8_cause">There was no timing bug at all. The keys were simply never defined in one or both dictionaries for that section of the page, so <code>setLang()</code> had nothing to find and fell back to printing the raw key.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-success" data-i18n="badge_fix">Fix</span></h4>
+            <p data-i18n="issue_8_fix">We added the missing keys to both the <code>en</code> and <code>fr</code> dictionaries in <code>app.js</code>.</p>
+          </div>
+          <div class="issue-section issue-section--lesson">
+            <h4><span class="badge-lesson" data-i18n="badge_lesson">Lesson</span></h4>
+            <p data-i18n="issue_8_lesson">The incident's own name was the first, misleading hypothesis, and it stuck as the title even after the real cause turned out to be simpler than a race. Worth naming a postmortem after the root cause is known, not before.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Issue 9 -->
+    <div class="accordion-item">
+      <div class="accordion-header">
+        <div class="accordion-header__title">
+          <div class="accordion-header__icon">📦</div>
+          <h3 data-i18n="issue_9_title">K3s ErrImageNeverPull & Local Containerd Sockets</h3>
+        </div>
+        <div class="accordion-icon">▼</div>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-content">
+          <div class="issue-section">
+            <h4><span class="badge-error" data-i18n="badge_symptom">Symptom</span></h4>
+            <p data-i18n="issue_9_symptom">After rebuilding the website image locally to ship a frontend change, the deployment failed with <code>ErrImageNeverPull</code> — as if the image had never been built at all.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-discarded" data-i18n="badge_discarded">Discarded Hypotheses</span></h4>
+            <p data-i18n="issue_9_discarded">We first assumed the build itself had silently failed — reran it, watched it complete, confirmed the tag existed locally. Then diffed the build tag against the Deployment's <code>image:</code> field — they matched exactly.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-cause" data-i18n="badge_cause">Root Cause</span></h4>
+            <p data-i18n="issue_9_cause"><code>nerdctl build</code> had run against the default containerd socket and namespace. K3s runs its own isolated containerd, at <code>/run/k3s/containerd/containerd.sock</code> in the <code>k8s.io</code> namespace — the kubelet simply couldn't see an image built anywhere else.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-success" data-i18n="badge_fix">Fix</span></h4>
+            <p data-i18n="issue_9_fix">We rebuilt the image directly into K3s's containerd, using the isolated socket and namespace explicitly.</p>
+            <pre><code>sudo nerdctl --address /run/k3s/containerd/containerd.sock \
+  --namespace k8s.io build -t showcase-website:v39 .</code></pre>
+          </div>
+          <div class="issue-section issue-section--lesson">
+            <h4><span class="badge-lesson" data-i18n="badge_lesson">Lesson</span></h4>
+            <p data-i18n="issue_9_lesson">"The image doesn't exist" and "the image exists somewhere the kubelet can't see" produce the exact same error. Worth checking which containerd socket a build actually landed in before assuming the build is broken — this is the exact command now used for every website rebuild on this cluster.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Issue 10 -->
+    <div class="accordion-item">
+      <div class="accordion-header">
+        <div class="accordion-header__title">
+          <div class="accordion-header__icon">🔏</div>
+          <h3 data-i18n="issue_10_title">Git Commit Hanging Indefinitely (GPG Signing)</h3>
+        </div>
+        <div class="accordion-icon">▼</div>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-content">
+          <div class="issue-section">
+            <h4><span class="badge-error" data-i18n="badge_symptom">Symptom</span></h4>
+            <p data-i18n="issue_10_symptom">Automated <code>git commit</code> calls from a headless terminal session hung indefinitely — no error, no visible prompt, until the surrounding task eventually timed out.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-discarded" data-i18n="badge_discarded">Discarded Hypotheses</span></h4>
+            <p data-i18n="issue_10_discarded">We first suspected a network hang — a pre-commit hook reaching out somewhere. There were no hooks installed. Then checked whether the process was deadlocked or spinning — it was idle, just blocked waiting on input.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-cause" data-i18n="badge_cause">Root Cause</span></h4>
+            <p data-i18n="issue_10_cause"><code>commit.gpgsign=true</code> was set globally. Git was waiting on a GPG passphrase prompt that had nowhere to render in that headless context.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-success" data-i18n="badge_fix">Fix</span></h4>
+            <p data-i18n="issue_10_fix">Documented as <code>--no-gpg-sign</code> per commit, to unblock the immediate incident.</p>
+            <pre><code>git commit --no-gpg-sign -m "fix: ..."</code></pre>
+          </div>
+          <div class="issue-section issue-section--lesson">
+            <h4><span class="badge-lesson" data-i18n="badge_lesson">Lesson</span></h4>
+            <p data-i18n="issue_10_lesson">This is a workaround, not a fix, and worth naming as such: bypassing signing per-command trades a hang for a silent gap in provenance. The durable version of this fix is a signing setup built for non-interactive contexts — an agent-cached key or SSH-based commit signing — or an explicit decision that automated commits on this repo are unsigned, made once, not re-decided on every hang.</p>
           </div>
         </div>
       </div>

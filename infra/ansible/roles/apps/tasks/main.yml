@@ -44,10 +44,12 @@
     - "{{ repo_root }}/k8s/tamagotchi/tamagotchi-all.yaml"
     - "{{ repo_root }}/k8s/tamagotchi/servicemonitor.yaml"
     - "{{ repo_root }}/k8s/tamagotchi/prometheus-rules.yaml"
+    - "{{ repo_root }}/k8s/tamagotchi/slo-rules.yaml"
     - "{{ repo_root }}/k8s/tamagotchi/alertmanager-n8n.yaml"
     - "{{ repo_root }}/k8s/tamagotchi/keepalive-cronjob.yaml"
     - "{{ repo_root }}/k8s/uptime-kuma/uptime-kuma-all.yaml"
     - "{{ repo_root }}/n8n.yaml"
+    - "{{ repo_root }}/k8s/tamagotchi/chaos-rbac.yaml"
 
 - name: Dashboards Grafana versionnes
   kubernetes.core.k8s:
@@ -57,6 +59,7 @@
   loop:
     - "{{ repo_root }}/k8s/monitoring/loki-dashboard-cm.yaml"
     - "{{ repo_root }}/k8s/tamagotchi/tamagotchi-dashboard.yaml"
+    - "{{ repo_root }}/k8s/tamagotchi/slo-dashboard.yaml"
 
 # En dernier : elles referencent des Services qui doivent deja exister, sinon
 # la Gateway les rejette et il faut repasser.

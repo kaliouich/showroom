@@ -63,6 +63,37 @@ function k8sRequest(apiPath) {
   });
 }
 
+// Separate from k8sRequest on purpose: a GET that returns garbage is treated
+// as "no data" by every existing caller, which is fine for read-only infra
+// display. A mutation needs its HTTP status actually checked — a silently
+// swallowed failure here would tell a visitor a pod was killed when it wasn't.
+function k8sMutate(apiPath, method) {
+  return new Promise((resolve, reject) => {
+    const token = readToken();
+    if (!token) return reject(new Error('no ServiceAccount token available'));
+    const options = {
+      hostname: 'kubernetes.default.svc',
+      port: 443,
+      path: apiPath,
+      method,
+      headers: { 'Authorization': `Bearer ${token}` },
+      ca: caCert,
+    };
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        let body = null;
+        try { body = JSON.parse(data); } catch (e) { /* empty body on some 2xx responses */ }
+        if (res.statusCode >= 200 && res.statusCode < 300) resolve(body);
+        else reject(new Error(`K8s API ${method} ${apiPath} -> ${res.statusCode}${body && body.message ? ': ' + body.message : ''}`));
+      });
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
 // Prometheus (node-exporter) is the only honest source for node metrics here:
 // the node reports ephemeral-storage as 44Gi while the root filesystem is 183Gi,
 // so kubelet capacity cannot be used for the disk gauge.
@@ -153,6 +184,57 @@ app.get('/api/infra', async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Chaos Button (website/index.html#chaos). Public, unauthenticated, and
+// genuinely destructive by design — RBAC (k8s/tamagotchi/chaos-rbac.yaml)
+// bounds the blast radius to "delete one pod in the tamagotchi namespace",
+// but nothing stops a script from hammering this endpoint, so the rate
+// limit here is the actual safety mechanism, not the RBAC. In-memory state
+// is fine only because showcase-website runs a single replica — this would
+// need a shared store the moment that changes.
+const CHAOS_NAMESPACE = 'tamagotchi';
+const CHAOS_LABEL_SELECTOR = 'app=tamagotchi-api';
+const CHAOS_COOLDOWN_MS = 30 * 1000;
+const CHAOS_HOURLY_CAP = 20;
+let chaosLastAt = 0;
+let chaosTimestamps = [];
+
+app.post('/api/chaos/kill-pod', async (req, res) => {
+  const now = Date.now();
+
+  if (now - chaosLastAt < CHAOS_COOLDOWN_MS) {
+    return res.status(429).json({ error: 'cooldown', retryAfterMs: CHAOS_COOLDOWN_MS - (now - chaosLastAt) });
+  }
+  chaosTimestamps = chaosTimestamps.filter(t => now - t < 60 * 60 * 1000);
+  if (chaosTimestamps.length >= CHAOS_HOURLY_CAP) {
+    return res.status(429).json({ error: 'hourly_cap_reached' });
+  }
+  // Claimed synchronously, before any await: two clicks arriving back to
+  // back must not both read the pre-claim state and both slip through.
+  chaosLastAt = now;
+  chaosTimestamps.push(now);
+
+  try {
+    const listPath = `/api/v1/namespaces/${CHAOS_NAMESPACE}/pods?labelSelector=${encodeURIComponent(CHAOS_LABEL_SELECTOR)}`;
+    const list = await k8sRequest(listPath);
+    const candidates = ((list && list.items) || []).filter(p =>
+      p.status.phase === 'Running' && !p.metadata.deletionTimestamp
+    );
+    if (candidates.length === 0) {
+      return res.status(503).json({ error: 'no_target_pod' });
+    }
+    const target = candidates[Math.floor(Math.random() * candidates.length)];
+    const podName = target.metadata.name;
+
+    await k8sMutate(`/api/v1/namespaces/${CHAOS_NAMESPACE}/pods/${podName}`, 'DELETE');
+
+    console.log(`[chaos] killed pod ${podName} in ${CHAOS_NAMESPACE} (${chaosTimestamps.length}/${CHAOS_HOURLY_CAP} this hour)`);
+    res.json({ killed: podName, namespace: CHAOS_NAMESPACE, timestamp: now });
+  } catch (err) {
+    console.error('[chaos] kill-pod failed:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

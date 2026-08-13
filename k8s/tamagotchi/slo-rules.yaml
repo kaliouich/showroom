@@ -1,0 +1,89 @@
+# Regles d'enregistrement pour le SLO board (voir slo-dashboard.yaml). Objet
+# separe de prometheus-rules.yaml : celui-ci alerte (business rules), celui-ci
+# calcule des series pretes a afficher (record rules), deux responsabilites
+# differentes meme si les deux sont scrapees sur le meme job.
+#
+# SLI choisi : ratio de requetes reussies sur tamagotchi_http_requests_total
+# (deja expose par tamagotchi/api/server.js), plutot que la simple
+# disponibilite `up`. `up` ne dit que "le process repond au scrape" ; le ratio
+# de requetes dit "les visiteurs ont eu une reponse correcte" — c'est la
+# recommandation standard du Google SRE Book (SLI base sur la requete plutot
+# que sur le temps quand la donnee existe).
+#
+# release: kube-prometheus est necessaire : c'est le label que le
+# ruleSelector de la ressource Prometheus utilise pour decouvrir les
+# PrometheusRule (verifie en direct : matchLabels.release=kube-prometheus).
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: tamagotchi-slo-rules
+  namespace: monitoring
+  labels:
+    release: kube-prometheus
+spec:
+  groups:
+    - name: tamagotchi.slo
+      interval: 1m
+      rules:
+        # Debit, par code de statut — panneau de contexte sur le dashboard.
+        - record: tamagotchi:http_requests_total:rate5m
+          expr: sum(rate(tamagotchi_http_requests_total[5m])) by (status_code)
+
+        # `or vector(0)` partout ou on somme les echecs : cette app est saine
+        # la plupart du temps, donc status_code=~"5.." n'a souvent litteralement
+        # aucune serie sur la fenetre. sum() d'un vecteur vide renvoie un
+        # vecteur vide, pas 0 — sans ce filet, la division qui suit n'a rien a
+        # joindre et toute la regle disparait (aucune donnee) au lieu
+        # d'afficher 100%. Verifie en direct avant d'ecrire cette version.
+        - record: tamagotchi:http_requests_failed:rate5m
+          expr: (sum(rate(tamagotchi_http_requests_total{status_code=~"5.."}[5m])) or vector(0))
+
+        # Disponibilite = 1 - (echecs / total), en somme sur la fenetre plutot
+        # qu'en moyenne de ratios : une moyenne de ratios peut mentir quand le
+        # trafic varie dans la fenetre, une somme de compteurs non.
+        - record: tamagotchi:availability:ratio1h
+          expr: >-
+            1 - (
+              (sum(increase(tamagotchi_http_requests_total{status_code=~"5.."}[1h])) or vector(0))
+              /
+              sum(increase(tamagotchi_http_requests_total[1h]))
+            )
+
+        - record: tamagotchi:availability:ratio6h
+          expr: >-
+            1 - (
+              (sum(increase(tamagotchi_http_requests_total{status_code=~"5.."}[6h])) or vector(0))
+              /
+              sum(increase(tamagotchi_http_requests_total[6h]))
+            )
+
+        - record: tamagotchi:availability:ratio30d
+          expr: >-
+            1 - (
+              (sum(increase(tamagotchi_http_requests_total{status_code=~"5.."}[30d])) or vector(0))
+              /
+              sum(increase(tamagotchi_http_requests_total[30d]))
+            )
+
+        # Cible SLO : 99.9% sur 30 jours = 43.2 min/mois de budget d'erreur.
+        # Enregistree comme serie (vector(0.999)) pour rester interrogeable
+        # depuis Grafana au lieu d'etre codee en dur dans chaque panneau.
+        - record: tamagotchi:slo_target:ratio
+          expr: vector(0.999)
+
+        # Budget consomme, en fraction du budget total : 0 = budget intact,
+        # 1 = exactement au seuil SLO, >1 = SLO deja casse sur la fenetre.
+        - record: tamagotchi:error_budget:consumed_ratio30d
+          expr: >-
+            (1 - tamagotchi:availability:ratio30d)
+            /
+            (1 - tamagotchi:slo_target:ratio)
+
+        # Latence : les buckets sont deja exposes par tamagotchi/api/server.js
+        # (client prom-client, buckets 0.01/0.05/0.1/0.5/1/5s) — aucune
+        # instrumentation supplementaire necessaire.
+        - record: tamagotchi:http_request_duration_seconds:p95_5m
+          expr: histogram_quantile(0.95, sum(rate(tamagotchi_http_request_duration_seconds_bucket[5m])) by (le))
+
+        - record: tamagotchi:http_request_duration_seconds:p99_5m
+          expr: histogram_quantile(0.99, sum(rate(tamagotchi_http_request_duration_seconds_bucket[5m])) by (le))

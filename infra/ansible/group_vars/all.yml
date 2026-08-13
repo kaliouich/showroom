@@ -62,7 +62,25 @@ kube_prometheus_values:
         allow_embedding: true
   prometheus:
     prometheusSpec:
-      retention: 15d
+      # Jusqu'ici sans storageSpec : le chart fait alors tourner Prometheus sur
+      # un emptyDir, donc la retention ci-dessous ne valait que jusqu'au
+      # prochain redemarrage du pod. Meme classe de bug que Grafana et
+      # Valkey/Gitea (voir issues.html, incidents 7 et le RUNBOOK-valkey) —
+      # une charge avec etat sur du stockage ephemere. Le SLO board a besoin
+      # d'un historique qui survit reellement 30 jours, donc PVC ici aussi.
+      retention: 30d
+      # Coupe-circuit si la retention temporelle ne suffit pas a purger assez
+      # vite : Prometheus efface les blocs les plus anciens pour rester sous
+      # ce volume plutot que de remplir le disque du noeud.
+      retentionSize: 14GB
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: local-path
+            accessModes: ['ReadWriteOnce']
+            resources:
+              requests:
+                storage: 15Gi
       resources:
         limits:
           memory: 3Gi
