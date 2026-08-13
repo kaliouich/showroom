@@ -69,6 +69,20 @@ const sleepCounter = new client.Counter({
   registers: [register],
 });
 
+const killCounter = new client.Counter({
+  name: 'tamagotchi_kill_actions_total',
+  help: 'Total number of creatures deliberately killed (Chaos Button)',
+  labelNames: ['creature_type'],
+  registers: [register],
+});
+
+const deleteCounter = new client.Counter({
+  name: 'tamagotchi_delete_actions_total',
+  help: 'Total number of creatures permanently deleted and reseeded (Chaos Button)',
+  labelNames: ['creature_type'],
+  registers: [register],
+});
+
 const httpRequestDuration = new client.Histogram({
   name: 'tamagotchi_http_request_duration_seconds',
   help: 'Duration of HTTP requests in seconds',
@@ -324,6 +338,65 @@ app.post('/api/creatures/:id/revive', async (req, res) => {
     );
     const result = await pool.query('SELECT * FROM creatures WHERE id = $1', [req.params.id]);
     res.json({ message: `${result.rows[0].name} has been revived! ✨`, creature: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /creatures/:id/kill — Poison a creature (Chaos Button "meteor" demo).
+// Sets is_alive=false directly, the same state a creature reaches through
+// natural decay — which is exactly what feeds tamagotchi_creatures_dead_total
+// and therefore the real TamagotchiCreatureDied -> Alertmanager -> n8n
+// revival chain. This is deliberately NOT a Kubernetes-level action: nothing
+// here touches a pod, so the thing that heals it is the business-logic
+// automation, not the ReplicaSet controller.
+app.post('/api/creatures/:id/kill', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM creatures WHERE id = $1', [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Creature not found' });
+    if (!rows[0].is_alive) return res.status(400).json({ error: 'This creature is already dead 💀' });
+
+    await pool.query(
+      'UPDATE creatures SET is_alive = false, last_interaction = NOW() WHERE id = $1',
+      [req.params.id]
+    );
+    killCounter.inc({ creature_type: rows[0].type });
+    const result = await pool.query('SELECT * FROM creatures WHERE id = $1', [req.params.id]);
+    res.json({ message: `${result.rows[0].name} was hit by a meteor and poisoned ☄️💀`, creature: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /creatures/:id/delete — Permanently delete a creature (Chaos Button
+// demo). Unlike /kill, this never touches tamagotchi_creatures_dead_total —
+// the row is gone, not marked dead — so it does NOT trigger the Prometheus
+// alert or n8n. That's intentional: it demonstrates a different resilience
+// layer, the app defending its own roster instead of relying on external
+// monitoring automation. A public, unauthenticated action that only ever
+// shrinks the roster would eventually empty it, so a replacement hatches
+// immediately.
+app.post('/api/creatures/:id/delete', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM creatures WHERE id = $1', [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Creature not found' });
+    const deletedName = rows[0].name;
+    deleteCounter.inc({ creature_type: rows[0].type });
+
+    await pool.query('DELETE FROM creatures WHERE id = $1', [req.params.id]);
+
+    const seedNames = ['Pixel', 'Nimbus', 'Sprocket', 'Blossom', 'Byte', 'Echo', 'Flux', 'Glitch'];
+    const allowedTypes = ['dragon', 'cat', 'robot', 'plant', 'alien'];
+    const newId = uuidv4();
+    const newName = seedNames[Math.floor(Math.random() * seedNames.length)];
+    const newType = allowedTypes[Math.floor(Math.random() * allowedTypes.length)];
+    await pool.query('INSERT INTO creatures (id, name, type) VALUES ($1, $2, $3)', [newId, newName, newType]);
+
+    const result = await pool.query('SELECT * FROM creatures WHERE id = $1', [newId]);
+    res.json({
+      message: `${deletedName} was deleted permanently. ${newName} the ${newType} hatched to take its place 🥚`,
+      creature: result.rows[0]
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

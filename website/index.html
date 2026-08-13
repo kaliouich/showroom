@@ -406,30 +406,39 @@
     <div class="section__header">
       <span class="section__badge" data-i18n="chaos_badge">Chaos Button</span>
       <h2 class="section__title" data-i18n="chaos_title">Break it yourself. <span class="gradient-text">Watch it heal.</span></h2>
-      <p class="section__subtitle" data-i18n="chaos_subtitle">Reading about resilience is not the same as watching it happen. This button deletes one real pod on the live cluster.</p>
+      <p class="section__subtitle" data-i18n="chaos_subtitle">Reading about the self-healing chain above is not the same as watching it fire. These buttons act on a real creature in the live database — not a pod, not a Kubernetes object.</p>
     </div>
 
     <div class="chaos-panel">
-      <p class="chaos-panel__text" data-i18n="chaos_explainer"><code>tamagotchi-api</code> runs 2 replicas behind a Kubernetes Service. Click the button and the backend deletes one pod by name through the Kubernetes API, using a Role scoped to exactly one verb (<code>delete</code>), one resource (<code>pods</code>), and one namespace (<code>tamagotchi</code>) — it cannot touch anything else in the cluster. The Deployment controller notices immediately and schedules a replacement. Watch the replica count dip and recover on the dashboard above, in the same window where the availability line doesn't move: that's the actual point — one replica absorbs the gap while the other is rescheduled, so nobody using the app notices.</p>
+      <p class="chaos-panel__text" data-i18n="chaos_explainer_poison"><strong>☄️ Send a Meteor</strong> calls <code>POST /creatures/:id/kill</code> on <code>tamagotchi-api</code>, setting a random living creature's <code>is_alive</code> to <code>false</code> — the same state natural decay reaches on its own. That's what feeds <code>tamagotchi_creatures_dead_total</code>, which is exactly what <code>TamagotchiCreatureDied</code> watches. Nothing here touches a pod: what heals it is the automation described above — Prometheus notices within a minute, Alertmanager routes on the <code>remediation: auto</code> label, and n8n revives the creature. Typically <strong>a few minutes</strong>, not instant on purpose.</p>
 
       <div class="chaos-panel__action">
-        <button id="chaosBtn" class="btn btn--danger" data-i18n="chaos_btn_label">💥 Kill a tamagotchi-api pod</button>
-        <div class="chaos-panel__status" id="chaosStatus"></div>
+        <button id="poisonBtn" class="btn btn--danger" data-i18n="poison_btn_label">☄️ Send a Meteor</button>
+        <div class="chaos-panel__status" id="poisonStatus"></div>
       </div>
-
-      <div class="chaos-panel__replicas">
-        <div class="demo-stat">
-          <span class="demo-stat__value" id="chaosReady">—</span>
-          <span class="demo-stat__label" data-i18n="chaos_ready_label">Ready replicas</span>
-        </div>
-        <div class="demo-stat">
-          <span class="demo-stat__value" id="chaosDesired">—</span>
-          <span class="demo-stat__label" data-i18n="chaos_desired_label">Desired replicas</span>
-        </div>
-      </div>
-
-      <p class="chaos-panel__note" data-i18n="chaos_note">Rate-limited to one kill per 30 seconds, capped per hour. This targets a stateless API pod only — not the database, not the frontend.</p>
     </div>
+
+    <div class="chaos-panel">
+      <p class="chaos-panel__text" data-i18n="chaos_explainer_delete"><strong>🗑️ Delete a Creature</strong> calls <code>POST /creatures/:id/delete</code>, which removes a creature's row entirely and hatches a replacement immediately. This deliberately does <em>not</em> touch the dead gauge or the alert chain — it's a different resilience layer, the application defending its own roster rather than relying on monitoring automation. That's also why it's instant instead of taking minutes: a public, unauthenticated action that only ever shrinks a table needs its own safety net, not n8n's.</p>
+
+      <div class="chaos-panel__action">
+        <button id="deleteBtn" class="btn btn--danger" data-i18n="delete_btn_label">🗑️ Delete a Creature</button>
+        <div class="chaos-panel__status" id="deleteStatus"></div>
+      </div>
+    </div>
+
+    <div class="chaos-panel__replicas">
+      <div class="demo-stat">
+        <span class="demo-stat__value" id="chaosAlive">—</span>
+        <span class="demo-stat__label" data-i18n="demo_alive">Alive</span>
+      </div>
+      <div class="demo-stat demo-stat--danger">
+        <span class="demo-stat__value" id="chaosDead">—</span>
+        <span class="demo-stat__label" data-i18n="demo_dead">Dead</span>
+      </div>
+    </div>
+
+    <p class="chaos-panel__note" style="max-width:860px;margin:1.5rem auto 0;" data-i18n="chaos_note">Each button is rate-limited independently (cooldown + hourly cap) — clicking one doesn't lock out the other. Watch the counts above, or the Tamagotchi dashboard in the Live Infra tab, to see a meteor strike land and, a few minutes later, get reversed.</p>
   </section>
 
   <section class="section" id="freelance">

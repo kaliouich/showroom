@@ -63,33 +63,28 @@ function k8sRequest(apiPath) {
   });
 }
 
-// Separate from k8sRequest on purpose: a GET that returns garbage is treated
-// as "no data" by every existing caller, which is fine for read-only infra
-// display. A mutation needs its HTTP status actually checked — a silently
-// swallowed failure here would tell a visitor a pod was killed when it wasn't.
-function k8sMutate(apiPath, method) {
+// tamagotchi-api is a plain in-cluster HTTP service — no ServiceAccount
+// token involved, unlike k8sRequest. Used by the Chaos Button to act on
+// creatures directly rather than on Kubernetes objects.
+const TAMAGOTCHI_API_INTERNAL = process.env.TAMAGOTCHI_API_URL
+  || 'http://tamagotchi-api.tamagotchi.svc.cluster.local:8080';
+
+function tamagotchiRequest(apiPath, method = 'GET') {
   return new Promise((resolve, reject) => {
-    const token = readToken();
-    if (!token) return reject(new Error('no ServiceAccount token available'));
-    const options = {
-      hostname: 'kubernetes.default.svc',
-      port: 443,
-      path: apiPath,
-      method,
-      headers: { 'Authorization': `Bearer ${token}` },
-      ca: caCert,
-    };
-    const req = https.request(options, (res) => {
+    const target = new URL(apiPath, TAMAGOTCHI_API_INTERNAL);
+    const options = { hostname: target.hostname, port: target.port || 80, path: target.pathname + target.search, method };
+    const req = require('http').request(options, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
         let body = null;
-        try { body = JSON.parse(data); } catch (e) { /* empty body on some 2xx responses */ }
+        try { body = JSON.parse(data); } catch (e) { /* empty body on some responses */ }
         if (res.statusCode >= 200 && res.statusCode < 300) resolve(body);
-        else reject(new Error(`K8s API ${method} ${apiPath} -> ${res.statusCode}${body && body.message ? ': ' + body.message : ''}`));
+        else reject(new Error(`tamagotchi-api ${method} ${apiPath} -> ${res.statusCode}${body && body.error ? ': ' + body.error : ''}`));
       });
     });
     req.on('error', reject);
+    req.setTimeout(5000, () => req.destroy(new Error('tamagotchi-api request timed out')));
     req.end();
   });
 }
@@ -188,53 +183,81 @@ app.get('/api/infra', async (req, res) => {
   }
 });
 
-// Chaos Button (website/index.html#chaos). Public, unauthenticated, and
-// genuinely destructive by design — RBAC (k8s/tamagotchi/chaos-rbac.yaml)
-// bounds the blast radius to "delete one pod in the tamagotchi namespace",
-// but nothing stops a script from hammering this endpoint, so the rate
-// limit here is the actual safety mechanism, not the RBAC. In-memory state
-// is fine only because showcase-website runs a single replica — this would
-// need a shared store the moment that changes.
-const CHAOS_NAMESPACE = 'tamagotchi';
-const CHAOS_LABEL_SELECTOR = 'app=tamagotchi-api';
-const CHAOS_COOLDOWN_MS = 30 * 1000;
-const CHAOS_HOURLY_CAP = 20;
-let chaosLastAt = 0;
-let chaosTimestamps = [];
+// Chaos Button (website/index.html#chaos). Public and unauthenticated by
+// design, acting on tamagotchi-api's own HTTP endpoints rather than the
+// Kubernetes API — no ServiceAccount permissions needed at all for this
+// feature. Rate limiting is the actual safety mechanism, not RBAC. Two
+// independent buckets on purpose: clicking one button shouldn't cool down
+// the other. In-memory state is fine only because showcase-website runs a
+// single replica — this would need a shared store the moment that changes.
+function makeChaosLimiter(cooldownMs, hourlyCap) {
+  let lastAt = 0;
+  let timestamps = [];
+  return function checkAndClaim() {
+    const now = Date.now();
+    if (now - lastAt < cooldownMs) {
+      return { blocked: true, error: 'cooldown', retryAfterMs: cooldownMs - (now - lastAt) };
+    }
+    timestamps = timestamps.filter(t => now - t < 60 * 60 * 1000);
+    if (timestamps.length >= hourlyCap) {
+      return { blocked: true, error: 'hourly_cap_reached' };
+    }
+    // Claimed synchronously, before any await: two clicks arriving back to
+    // back must not both read the pre-claim state and both slip through.
+    lastAt = now;
+    timestamps.push(now);
+    return { blocked: false, countThisHour: timestamps.length };
+  };
+}
+const poisonLimiter = makeChaosLimiter(15 * 1000, 30);
+const deleteLimiter = makeChaosLimiter(15 * 1000, 30);
 
-app.post('/api/chaos/kill-pod', async (req, res) => {
-  const now = Date.now();
-
-  if (now - chaosLastAt < CHAOS_COOLDOWN_MS) {
-    return res.status(429).json({ error: 'cooldown', retryAfterMs: CHAOS_COOLDOWN_MS - (now - chaosLastAt) });
-  }
-  chaosTimestamps = chaosTimestamps.filter(t => now - t < 60 * 60 * 1000);
-  if (chaosTimestamps.length >= CHAOS_HOURLY_CAP) {
-    return res.status(429).json({ error: 'hourly_cap_reached' });
-  }
-  // Claimed synchronously, before any await: two clicks arriving back to
-  // back must not both read the pre-claim state and both slip through.
-  chaosLastAt = now;
-  chaosTimestamps.push(now);
+// Poisons a random living creature: is_alive -> false, the same state
+// natural decay reaches. That's what tamagotchi-api's own decay loop counts
+// into tamagotchi_creatures_dead_total, which is what TamagotchiCreatureDied
+// actually watches — this click feeds the real alert chain (Prometheus ->
+// Alertmanager -> n8n), not a Kubernetes-level action. Revival is not
+// synchronous: it follows the same ~1-10 minute path documented in the
+// self-healing section, on its own schedule.
+app.post('/api/chaos/poison-creature', async (req, res) => {
+  const claim = poisonLimiter();
+  if (claim.blocked) return res.status(429).json(claim);
 
   try {
-    const listPath = `/api/v1/namespaces/${CHAOS_NAMESPACE}/pods?labelSelector=${encodeURIComponent(CHAOS_LABEL_SELECTOR)}`;
-    const list = await k8sRequest(listPath);
-    const candidates = ((list && list.items) || []).filter(p =>
-      p.status.phase === 'Running' && !p.metadata.deletionTimestamp
-    );
-    if (candidates.length === 0) {
-      return res.status(503).json({ error: 'no_target_pod' });
-    }
-    const target = candidates[Math.floor(Math.random() * candidates.length)];
-    const podName = target.metadata.name;
+    const creatures = await tamagotchiRequest('/api/creatures');
+    const alive = (creatures || []).filter(c => c.is_alive);
+    if (alive.length === 0) return res.status(503).json({ error: 'no_target_creature' });
+    const target = alive[Math.floor(Math.random() * alive.length)];
 
-    await k8sMutate(`/api/v1/namespaces/${CHAOS_NAMESPACE}/pods/${podName}`, 'DELETE');
+    const result = await tamagotchiRequest(`/api/creatures/${target.id}/kill`, 'POST');
 
-    console.log(`[chaos] killed pod ${podName} in ${CHAOS_NAMESPACE} (${chaosTimestamps.length}/${CHAOS_HOURLY_CAP} this hour)`);
-    res.json({ killed: podName, namespace: CHAOS_NAMESPACE, timestamp: now });
+    console.log(`[chaos] poisoned creature ${target.name} (${target.id}) (${claim.countThisHour}/30 this hour)`);
+    res.json({ poisoned: target.name, creature: result && result.creature, timestamp: Date.now() });
   } catch (err) {
-    console.error('[chaos] kill-pod failed:', err.message);
+    console.error('[chaos] poison-creature failed:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Permanently removes a random creature and lets tamagotchi-api reseed a
+// replacement immediately. Does not touch the dead gauge — this shows the
+// app defending its own roster, a different resilience layer than the
+// monitoring-driven revival above, not a shortcut around it.
+app.post('/api/chaos/delete-creature', async (req, res) => {
+  const claim = deleteLimiter();
+  if (claim.blocked) return res.status(429).json(claim);
+
+  try {
+    const creatures = await tamagotchiRequest('/api/creatures');
+    if (!creatures || creatures.length === 0) return res.status(503).json({ error: 'no_target_creature' });
+    const target = creatures[Math.floor(Math.random() * creatures.length)];
+
+    const result = await tamagotchiRequest(`/api/creatures/${target.id}/delete`, 'POST');
+
+    console.log(`[chaos] deleted creature ${target.name} (${target.id}), reseeded (${claim.countThisHour}/30 this hour)`);
+    res.json({ deleted: target.name, replacement: result && result.creature, timestamp: Date.now() });
+  } catch (err) {
+    console.error('[chaos] delete-creature failed:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
