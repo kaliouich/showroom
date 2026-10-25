@@ -1,0 +1,81 @@
+# Dashboard Grafana du cluster Kafka. Meme mecanisme que les autres : le
+# sidecar de kube-prometheus-stack decouvre tout ConfigMap portant
+# grafana_dashboard: "1", quel que soit le namespace.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-dashboard
+  namespace: kafka
+  labels:
+    grafana_dashboard: "1"
+data:
+  kafka-showroom.json: |
+    {
+      "uid": "kafka-showroom",
+      "title": "📨 Kafka (Strimzi) — Event Streaming",
+      "tags": [ "kafka", "strimzi", "demo" ],
+      "timezone": "browser",
+      "schemaVersion": 30,
+      "version": 1,
+      "refresh": "15s",
+      "time": { "from": "now-30m", "to": "now" },
+      "panels": [
+        {
+          "type": "stat",
+          "title": "🟢 Brokers up (of 3)",
+          "gridPos": { "h": 5, "w": 4, "x": 0, "y": 0 },
+          "targets": [{ "expr": "count(up{job=\"kafka/kafka-brokers\"} == 1)", "format": "time_series" }],
+          "options": { "graphMode": "none", "colorMode": "value", "textMode": "auto" },
+          "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null }, { "color": "yellow", "value": 2 }, { "color": "green", "value": 3 } ] } } }
+        },
+        {
+          "type": "stat",
+          "title": "⚠️ Under-replicated partitions",
+          "gridPos": { "h": 5, "w": 5, "x": 4, "y": 0 },
+          "targets": [{ "expr": "sum(kafka_server_replicamanager_underreplicatedpartitions)", "format": "time_series" }],
+          "options": { "graphMode": "none", "colorMode": "value", "textMode": "auto" },
+          "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null }, { "color": "red", "value": 1 } ] } } }
+        },
+        {
+          "type": "stat",
+          "title": "📬 Events stored (tamagotchi.events)",
+          "gridPos": { "h": 5, "w": 5, "x": 9, "y": 0 },
+          "targets": [{ "expr": "sum(kafka_topic_partition_current_offset{topic=\"tamagotchi.events\"})", "format": "time_series" }],
+          "options": { "graphMode": "area", "colorMode": "none", "textMode": "auto" }
+        },
+        {
+          "type": "stat",
+          "title": "⏱️ End-to-end p95 (API → consumer)",
+          "gridPos": { "h": 5, "w": 6, "x": 14, "y": 0 },
+          "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(event_feed_end_to_end_seconds_bucket[5m])) by (le))", "format": "time_series" }],
+          "options": { "graphMode": "area", "colorMode": "none", "textMode": "auto" },
+          "fieldConfig": { "defaults": { "unit": "s", "decimals": 2 } }
+        },
+        {
+          "type": "timeseries",
+          "title": "Messages in / second (all topics)",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+          "targets": [{ "expr": "sum(rate(kafka_server_brokertopicmetrics_messagesinpersec_total[2m]))", "legendFormat": "messages/s" }]
+        },
+        {
+          "type": "timeseries",
+          "title": "Events consumed by type",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
+          "targets": [{ "expr": "sum(increase(event_feed_messages_total[1m])) by (type)", "legendFormat": "{{type}}" }]
+        },
+        {
+          "type": "timeseries",
+          "title": "Consumer group lag (event-feed)",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
+          "targets": [{ "expr": "sum(clamp_min(kafka_consumergroup_lag{consumergroup=\"event-feed\"}, 0)) by (topic)", "legendFormat": "{{topic}}" }]
+        },
+        {
+          "type": "timeseries",
+          "title": "Log end offset per partition",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 13 },
+          "targets": [{ "expr": "kafka_topic_partition_current_offset{topic=\"tamagotchi.events\"}", "legendFormat": "partition {{partition}}" }]
+        }
+      ]
+    }

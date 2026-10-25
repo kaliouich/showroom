@@ -1,0 +1,12 @@
+{
+  "name": "event-feed",
+  "version": "1.0.0",
+  "description": "Consumer Kafka du showroom : relaie les evenements du Tamagotchi en SSE",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "dependencies": {
+    "express": "^4.21.0",
+    "kafkajs": "^2.2.4",
+    "prom-client": "^15.1.0"
+  }
+}

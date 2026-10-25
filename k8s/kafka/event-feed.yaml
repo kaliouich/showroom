@@ -1,0 +1,97 @@
+# Consumer du topic tamagotchi.events (source : kafka-apps/event-feed). Il vit
+# dans le namespace kafka, hors maillage Linkerd, pour lire directement les
+# secrets que Strimzi genere (certificat du cluster et mot de passe SCRAM du
+# KafkaUser) sans les copier ailleurs.
+#
+# Image construite sur le noeud, comme le site vitrine :
+#   sudo nerdctl --address /run/k3s/containerd/containerd.sock --namespace k8s.io \
+#     build -t event-feed:vNN kafka-apps/event-feed
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: event-feed
+  namespace: kafka
+  labels:
+    app: event-feed
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: event-feed
+  template:
+    metadata:
+      labels:
+        app: event-feed
+    spec:
+      containers:
+        - name: event-feed
+          image: event-feed:v1
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: KAFKA_BROKERS
+              value: showroom-kafka-bootstrap.kafka.svc:9093
+            - name: KAFKA_USER
+              value: tamagotchi-consumer
+            - name: KAFKA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: tamagotchi-consumer
+                  key: password
+            - name: KAFKA_CA_FILE
+              value: /etc/kafka/ca.crt
+          volumeMounts:
+            - name: cluster-ca
+              mountPath: /etc/kafka
+              readOnly: true
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: http }
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 192Mi
+      volumes:
+        - name: cluster-ca
+          secret:
+            secretName: showroom-cluster-ca-cert
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: event-feed
+  namespace: kafka
+  labels:
+    app: event-feed
+spec:
+  selector:
+    app: event-feed
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: event-feed
+  namespace: kafka
+  labels:
+    release: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app: event-feed
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
