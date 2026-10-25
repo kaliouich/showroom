@@ -1,0 +1,78 @@
+# Valeurs Helm de Gitea. Source unique : le role Ansible platform les lit ici
+# (lookup('file')), et la meme commande d'installation sert en reprise comme en
+# operation courante.
+#
+# Reconstruit le 2026-10-25 apres la compromission du pod par CVE-2026-59774
+# (voir TECHNICAL_ISSUES_RESOLVED.md, incident 12). Ce qui change par rapport a
+# l'ancienne installation, et pourquoi :
+#   - image 28.2.0 : le chart 12.7.0 embarque 1.27.0, encore vulnerable
+#     (correctif en 1.27.1) et en retard sur la branche 28.x ;
+#   - connexion obligatoire pour tout voir, depots prives par defaut : plus
+#     rien n'est accessible sans compte, c'est ce qui rendait l'attaque possible ;
+#   - pas de miroirs ni de Swagger : surface en moins.
+image:
+  registry: docker.io
+  repository: gitea/gitea
+  tag: "28.2.0"
+
+global:
+  storageClass: local-path
+
+persistence:
+  size: 5Gi
+  storageClass: local-path
+
+gitea:
+  # Linkerd : depuis un pod maille, la connexion vers PostgreSQL et Valkey est reinitialisee
+  # par le proxy du serveur (psql et Gitea : "server closed the connection
+  # unexpectedly"), alors qu'un pod non maille se connecte sans probleme. Cause
+  # non isolee ; en attendant, le trafic sortant vers 5432 contourne le proxy
+  # (il reste dans le namespace, et la NetworkPolicy k8s/gitea/networkpolicy.yaml
+  # le limite).
+  podAnnotations:
+    config.linkerd.io/skip-outbound-ports: "5432,6379"
+  admin:
+    # Le mot de passe n'est pas ici : il vit dans le secret
+    # gitea-admin-credentials, hors du depot. Sans cette reference, le chart
+    # reinitialiserait le compte a chaque upgrade.
+    existingSecret: gitea-admin-credentials
+  config:
+    server:
+      DOMAIN: git.khalilaliouich.com
+      ROOT_URL: https://git.khalilaliouich.com/
+    service:
+      DISABLE_REGISTRATION: true
+      REQUIRE_SIGNIN_VIEW: true
+    repository:
+      DEFAULT_PRIVATE: private
+      FORCE_PRIVATE: true
+    mirror:
+      ENABLED: false
+    api:
+      ENABLE_SWAGGER: false
+
+postgresql:
+  enabled: true
+  primary:
+    persistence:
+      storageClass: local-path
+postgresql-ha:
+  enabled: false
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+valkey-cluster:
+  enabled: true
+  # Sans persistance, chaque recreation de pod fait perdre a Valkey son
+  # identite de cluster et met Gitea a terre. C'est exactement ce qui s'est
+  # produit le 2026-08-10. Voir k8s/RUNBOOK-valkey.md.
+  persistence:
+    enabled: true
+    size: 1Gi
+    storageClass: local-path

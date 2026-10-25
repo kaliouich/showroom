@@ -213,7 +213,19 @@
     wait: true
     timeout: 20m
     kubeconfig: "{{ kubeconfig }}"
-    values: "{{ gitea_values }}"
+    values: "{{ lookup('file', repo_root ~ '/k8s/gitea/values.yaml') | from_yaml }}"
+
+# Durcissement de Gitea : filtrage des sorties du namespace et refus de
+# /api/internal a la passerelle (voir ces fichiers pour le pourquoi).
+- name: Durcissement Gitea (NetworkPolicy, filtre de la passerelle)
+  kubernetes.core.k8s:
+    src: "{{ item }}"
+    state: present
+    kubeconfig: "{{ kubeconfig }}"
+  loop:
+    - "{{ repo_root }}/k8s/gitea/networkpolicy.yaml"
+    - "{{ repo_root }}/k8s/gitea/httproute-hardening.yaml"
+    - "{{ repo_root }}/k8s/gitea/alerts.yaml"
 
 # Operateur Strimzi : il ne surveille que le namespace kafka. Le cluster Kafka
 # lui-meme (CR Kafka, KafkaNodePool, KafkaTopic, KafkaUser) est declare dans

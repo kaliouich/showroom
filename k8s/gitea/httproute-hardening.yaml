@@ -1,0 +1,18 @@
+# L'API /api/internal de Gitea n'est destinee qu'aux hooks et a la CLI, depuis
+# le pod lui-meme. Elle ne doit jamais etre joignable depuis Internet : c'est
+# elle que l'attaquant du 2026-10-01 a utilisee, avec un jeton lu dans app.ini,
+# pour poser un hook git. La passerelle repond 404 avant que la requete
+# n'atteigne Gitea.
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: HTTPRouteFilter
+metadata:
+  name: deny-internal
+  namespace: gitea
+spec:
+  directResponse:
+    contentType: text/plain
+    statusCode: 404
+    body:
+      type: Inline
+      inline: not found

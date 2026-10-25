@@ -1,0 +1,30 @@
+# Alertes de detection pour Gitea. L'intrusion du 2026-10-01 a dure 24 jours
+# sans qu'aucune alerte ne parte : le mineur pesait 0,25 cœur de facon constante
+# sur un pod qui n'en utilise normalement que 0,03. Ces regles auraient suffi.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: gitea-security
+  namespace: gitea
+  labels:
+    release: kube-prometheus
+spec:
+  groups:
+    - name: gitea.security
+      interval: 1m
+      rules:
+        - alert: GiteaSustainedCPU
+          expr: sum(rate(container_cpu_usage_seconds_total{namespace="gitea",container="gitea"}[10m])) > 0.15
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: "Gitea consomme du CPU de facon soutenue"
+            description: "{{ $value | humanize }} cœur depuis 1 h (habituel : 0,03). Un mineur de cryptomonnaie ressemble a ca."
+        - alert: GiteaUnexpectedRestarts
+          expr: increase(kube_pod_container_status_restarts_total{namespace="gitea"}[1h]) > 2
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Redemarrages repetes dans le namespace gitea"

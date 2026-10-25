@@ -1,0 +1,62 @@
+# Filtrage des sorties du namespace gitea.
+#
+# Pourquoi : lors de l'incident du 2026-10-01, le pod compromis a pu telecharger
+# sa charge utile (un mineur) depuis des serveurs externes. Aucun composant de
+# Gitea n'a besoin d'Internet : sans sortie, la meme intrusion ne pouvait ni
+# recuperer d'outil ni joindre un serveur de commande.
+#
+# Les NetworkPolicy sont additives : la premiere s'applique a tous les pods du
+# namespace, la seconde ajoute Internet au seul runner, qui doit tirer des
+# images de base.
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-egress
+  namespace: gitea
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    # Gitea, PostgreSQL, Valkey et le runner se parlent entre eux.
+    - to:
+        - podSelector: {}
+    # Resolution DNS.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+    # Plan de controle Linkerd : le proxy a besoin de son identite et de ses
+    # destinations.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: linkerd
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: runner-egress
+  namespace: gitea
+spec:
+  podSelector:
+    matchLabels:
+      app: gitea-act-runner
+  policyTypes: [Egress]
+  egress:
+    # Internet, mais ni le reseau du cluster ni celui du noeud, ni les
+    # metadonnees du cloud. Les builds tirent leurs images de registres publics.
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 169.254.0.0/16

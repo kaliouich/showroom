@@ -16,7 +16,9 @@ versions:
   loki: 2.10.3
   kyverno: 3.8.1
   trivy: 0.33.2
-  gitea: 12.6.0
+  # Chart 12.7.0 (appVersion 1.27.0) ; l'image est forcee a 28.2.0 dans
+  # k8s/gitea/values.yaml. Voir TECHNICAL_ISSUES_RESOLVED.md, incident 12.
+  gitea: 12.7.0
   argocd: v3.4.4
   strimzi: 1.3.0
   linkerd_edge: edge-26.6.3
@@ -88,44 +90,5 @@ kube_prometheus_values:
         requests:
           memory: 512Mi
 
-gitea_values:
-  global:
-    storageClass: local-path
-  persistence:
-    size: 5Gi
-    storageClass: local-path
-  gitea:
-    # Le mot de passe admin n'est pas ici : il vit dans le secret
-    # gitea-admin-credentials, hors du depot. Sans cette reference, le chart
-    # reinitialiserait le compte a chaque upgrade.
-    admin:
-      existingSecret: gitea-admin-credentials
-    config:
-      server:
-        DOMAIN: git.khalilaliouich.com
-        ROOT_URL: https://git.khalilaliouich.com/
-      service:
-        DISABLE_REGISTRATION: true
-  postgresql:
-    enabled: true
-    primary:
-      persistence:
-        storageClass: local-path
-  postgresql-ha:
-    enabled: false
-  resources:
-    limits:
-      cpu: 500m
-      memory: 512Mi
-    requests:
-      cpu: 100m
-      memory: 256Mi
-  valkey-cluster:
-    enabled: true
-    # Sans persistance, chaque recreation de pod fait perdre a Valkey son
-    # identite de cluster et met Gitea a terre. C'est exactement ce qui s'est
-    # produit le 2026-08-10. Voir k8s/RUNBOOK-valkey.md.
-    persistence:
-      enabled: true
-      size: 1Gi
-      storageClass: local-path
+# Les valeurs Helm de Gitea vivent dans k8s/gitea/values.yaml (source unique,
+# lue par le role platform) : elles sont versionnees avec le reste du durcissement.

@@ -124,6 +124,17 @@ spec:
   hostnames:
   - "git.khalilaliouich.com"
   rules:
+  # Jamais d'API interne depuis Internet (voir k8s/gitea/httproute-hardening.yaml).
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api/internal
+    filters:
+    - type: ExtensionRef
+      extensionRef:
+        group: gateway.envoyproxy.io
+        kind: HTTPRouteFilter
+        name: deny-internal
   - matches:
     - path:
         type: PathPrefix
