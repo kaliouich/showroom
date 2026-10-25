@@ -1840,3 +1840,18 @@ a { color: inherit; text-decoration: none; }
   .hero__title { font-size: 2.2rem; }
   .hero__terminal { transform: scale(0.65); margin-top: 2rem; margin-left: -1rem; margin-right: -1rem; }
 }
+
+/* ---- Event streaming (Kafka) ---- */
+.event-feed { max-width: 860px; margin: 2rem auto 0; background: rgba(0,0,0,0.25); border: 1px solid var(--glass-border); border-radius: var(--radius); overflow: hidden; }
+.event-feed__head { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; font-size: 0.85rem; font-weight: 600; border-bottom: 1px solid var(--glass-border); }
+.event-feed__dot { width: 10px; height: 10px; border-radius: 50%; background: #666; flex: none; }
+.event-feed__dot--on { background: #28c840; box-shadow: 0 0 8px #28c840; }
+.event-feed__list { list-style: none; margin: 0; padding: 0; max-height: 340px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
+.event-feed__item, .event-feed__empty { display: flex; gap: 0.75rem; align-items: baseline; padding: 0.45rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.event-feed__empty { opacity: 0.6; font-family: inherit; }
+.event-feed__time { opacity: 0.55; flex: none; }
+.event-feed__text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.event-feed__meta { opacity: 0.45; flex: none; font-size: 0.72rem; }
+.event-feed__item--died { background: rgba(255,0,85,0.08); }
+.event-feed__item--revived { background: rgba(40,200,64,0.08); }
+@media (max-width: 600px) { .event-feed__meta { display: none; } }

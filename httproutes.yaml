@@ -12,6 +12,18 @@ spec:
   - "khalilaliouich.com"
   - "www.khalilaliouich.com"
   rules:
+  # Flux SSE des evenements Kafka : une connexion longue par visiteur. Sans ce
+  # timeout a 0s, Envoy coupe la connexion apres 15 s (timeout de route par
+  # defaut) et le navigateur doit se reconnecter en boucle.
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api/events/stream
+    timeouts:
+      request: 0s
+    backendRefs:
+    - name: showcase-website
+      port: 80
   - matches:
     - path:
         type: PathPrefix

@@ -38,6 +38,12 @@ graph TB
             N8[n8n]
         end
 
+        subgraph "Event streaming"
+            SZ["Strimzi<br/>operator"]
+            KF["Kafka KRaft<br/>3 brokers, TLS+SCRAM"]
+            EF["event-feed<br/>consumer"]
+        end
+
         subgraph "Sécurité"
             CM[cert-manager]
             LD["Linkerd<br/>(mTLS)"]
@@ -53,6 +59,9 @@ graph TB
     TG -->|métriques custom| PR
     PR --> GF
     PR -->|alerte| AM -->|webhook| N8 -->|ranime| TG
+    SZ -->|reconcilie| KF
+    TG -->|événements| KF -->|consumer group| EF -->|SSE| WS
+    PR -.->|lag, ISR| KF
     LO[Promtail] --> LK --> GF
     WS -->|"API K8s (RO) + PromQL"| PR
     CM -->|"ACME HTTP-01"| EG
@@ -68,6 +77,12 @@ graph TB
   créature du Tamagotchi meurt → Prometheus détecte → Alertmanager route sur un
   label → n8n ranime. Et une seconde alerte critique surveille l'échec de
   cette remédiation elle-même — voir la section *Self-healing* du site.
+- **Un flux d'événements Kafka réel, pas une capture d'écran.** Le Tamagotchi
+  publie chaque action (adoption, repas, mort, résurrection…) sur un topic
+  répliqué 3 fois, opéré par [Strimzi](k8s/kafka/) (KRaft, TLS + SCRAM, topic et
+  utilisateurs déclarés en CR). Un consumer le relaie en direct sur le site ;
+  lag et partitions sous-répliquées ont leur dashboard Grafana et leurs
+  alertes. Limite assumée : les 3 brokers partagent la même VM.
 - **Les pannes rencontrées sont documentées**, causes racines et commandes de
   résolution incluses : [`TECHNICAL_ISSUES_RESOLVED.md`](TECHNICAL_ISSUES_RESOLVED.md)
   et la page [Issues](https://khalilaliouich.com/issues.html) du site.

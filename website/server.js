@@ -249,6 +249,57 @@ app.post('/api/chaos/poison-creature', async (req, res) => {
   }
 });
 
+// ---------------------------------------------------------------------------
+// Event streaming (website/index.html#events). Le consumer Kafka vit dans
+// son propre service (kafka/event-feed) ; le site ne parle jamais a Kafka, il
+// relaie seulement son flux HTTP. Si Kafka ou event-feed tombe, ces routes
+// repondent proprement et le reste du site continue de fonctionner.
+// ---------------------------------------------------------------------------
+const EVENT_FEED = new URL(process.env.EVENT_FEED_URL
+  || 'http://event-feed.kafka.svc.cluster.local:8080');
+const http = require('http');
+const MAX_STREAMS = 40; // meme plafond cote site : un visiteur = une connexion ouverte
+let openStreams = 0;
+
+app.get('/api/events/recent', (req, res) => {
+  const r = http.get({ host: EVENT_FEED.hostname, port: EVENT_FEED.port, path: '/recent', timeout: 4000 }, (up) => {
+    res.set('Content-Type', 'application/json');
+    up.pipe(res);
+  });
+  r.on('error', () => res.status(502).json({ error: 'event-feed unreachable' }));
+  r.on('timeout', () => r.destroy());
+});
+
+app.get('/api/events/stream', (req, res) => {
+  if (openStreams >= MAX_STREAMS) return res.status(503).end();
+  const up = http.get({ host: EVENT_FEED.hostname, port: EVENT_FEED.port, path: '/stream' }, (r) => {
+    openStreams++;
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no'
+    });
+    r.pipe(res);
+    const done = () => { openStreams--; };
+    res.on('close', () => { done(); up.destroy(); });
+    r.on('end', () => res.end());
+  });
+  up.on('error', () => { if (!res.headersSent) res.status(502).end(); else res.end(); });
+});
+
+app.get('/api/kafka/stats', async (req, res) => {
+  const [brokers, underRep, stored, p95, lag, rate] = await Promise.all([
+    promQuery('count(up{job="kafka/kafka-brokers"} == 1)'),
+    promQuery('sum(kafka_server_replicamanager_underreplicatedpartitions)'),
+    promQuery('sum(kafka_topic_partition_current_offset{topic="tamagotchi.events"})'),
+    promQuery('histogram_quantile(0.95, sum(rate(event_feed_end_to_end_seconds_bucket[15m])) by (le))'),
+    promQuery('sum(clamp_min(kafka_consumergroup_lag{consumergroup="event-feed"}, 0))'),
+    promQuery('sum(rate(event_feed_messages_total[5m]))')
+  ]);
+  res.json({ brokers, underReplicated: underRep, eventsStored: stored, p95Seconds: p95, consumerLag: lag, eventsPerSecond: rate });
+});
+
 // Deliberately dependency-free: a liveness check must answer even if
 // Prometheus or the K8s API are unreachable, otherwise a monitoring outage
 // would also take down the probe that's supposed to report it.

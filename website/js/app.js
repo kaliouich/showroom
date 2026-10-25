@@ -70,6 +70,16 @@ const i18n = {
     chaos_explainer_poison: '<strong>☄️ Send a Meteor</strong> calls <code>POST /creatures/:id/kill</code> on <code>tamagotchi-api</code> for every currently living creature, setting each one\'s <code>is_alive</code> to <code>false</code> — the same state natural decay reaches on its own. That\'s what feeds <code>tamagotchi_creatures_dead_total</code>, which is exactly what <code>TamagotchiCreatureDied</code> watches. A full wipe makes the alert impossible to miss. Nothing here touches a pod: what heals it is the automation described above — Prometheus notices within a minute, Alertmanager routes on the <code>remediation: auto</code> label, and n8n revives every one of them. Usually under <strong>90 seconds</strong>, not instant on purpose — the full chain runs for real, no shortcut.',
     poison_btn_label: '☄️ Send a Meteor',
     chaos_note: 'Rate-limited to one strike per minute, capped per hour — this kills every creature at once, it needs room to actually recover before it can fire again. Watch the counts above, or the Tamagotchi dashboard in the Live Infra tab, to see a meteor strike land and, a few minutes later, get reversed. Want to remove a creature permanently instead? That\'s a per-creature action in <a href="https://demo.khalilaliouich.com" target="_blank">the app itself</a> — the opposite of Adopt, not a chaos event.',
+    nav_events: '📨 Events',
+    events_badge: 'Event streaming',
+    events_title: 'Every creature action is an event. <span class="gradient-text">Replicated three times.</span>',
+    events_subtitle: 'Kafka, run by the Strimzi operator, carries the Tamagotchi\'s life as a stream. This feed is live: what you see below was published by the API, stored on three brokers, and read back by a consumer group.',
+    events_k_brokers: 'Brokers up / 3', events_k_stored: 'Events stored', events_k_p95: 'End-to-end p95', events_k_lag: 'Consumer lag',
+    events_feed_title: 'Live feed — topic tamagotchi.events',
+    events_feed_empty: 'Waiting for events… feed, play with or adopt a creature in the demo app, or send a meteor below.',
+    events_explainer: 'Each event is keyed by creature id, so one creature\'s story stays ordered inside a single partition. The topic, its ACLs and both service accounts are declared as <code>KafkaTopic</code> / <code>KafkaUser</code> custom resources in Git; the listener is TLS with SCRAM-SHA-512. Metrics and consumer lag are on the <a href="https://grafana.khalilaliouich.com/d/kafka-showroom" target="_blank">Kafka dashboard</a>.',
+    events_honest: 'Honest limits: the three brokers share one VM, so this survives the loss of a broker process (replication factor 3, min.insync.replicas 2, rolling restarts by the operator), not the loss of the machine. The self-healing chain above does not depend on Kafka — the stream observes it, it does not drive it.',
+    ev_adopted: 'adopted', ev_fed: 'was fed', ev_played: 'played', ev_slept: 'slept', ev_died: 'died', ev_revived: 'was revived', ev_deleted: 'was deleted',
     poison_status_working: 'Calling down a meteor…', poison_status_done: '{count} creature(s) poisoned ☄️ — watch for the revival, usually under 90s',
     chaos_status_cooldown: 'Cooling down, try again in a few seconds', chaos_status_error: "Couldn't reach tamagotchi-api",
     tool_n8n: "Receives Alertmanager webhooks and revives the dead creatures. This is the remediation step of the self-healing chain, not a demo.",
@@ -292,6 +302,16 @@ const i18n = {
     iac_tf_chips: "<span class=\"hire-chip\">VCN &amp; sous-réseau</span><span class=\"hire-chip\">Passerelle Internet</span><span class=\"hire-chip\">Security lists</span><span class=\"hire-chip\">Compute ARM A1</span><span class=\"hire-chip\">IP réservée</span>",
     iac_tf_link: "📂 Lire le Terraform →",
     iac_ans_scope: "tout ce qui se passe dans la machine et le cluster",
+    nav_events: '📨 Événements',
+    events_badge: 'Event streaming',
+    events_title: 'Chaque action est un événement. <span class="gradient-text">Répliqué trois fois.</span>',
+    events_subtitle: 'Kafka, piloté par l\'opérateur Strimzi, transporte la vie du Tamagotchi comme un flux. Ce fil est en direct : ce que tu vois a été publié par l\'API, stocké sur trois brokers, puis relu par un consumer group.',
+    events_k_brokers: 'Brokers up / 3', events_k_stored: 'Événements stockés', events_k_p95: 'Bout en bout p95', events_k_lag: 'Lag du consumer',
+    events_feed_title: 'Fil en direct — topic tamagotchi.events',
+    events_feed_empty: 'En attente d\'événements… nourris, joue avec ou adopte une créature dans l\'app démo, ou envoie une météorite plus bas.',
+    events_explainer: 'Chaque événement a pour clé l\'id de la créature : son histoire reste ordonnée dans une seule partition. Le topic, ses ACL et les deux comptes de service sont déclarés en <code>KafkaTopic</code> / <code>KafkaUser</code> dans Git ; le listener est en TLS avec SCRAM-SHA-512. Métriques et lag sur le <a href="https://grafana.khalilaliouich.com/d/kafka-showroom" target="_blank">dashboard Kafka</a>.',
+    events_honest: 'Limites assumées : les trois brokers partagent une seule VM, donc ça survit à la perte d\'un processus broker (facteur de réplication 3, min.insync.replicas 2, redémarrages progressifs par l\'opérateur), pas à celle de la machine. La chaîne d\'auto-réparation ci-dessus ne dépend pas de Kafka — le flux l\'observe, il ne la pilote pas.',
+    ev_adopted: 'a été adopté(e)', ev_fed: 'a mangé', ev_played: 'a joué', ev_slept: 'a dormi', ev_died: 'est mort(e)', ev_revived: 'a été ranimé(e)', ev_deleted: 'a été supprimé(e)',
     iac_ans_desc: "Paquets, pare-feu, K3s, releases Helm, manifestes, images, timer de sauvegarde. Ansible intervient là où Terraform n'aurait que des <code>local-exec</code> : il est idempotent, se rejoue sur un cluster vivant pour corriger une dérive, et fait des valeurs Helm des fichiers versionnés au lieu de les laisser enfouies dans l'état d'une release.",
     iac_ans_chips: "<span class=\"hire-chip\">K3s</span><span class=\"hire-chip\">cert-manager</span><span class=\"hire-chip\">Envoy Gateway</span><span class=\"hire-chip\">ArgoCD</span><span class=\"hire-chip\">Linkerd</span><span class=\"hire-chip\">Prometheus</span><span class=\"hire-chip\">Gitea</span><span class=\"hire-chip\">Sauvegardes</span>",
     iac_ans_link: "📂 Lire le playbook →",
@@ -1084,3 +1104,70 @@ function initHamburgerMenu() {
   });
 }
 initHamburgerMenu();
+
+// ---- Event streaming (Kafka) ----
+// Les noms de creatures viennent des visiteurs : tout passe par textContent,
+// jamais par innerHTML.
+const EVENT_ICONS = {
+  'creature.adopted': '🐣', 'creature.fed': '🍖', 'creature.played': '🎮', 'creature.slept': '💤',
+  'creature.died': '💀', 'creature.revived': '✨', 'creature.deleted': '🗑️'
+};
+const EVENT_KEYS = {
+  'creature.adopted': 'ev_adopted', 'creature.fed': 'ev_fed', 'creature.played': 'ev_played',
+  'creature.slept': 'ev_slept', 'creature.died': 'ev_died', 'creature.revived': 'ev_revived',
+  'creature.deleted': 'ev_deleted'
+};
+const EVENT_LIST_MAX = 30;
+
+function renderEvent(evt) {
+  const li = document.createElement('li');
+  li.className = `event-feed__item event-feed__item--${(evt.type || '').split('.')[1] || 'other'}`;
+  const time = document.createElement('span');
+  time.className = 'event-feed__time';
+  time.textContent = new Date(evt.ts || Date.now()).toLocaleTimeString();
+  const text = document.createElement('span');
+  text.className = 'event-feed__text';
+  const name = evt.creature && evt.creature.name ? evt.creature.name : '?';
+  text.textContent = `${EVENT_ICONS[evt.type] || '•'} ${name} ${t(EVENT_KEYS[evt.type] || 'ev_fed')}`;
+  const meta = document.createElement('span');
+  meta.className = 'event-feed__meta';
+  meta.textContent = `p${evt.partition ?? '?'}·#${evt.offset ?? '?'}${evt.source && evt.source !== 'api' ? ' · ' + evt.source : ''}`;
+  li.append(time, text, meta);
+  return li;
+}
+
+function pushEvent(list, evt) {
+  const empty = list.querySelector('.event-feed__empty');
+  if (empty) empty.remove();
+  list.prepend(renderEvent(evt));
+  while (list.children.length > EVENT_LIST_MAX) list.lastChild.remove();
+}
+
+async function initEventFeed() {
+  const list = document.getElementById('eventList');
+  if (!list) return;
+  try {
+    const res = await fetch('/api/events/recent');
+    if (res.ok) (await res.json()).reverse().forEach(e => pushEvent(list, e));
+  } catch (e) { /* le flux live prendra le relais */ }
+  const dot = document.getElementById('eventDot');
+  const es = new EventSource('/api/events/stream');
+  es.onopen = () => dot.classList.add('event-feed__dot--on');
+  es.onerror = () => dot.classList.remove('event-feed__dot--on'); // EventSource se reconnecte seul
+  es.onmessage = (m) => { try { pushEvent(list, JSON.parse(m.data)); } catch (e) { /* ignore */ } };
+}
+
+async function fetchKafkaStats() {
+  try {
+    const d = await (await fetch('/api/kafka/stats')).json();
+    const num = (v, f) => (v === null || v === undefined || Number.isNaN(v)) ? '—' : f(v);
+    document.getElementById('kBrokers').textContent = num(d.brokers, v => `${v}/3`);
+    document.getElementById('kStored').textContent = num(d.eventsStored, v => Math.round(v).toLocaleString());
+    document.getElementById('kP95').textContent = num(d.p95Seconds, v => v < 1 ? `${Math.round(v * 1000)} ms` : `${v.toFixed(1)} s`);
+    document.getElementById('kLag').textContent = num(d.consumerLag, v => Math.round(v));
+  } catch (e) { /* tuiles laissees a "—" */ }
+}
+
+initEventFeed();
+fetchKafkaStats();
+setInterval(fetchKafkaStats, 15000);

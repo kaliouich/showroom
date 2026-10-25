@@ -34,6 +34,7 @@
         <a href="#demo" class="nav__link" data-i18n="nav_demo">Demo App</a>
         <a href="#freelance" class="nav__link nav__link--hire" data-i18n="nav_freelance">💼 Hire Me</a>
         <a href="#selfhealing" class="nav__link" data-i18n="nav_heal">♻️ Self-healing</a>
+        <a href="#events" class="nav__link" data-i18n="nav_events">📨 Events</a>
         <a href="#iac" class="nav__link" data-i18n="nav_iac">IaC</a>
         <a href="#tools" class="nav__link" data-i18n="nav_tools">Tools</a>
         <a href="about.html" class="nav__link" data-i18n="nav_about">👤 About</a>
@@ -430,6 +431,34 @@
     </div>
 
     <p class="chaos-panel__note" style="max-width:860px;margin:1.5rem auto 0;" data-i18n="chaos_note">Rate-limited to one strike per minute, capped per hour — this kills every creature at once, it needs room to actually recover before it can fire again. Watch the counts above, or the Tamagotchi dashboard in the Live Infra tab, to see a meteor strike land and, a few minutes later, get reversed. Want to remove a creature permanently instead? That's a per-creature action in <a href="https://demo.khalilaliouich.com" target="_blank">the app itself</a> — the opposite of Adopt, not a chaos event.</p>
+  </section>
+
+  <section class="section" id="events">
+    <div class="section__header">
+      <span class="section__badge" data-i18n="events_badge">Event streaming</span>
+      <h2 class="section__title" data-i18n="events_title">Every creature action is an event. <span class="gradient-text">Replicated three times.</span></h2>
+      <p class="section__subtitle" data-i18n="events_subtitle">Kafka, run by the Strimzi operator, carries the Tamagotchi's life as a stream. This feed is live: what you see below was published by the API, stored on three brokers, and read back by a consumer group.</p>
+    </div>
+
+    <div class="demo-live__stats" id="kafkaStats">
+      <div class="demo-stat demo-stat--info"><span class="demo-stat__value" id="kBrokers">—</span><span class="demo-stat__label" data-i18n="events_k_brokers">Brokers up / 3</span></div>
+      <div class="demo-stat demo-stat--purple"><span class="demo-stat__value" id="kStored">—</span><span class="demo-stat__label" data-i18n="events_k_stored">Events stored</span></div>
+      <div class="demo-stat demo-stat--info"><span class="demo-stat__value" id="kP95">—</span><span class="demo-stat__label" data-i18n="events_k_p95">End-to-end p95</span></div>
+      <div class="demo-stat demo-stat--warn"><span class="demo-stat__value" id="kLag">—</span><span class="demo-stat__label" data-i18n="events_k_lag">Consumer lag</span></div>
+    </div>
+
+    <div class="event-feed" aria-live="polite">
+      <div class="event-feed__head">
+        <span data-i18n="events_feed_title">Live feed — topic tamagotchi.events</span>
+        <span class="event-feed__dot" id="eventDot" title="SSE"></span>
+      </div>
+      <ul class="event-feed__list" id="eventList">
+        <li class="event-feed__empty" data-i18n="events_feed_empty">Waiting for events… feed, play with or adopt a creature in the demo app, or send a meteor below.</li>
+      </ul>
+    </div>
+
+    <p class="chaos-panel__note" style="max-width:860px;margin:1.5rem auto 0;" data-i18n="events_explainer">Each event is keyed by creature id, so one creature's story stays ordered inside a single partition. The topic, its ACLs and both service accounts are declared as <code>KafkaTopic</code> / <code>KafkaUser</code> custom resources in Git; the listener is TLS with SCRAM-SHA-512. Metrics and consumer lag are on the <a href="https://grafana.khalilaliouich.com/d/kafka-showroom" target="_blank">Kafka dashboard</a>.</p>
+    <p class="chaos-panel__note" style="max-width:860px;margin:1rem auto 0;" data-i18n="events_honest">Honest limits: the three brokers share one VM, so this survives the loss of a broker process (replication factor 3, min.insync.replicas 2, rolling restarts by the operator), not the loss of the machine. The self-healing chain above does not depend on Kafka — the stream observes it, it does not drive it.</p>
   </section>
 
   <section class="section" id="freelance">
