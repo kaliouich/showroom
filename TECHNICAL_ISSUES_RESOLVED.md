@@ -126,3 +126,33 @@ Bypassed the GPG requirement for automated agent commits by injecting the `--no-
 ```bash
 git commit --no-gpg-sign -m "fix: ..."
 ```
+
+---
+
+## 11. Pods `Pending` at 55 % real CPU: the node was full on *requests*
+**Issue:**
+After installing the Strimzi operator and applying the Kafka cluster, all three brokers (and five Trivy scan jobs for the new namespace) stayed `Pending` for hours with `0/1 nodes are available: 1 Insufficient cpu`, while `kubectl top node` showed only ~55 % CPU in use.
+**Root Cause:**
+The scheduler places pods on CPU *requests*, not on measured usage. The 4-vCPU node already had 100 % of its CPU reserved, mostly by idle components: Kyverno (4 controllers × 100m, measured at 2–4m each, no policy loaded), a worker requesting 500m, transient Trivy scan jobs. Memory was fine (78 % requested), so nothing looked wrong until a new workload arrived.
+**Resolution:**
+1. Right-sized Kyverno's four controllers from 100m to 25m requests (`helm upgrade --reuse-values`). The rolling update then deadlocked: the surge pods could not be scheduled because the node was full, so the old pods never terminated. Deleting the old pods freed the CPU and let the new ones start.
+2. Kafka brokers request 50m each (they idle at a few millicores); the memory limit and JVM heap are what actually bound them (`-Xmx512m`, 1Gi limit).
+**Lesson:**
+On a single small node, `Allocated resources` in `kubectl describe node` is the number to watch, not `kubectl top`. And a rolling update needs headroom for the surge pod — on a full node, either lower `maxSurge` to 0 or free capacity first.
+
+
+---
+
+## 12. Gitea compromised through an unauthenticated file read (CVE-2026-59774)
+**Issue:**
+While investigating pods stuck in `Pending`, a `git clone` against the in-cluster Gitea failed with `504` and `remote: wget: server returned error` lines that Gitea never prints. Inside the pod, the git user's global config held `uploadpack.packObjectsHook = sh /data/home/.pwn`, and a binary named `{kthreadd}` was running under qemu emulation. A Monero miner had been installed 24 days earlier.
+**Root Cause:**
+Gitea 1.26.1 was exposed to the Internet with a public repository. CVE-2026-59774 (fixed in 1.27.1, published 60 days before the attack) lets an anonymous request read arbitrary server files through the markup endpoint (`#+INCLUDE` in Org-mode), which discloses `INTERNAL_TOKEN` from `app.ini`. With it, the internal logger API — reachable through the public ingress — was used to write a forged log line into the global git config as a `packObjectsHook`, executed on the next anonymous clone. Everything happened in 20 seconds on 2026-10-01 10:51 UTC. Nothing alerted for 24 days, even though the pod's CPU had gone from 0.03 to a constant 0.25 core for five days.
+**Impact (verified):**
+Command execution as the Gitea user in one pod. No account, token, SSH key or webhook was added; the repository history, the deployed image and the host were intact; the pod's service account had no Kubernetes permission. Every secret mounted in the pod was treated as stolen.
+**Resolution:**
+1. Contained first (Gitea and its runner scaled to zero), evidence preserved (volume archive, database dump, hashes), then analysed from gateway logs (Loki), Prometheus and file timestamps.
+2. Rebuilt from scratch: Gitea 28.2.0, new volumes, new database, new admin credential, new access tokens scoped to the minimum (CI push, ArgoCD read-only, registry pull).
+3. Hardened: sign-in required for everything, private repositories by default, `/api/internal` answered 404 by the gateway (`HTTPRouteFilter` direct response), egress of the whole namespace denied by `NetworkPolicy` (only the runner may reach the Internet, never the cluster), alert on sustained CPU.
+**Lesson:**
+An internal API must never be reachable from the Internet, and a forge needs both a patch cadence and an egress policy. The blast radius stayed small because of choices made earlier (no Kubernetes permissions for the pod, no secret shared with other workloads) — and detection was the missing layer, not prevention alone.

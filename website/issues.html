@@ -611,6 +611,79 @@ kubectl rollout restart deployment/showcase-website -n showcase</code></pre>
       </div>
     </div>
 
+    <!-- Issue 11 -->
+    <div class="accordion-item">
+      <div class="accordion-header">
+        <div class="accordion-header__title">
+          <div class="accordion-header__icon">🧮</div>
+          <h3 data-i18n="issue_11_title">Pods Pending at 55% Real CPU: the Node Was Full on Requests</h3>
+        </div>
+        <div class="accordion-icon">▼</div>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-content">
+          <div class="issue-section">
+            <h4><span class="badge-error" data-i18n="badge_symptom">Symptom</span></h4>
+            <p data-i18n="issue_11_symptom">After installing the Kafka operator, all three brokers (and five Trivy scan jobs for the new namespace) stayed <code>Pending</code> for hours: <code>0/1 nodes are available: 1 Insufficient cpu</code>. Meanwhile <code>kubectl top node</code> showed only about 55% CPU in use.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-discarded" data-i18n="badge_discarded">Discarded Hypotheses</span></h4>
+            <p data-i18n="issue_11_discarded">Kafka being a heavy workload: at idle the brokers use a few millicores, memory is what bounds them. A storage problem: the PVCs were simply waiting for their first consumer (<code>WaitForFirstConsumer</code>), not failing.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-cause" data-i18n="badge_cause">Root Cause</span></h4>
+            <p data-i18n="issue_11_cause">The scheduler places pods on CPU <em>requests</em>, not measured usage. The 4-vCPU node already had 100% of its CPU reserved, mostly by idle components: Kyverno asked 4×100m while using 2–4m each, with no policy loaded. Memory was fine (78% requested), so nothing looked wrong until a new workload arrived.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-success" data-i18n="badge_fix">Fix</span></h4>
+            <p data-i18n="issue_11_fix">Right-sized Kyverno's controllers to 25m, then hit a second trap: the rolling update deadlocked because its surge pods needed CPU the full node did not have, so the old pods never terminated. Deleting the old pods freed the room. Kafka brokers request 50m each; their memory limit and JVM heap are the real bound.</p>
+            <pre><code>kubectl describe node | grep -A4 "Allocated resources"</code></pre>
+          </div>
+          <div class="issue-section issue-section--lesson">
+            <h4><span class="badge-lesson" data-i18n="badge_lesson">Lesson</span></h4>
+            <p data-i18n="issue_11_lesson">On a small single node, the number to watch is allocated requests, not live usage. And a rolling update needs headroom for its surge pod: on a full node, free capacity first or set <code>maxSurge: 0</code>.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Issue 12 -->
+    <div class="accordion-item">
+      <div class="accordion-header">
+        <div class="accordion-header__title">
+          <div class="accordion-header__icon">🛡️</div>
+          <h3 data-i18n="issue_12_title">Gitea Compromised Through an Unauthenticated File Read (CVE-2026-59774)</h3>
+        </div>
+        <div class="accordion-icon">▼</div>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-content">
+          <div class="issue-section">
+            <h4><span class="badge-error" data-i18n="badge_symptom">Symptom</span></h4>
+            <p data-i18n="issue_12_symptom">A <code>git clone</code> against the in-cluster Gitea failed with a <code>504</code> and error lines Gitea never prints. Inside the pod, the git user's global config contained a <code>packObjectsHook</code> pointing at a hidden script, and a process disguised as <code>kthreadd</code> was running. A cryptocurrency miner had been installed 24 days earlier.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-discarded" data-i18n="badge_discarded">Discarded Hypotheses</span></h4>
+            <p data-i18n="issue_12_discarded">A flaky gateway (the 504 came from the server-side hook, not the network). A stolen account or token: the database showed a single user, no token, key or webhook added since July. A tampered deployment: the running image matched the last legitimate build and the repository history had no foreign commit.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-cause" data-i18n="badge_cause">Root Cause</span></h4>
+            <p data-i18n="issue_12_cause">Gitea 1.26.1 was reachable from the Internet with a public repository. CVE-2026-59774, fixed 60 days earlier, lets an anonymous request read server files through the markup endpoint, which discloses the internal token. That token opened the internal logger API, itself reachable through the public ingress, and a forged log line became a git hook executed on the next anonymous clone. The whole chain took 20 seconds, on October 1st. Nothing alerted for 24 days.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-success" data-i18n="badge_fix">Fix</span></h4>
+            <p data-i18n="issue_12_fix">Contained first, evidence preserved, then analysed from gateway logs, Prometheus and file timestamps. Rebuilt from scratch on Gitea 28.2.0 with new volumes and secrets, sign-in required, private repositories, <code>/api/internal</code> answered 404 by the gateway, the whole namespace denied egress by NetworkPolicy, and an alert on sustained CPU.</p>
+            <pre><code>kubectl -n gitea exec deploy/gitea -- wget -T5 http://1.1.1.1   # blocked
+curl -X POST https://git.khalilaliouich.com/api/internal/x       # 404</code></pre>
+          </div>
+          <div class="issue-section issue-section--lesson">
+            <h4><span class="badge-lesson" data-i18n="badge_lesson">Lesson</span></h4>
+            <p data-i18n="issue_12_lesson">An internal API must never be reachable from the Internet, and a forge needs a patch cadence and an egress policy. The blast radius stayed small thanks to earlier choices — no Kubernetes permission for the pod, no secret shared across workloads — but detection was the missing layer.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
