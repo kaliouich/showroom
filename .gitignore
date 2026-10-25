@@ -45,3 +45,4 @@ kubeconfig
 *.kubeconfig
 .claude/
 .claude-flow/
+.gstack/
