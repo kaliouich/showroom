@@ -121,6 +121,24 @@ spec:
               value: <YOUR_DB_PASSWORD>
             - name: DECAY_INTERVAL_MS
               value: "15000"
+            # Publication des evenements vers Kafka (voir tamagotchi/api/events.js).
+            # Le mot de passe et le CA sont copies depuis le namespace kafka
+            # par scripts/copy-kafka-secrets.sh.
+            - name: KAFKA_BROKERS
+              value: showroom-kafka-bootstrap.kafka.svc:9093
+            - name: KAFKA_USER
+              value: tamagotchi-producer
+            - name: KAFKA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kafka-producer-credentials
+                  key: password
+            - name: KAFKA_CA_FILE
+              value: /etc/kafka/ca.crt
+          volumeMounts:
+            - name: kafka-ca
+              mountPath: /etc/kafka
+              readOnly: true
           resources:
             requests:
               cpu: 100m
@@ -140,6 +158,10 @@ spec:
               port: 8080
             initialDelaySeconds: 5
             periodSeconds: 10
+      volumes:
+        - name: kafka-ca
+          secret:
+            secretName: kafka-cluster-ca
 ---
 # Tamagotchi API Service
 apiVersion: v1

@@ -60,6 +60,46 @@
     - "{{ repo_root }}/k8s/tamagotchi/tamagotchi-dashboard.yaml"
     - "{{ repo_root }}/k8s/tamagotchi/slo-dashboard.yaml"
 
+# ---------------------------------------------------------------------------
+# Kafka : l'operateur Strimzi est installe par le role platform. Ici, le
+# cluster (CR), l'image du consumer, puis la copie des secrets generes par
+# Strimzi vers le namespace de l'API, qui produit les evenements.
+# ---------------------------------------------------------------------------
+
+- name: Construire l'image du consumer Kafka
+  ansible.builtin.shell: |
+    nerdctl --address /run/k3s/containerd/containerd.sock -n k8s.io build -t event-feed:v1 .
+  args:
+    chdir: "{{ repo_root }}/kafka-apps/event-feed"
+  register: build_feed
+  changed_when: "'Loaded image' in build_feed.stdout"
+
+- name: Cluster Kafka, topics, utilisateurs, supervision et consumer
+  kubernetes.core.k8s:
+    src: "{{ item }}"
+    state: present
+    kubeconfig: "{{ kubeconfig }}"
+  loop:
+    - "{{ repo_root }}/k8s/kafka/kafka-cluster.yaml"
+    - "{{ repo_root }}/k8s/kafka/kafka-topics-users.yaml"
+    - "{{ repo_root }}/k8s/kafka/podmonitor.yaml"
+    - "{{ repo_root }}/k8s/kafka/kafka-rules.yaml"
+    - "{{ repo_root }}/k8s/kafka/kafka-dashboard.yaml"
+    - "{{ repo_root }}/k8s/kafka/event-feed.yaml"
+
+- name: Attendre que le cluster Kafka soit pret
+  ansible.builtin.command: >
+    kubectl -n kafka wait kafka/showroom --for=condition=Ready --timeout=15m
+  environment:
+    KUBECONFIG: "{{ kubeconfig }}"
+  changed_when: false
+
+- name: Copier les secrets Kafka vers le namespace de l'API
+  ansible.builtin.command: "{{ repo_root }}/scripts/copy-kafka-secrets.sh"
+  environment:
+    KUBECONFIG: "{{ kubeconfig }}"
+  changed_when: true
+
 # En dernier : elles referencent des Services qui doivent deja exister, sinon
 # la Gateway les rejette et il faut repasser.
 - name: Routes HTTP

@@ -3,6 +3,7 @@ const cors = require('cors');
 const { Pool } = require('pg');
 const { v4: uuidv4 } = require('uuid');
 const client = require('prom-client');
+const events = require('./events');
 
 const app = express();
 app.use(cors());
@@ -174,7 +175,7 @@ setInterval(async () => {
     const client = await pool.connect();
     try {
       // Increase hunger, decrease happiness and energy for alive creatures
-      await client.query(`
+      const decayed = await client.query(`
         UPDATE creatures
         SET
           hunger = LEAST(100, hunger + $1),
@@ -185,7 +186,13 @@ setInterval(async () => {
             ELSE is_alive
           END
         WHERE is_alive = true
+        RETURNING id, name, type, is_alive
       `, [HUNGER_DECAY, HAPPINESS_DECAY, ENERGY_DECAY]);
+      // Le WHERE ne retient que des creatures vivantes : celles qui ressortent
+      // avec is_alive=false viennent donc de mourir dans CETTE requete.
+      for (const c of decayed.rows) {
+        if (!c.is_alive) events.publish('creature.died', c, 'decay');
+      }
 
       // Update Prometheus metrics
       const { rows } = await client.query('SELECT * FROM creatures');
@@ -262,6 +269,7 @@ app.post('/api/creatures', async (req, res) => {
       [id, name, type]
     );
     const { rows } = await pool.query('SELECT * FROM creatures WHERE id = $1', [id]);
+    events.publish('creature.adopted', rows[0]);
     res.status(201).json(rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -281,6 +289,7 @@ app.post('/api/creatures/:id/feed', async (req, res) => {
     );
     feedCounter.inc({ creature_type: rows[0].type });
     const result = await pool.query('SELECT * FROM creatures WHERE id = $1', [req.params.id]);
+    events.publish('creature.fed', result.rows[0]);
     res.json({ message: `${result.rows[0].name} has been fed! 🍖`, creature: result.rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -300,6 +309,7 @@ app.post('/api/creatures/:id/play', async (req, res) => {
     );
     playCounter.inc({ creature_type: rows[0].type });
     const result = await pool.query('SELECT * FROM creatures WHERE id = $1', [req.params.id]);
+    events.publish('creature.played', result.rows[0]);
     res.json({ message: `${result.rows[0].name} had a great time! 🎮`, creature: result.rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -319,6 +329,7 @@ app.post('/api/creatures/:id/sleep', async (req, res) => {
     );
     sleepCounter.inc({ creature_type: rows[0].type });
     const result = await pool.query('SELECT * FROM creatures WHERE id = $1', [req.params.id]);
+    events.publish('creature.slept', result.rows[0]);
     res.json({ message: `${result.rows[0].name} is well rested! 💤`, creature: result.rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -337,6 +348,7 @@ app.post('/api/creatures/:id/revive', async (req, res) => {
       [req.params.id]
     );
     const result = await pool.query('SELECT * FROM creatures WHERE id = $1', [req.params.id]);
+    events.publish('creature.revived', result.rows[0]);
     res.json({ message: `${result.rows[0].name} has been revived! ✨`, creature: result.rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -362,6 +374,7 @@ app.post('/api/creatures/:id/kill', async (req, res) => {
     );
     killCounter.inc({ creature_type: rows[0].type });
     const result = await pool.query('SELECT * FROM creatures WHERE id = $1', [req.params.id]);
+    events.publish('creature.died', result.rows[0]);
     res.json({ message: `${result.rows[0].name} was hit by a meteor and poisoned ☄️💀`, creature: result.rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -381,6 +394,7 @@ app.post('/api/creatures/:id/delete', async (req, res) => {
     deleteCounter.inc({ creature_type: rows[0].type });
 
     await pool.query('DELETE FROM creatures WHERE id = $1', [req.params.id]);
+    events.publish('creature.deleted', rows[0]);
 
     res.json({ message: `${deletedName} has been deleted permanently 🗑️` });
   } catch (err) {
@@ -415,6 +429,8 @@ app.get('/api/stats', async (req, res) => {
 // Start Server
 // ============================================================================
 const PORT = parseInt(process.env.PORT || '8080');
+
+events.start();
 
 initDB()
   .then(() => {
