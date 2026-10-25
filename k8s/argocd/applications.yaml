@@ -61,3 +61,26 @@ spec:
     syncOptions:
     - CreateNamespace=true
 
+---
+# Cluster Kafka : les CR Strimzi (Kafka, KafkaNodePool, KafkaTopic, KafkaUser)
+# et le scraping vivent dans ce depot, sous k8s/kafka/. L'operateur lui-meme est
+# installe par Helm (roles/platform) : un CRD doit exister avant que ArgoCD
+# puisse synchroniser un CR.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kafka
+  namespace: argocd
+spec:
+  destination:
+    namespace: kafka
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: k8s/kafka
+    repoURL: https://github.com/kaliouich/showroom.git
+    targetRevision: main
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

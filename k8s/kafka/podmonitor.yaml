@@ -1,0 +1,36 @@
+# Scraping de Kafka. Le label release=kube-prometheus est indispensable, comme
+# pour le ServiceMonitor du Tamagotchi : sans lui Prometheus ignore l'objet en
+# silence. Les brokers exposent leurs metriques via le Strimzi Metrics
+# Reporter, et kafka-exporter ajoute le lag des consumer groups.
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: kafka-brokers
+  namespace: kafka
+  labels:
+    release: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      strimzi.io/kind: Kafka
+      strimzi.io/name: showroom-kafka
+  podMetricsEndpoints:
+    - port: tcp-prometheus
+      interval: 30s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: kafka-exporter
+  namespace: kafka
+  labels:
+    release: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      strimzi.io/kind: Kafka
+      strimzi.io/name: showroom-kafka-exporter
+  podMetricsEndpoints:
+    - port: tcp-prometheus
+      interval: 30s

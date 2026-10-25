@@ -20,6 +20,7 @@
     - { name: grafana, url: "https://grafana.github.io/helm-charts" }
     - { name: kyverno, url: "https://kyverno.github.io/kyverno/" }
     - { name: aqua, url: "https://aquasecurity.github.io/helm-charts/" }
+    - { name: strimzi, url: "https://strimzi.io/charts/" }
 
 - name: Installer cert-manager
   kubernetes.core.helm:
@@ -193,6 +194,28 @@
     timeout: 20m
     kubeconfig: "{{ kubeconfig }}"
     values: "{{ gitea_values }}"
+
+# Operateur Strimzi : il ne surveille que le namespace kafka. Le cluster Kafka
+# lui-meme (CR Kafka, KafkaNodePool, KafkaTopic, KafkaUser) est declare dans
+# k8s/kafka/ et synchronise par l'Application ArgoCD "kafka".
+- name: Strimzi (operateur Kafka)
+  kubernetes.core.helm:
+    name: strimzi
+    chart_ref: strimzi/strimzi-kafka-operator
+    chart_version: "{{ versions.strimzi }}"
+    release_namespace: kafka
+    create_namespace: true
+    wait: true
+    kubeconfig: "{{ kubeconfig }}"
+    values:
+      watchNamespaces:
+        - kafka
+      resources:
+        requests:
+          memory: 256Mi
+          cpu: 50m
+        limits:
+          memory: 384Mi
 
 - name: Limites de ressources par namespace
   kubernetes.core.k8s:
