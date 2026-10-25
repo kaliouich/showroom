@@ -172,6 +172,26 @@
     create_namespace: true
     wait: true
     kubeconfig: "{{ kubeconfig }}"
+    # Aucune policy chargee, 2 a 4 m de CPU mesures par controleur : les 100m
+    # par defaut gardaient le noeud plein en requests (incident 11).
+    values:
+      admissionController:
+        container:
+          resources:
+            requests:
+              cpu: 25m
+      backgroundController:
+        resources:
+          requests:
+            cpu: 25m
+      cleanupController:
+        resources:
+          requests:
+            cpu: 25m
+      reportsController:
+        resources:
+          requests:
+            cpu: 25m
 
 - name: Trivy Operator
   kubernetes.core.helm:
