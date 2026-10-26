@@ -288,9 +288,33 @@ app.get('/api/events/stream', (req, res) => {
   up.on('error', () => { if (!res.headersSent) res.status(502).end(); else res.end(); });
 });
 
+// Bouton « tuer un broker ». Le site n'a aucun droit d'ecriture sur Kubernetes :
+// il relaie vers kafka/broker-chaos, qui verifie que le cluster est sain, limite
+// la cadence (10 min) et n'a le droit de supprimer que les trois brokers.
+const BROKER_CHAOS = new URL(process.env.BROKER_CHAOS_URL
+  || 'http://broker-chaos.kafka.svc.cluster.local:8080');
+const brokerLimiter = makeChaosLimiter(10 * 60 * 1000, 6);
+
+app.post('/api/chaos/kill-broker', (req, res) => {
+  const claim = brokerLimiter();
+  if (claim.blocked) return res.status(429).json(claim);
+  const r = http.request({ host: BROKER_CHAOS.hostname, port: BROKER_CHAOS.port, path: '/kill', method: 'POST', timeout: 8000 }, (up) => {
+    let data = '';
+    up.on('data', c => { data += c; });
+    up.on('end', () => {
+      let body = {};
+      try { body = JSON.parse(data); } catch (e) { /* reponse vide */ }
+      res.status(up.statusCode).json(body);
+    });
+  });
+  r.on('error', () => res.status(502).json({ error: 'unavailable' }));
+  r.on('timeout', () => r.destroy());
+  r.end();
+});
+
 app.get('/api/kafka/stats', async (req, res) => {
   const [brokers, underRep, stored, p95, lag, rate] = await Promise.all([
-    promQuery('count(up{job="kafka/kafka-brokers"} == 1)'),
+    promQuery('sum(kube_pod_status_ready{namespace="kafka",pod=~"showroom-dual-role-.*",condition="true"})'),
     promQuery('sum(kafka_server_replicamanager_underreplicatedpartitions)'),
     promQuery('sum(kafka_topic_partition_current_offset{topic="tamagotchi.events"})'),
     promQuery('histogram_quantile(0.95, sum(rate(event_feed_end_to_end_seconds_bucket[15m])) by (le))'),

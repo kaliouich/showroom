@@ -68,12 +68,17 @@ const i18n = {
     chaos_badge: 'Chaos Button', chaos_title: 'Break it yourself. <span class="gradient-text">Watch it heal.</span>',
     chaos_subtitle: 'Reading about the self-healing chain above is not the same as watching it fire. This button wipes out every living creature in the live database — not a pod, not a Kubernetes object.',
     chaos_explainer_poison: '<strong>☄️ Send a Meteor</strong> calls <code>POST /creatures/:id/kill</code> on <code>tamagotchi-api</code> for every currently living creature, setting each one\'s <code>is_alive</code> to <code>false</code> — the same state natural decay reaches on its own. That\'s what feeds <code>tamagotchi_creatures_dead_total</code>, which is exactly what <code>TamagotchiCreatureDied</code> watches. A full wipe makes the alert impossible to miss. Nothing here touches a pod: what heals it is the automation described above — Prometheus notices within a minute, Alertmanager routes on the <code>remediation: auto</code> label, and n8n revives every one of them. Usually under <strong>90 seconds</strong>, not instant on purpose — the full chain runs for real, no shortcut.',
+    kill_btn_label: '💥 Kill a broker',
+    kill_explainer: '<strong>💥 Kill a broker</strong> deletes one of the three Kafka brokers with no graceful shutdown. With replication factor 3 and <code>min.insync.replicas=2</code> the stream keeps accepting writes: watch <em>Brokers up</em> drop to 2/3 and <em>Under-replicated partitions</em> spike, then the Strimzi operator bring the third one back and the count return to 0. Feed a creature in the demo app during the outage: its event still lands in the feed above. The alerts stay quiet on purpose — they wait 3 minutes, and recovery takes about one. A small service with delete rights on those three pods only (and nothing else) does the killing; the site itself stays read-only. One strike per 10 minutes, and never while the cluster is already degraded.',
+    kill_status_working: 'Killing a broker…', kill_status_done: '{broker} killed 💥 — watch Brokers up and the feed',
+    kill_status_degraded: 'The cluster is already recovering, try again in a minute', kill_status_cooldown: 'Cooling down, one strike every 10 minutes',
     poison_btn_label: '☄️ Send a Meteor',
     chaos_note: 'Rate-limited to one strike per minute, capped per hour — this kills every creature at once, it needs room to actually recover before it can fire again. Watch the counts above, or the Tamagotchi dashboard in the Live Infra tab, to see a meteor strike land and, a few minutes later, get reversed. Want to remove a creature permanently instead? That\'s a per-creature action in <a href="https://demo.khalilaliouich.com" target="_blank">the app itself</a> — the opposite of Adopt, not a chaos event.',
     nav_events: '📨 Events',
     events_badge: 'Event streaming',
     events_title: 'Every creature action is an event. <span class="gradient-text">Replicated three times.</span>',
     events_subtitle: 'Kafka, run by the Strimzi operator, carries the Tamagotchi\'s life as a stream. This feed is live: what you see below was published by the API, stored on three brokers, and read back by a consumer group.',
+    events_k_under: 'Under-replicated partitions',
     events_k_brokers: 'Brokers up / 3', events_k_stored: 'Events stored', events_k_p95: 'End-to-end p95', events_k_lag: 'Consumer lag',
     events_feed_title: 'Live feed — topic tamagotchi.events',
     events_feed_empty: 'Waiting for events… feed, play with or adopt a creature in the demo app, or send a meteor below.',
@@ -300,12 +305,17 @@ const i18n = {
     chaos_badge: 'Bouton Chaos', chaos_title: 'Casse-le toi-même. <span class="gradient-text">Regarde-le guérir.</span>',
     chaos_subtitle: "Lire sur la chaîne d'auto-réparation ci-dessus, ce n'est pas la même chose que la voir se déclencher. Ce bouton élimine toutes les créatures vivantes de la base en production — pas un pod, pas un objet Kubernetes.",
     chaos_explainer_poison: "<strong>☄️ Envoyer une Météorite</strong> appelle <code>POST /creatures/:id/kill</code> sur <code>tamagotchi-api</code> pour chaque créature actuellement vivante, mettant <code>is_alive</code> à <code>false</code> pour chacune — le même état que la décroissance naturelle atteint toute seule. C'est ce qui alimente <code>tamagotchi_creatures_dead_total</code>, exactement ce que surveille <code>TamagotchiCreatureDied</code>. Une élimination totale rend l'alerte impossible à manquer. Rien ici ne touche un pod : ce qui guérit les créatures, c'est l'automatisation décrite plus haut — Prometheus le remarque en moins d'une minute, Alertmanager route sur le label <code>remediation: auto</code>, et n8n les ranime toutes. Généralement en moins de <strong>90 secondes</strong>, pas instantané, exprès — la chaîne complète tourne pour de vrai, sans raccourci.",
+    kill_btn_label: '💥 Tuer un broker',
+    kill_explainer: "<strong>💥 Tuer un broker</strong> supprime l'un des trois brokers Kafka, sans arrêt propre. Avec un facteur de réplication de 3 et <code>min.insync.replicas=2</code>, le flux continue d'accepter les écritures : regarde <em>Brokers up</em> passer à 2/3 et <em>Partitions sous-répliquées</em> grimper, puis l'opérateur Strimzi ramener le troisième et le compteur revenir à 0. Nourris une créature dans l'app de démo pendant la panne : son événement arrive quand même dans le fil ci-dessus. Les alertes restent silencieuses exprès — elles attendent 3 minutes, et le retour prend environ une. Un petit service, qui n'a le droit de supprimer que ces trois pods, s'en charge ; le site lui-même reste en lecture seule. Un tir toutes les 10 minutes, jamais si le cluster est déjà dégradé.",
+    kill_status_working: 'Arrêt d\'un broker…', kill_status_done: '{broker} tué 💥 — surveille Brokers up et le fil',
+    kill_status_degraded: 'Le cluster est déjà en train de se rétablir, réessaie dans une minute', kill_status_cooldown: 'Recharge en cours, un tir toutes les 10 minutes',
     poison_btn_label: '☄️ Envoyer une Météorite',
     chaos_note: 'Limité à une frappe par minute, plafonné par heure — ça tue toutes les créatures d\'un coup, il faut le temps que la population se refasse avant de pouvoir refrapper. Observe les compteurs ci-dessus, ou le dashboard Tamagotchi dans l\'onglet Live Infra, pour voir une météorite frapper puis, quelques minutes plus tard, être annulée. Envie de supprimer une créature définitivement plutôt ? C\'est une action par créature dans <a href="https://demo.khalilaliouich.com" target="_blank">l\'application elle-même</a> — l\'opposé d\'Adopter, pas un événement chaos.',
     nav_events: '📨 Événements',
     events_badge: 'Event streaming',
     events_title: 'Chaque action est un événement. <span class="gradient-text">Répliqué trois fois.</span>',
     events_subtitle: 'Kafka, piloté par l\'opérateur Strimzi, transporte la vie du Tamagotchi comme un flux. Ce fil est en direct : ce que tu vois a été publié par l\'API, stocké sur trois brokers, puis relu par un consumer group.',
+    events_k_under: 'Partitions sous-répliquées',
     events_k_brokers: 'Brokers up / 3', events_k_stored: 'Événements stockés', events_k_p95: 'Bout en bout p95', events_k_lag: 'Lag du consumer',
     events_feed_title: 'Fil en direct — topic tamagotchi.events',
     events_feed_empty: 'En attente d\'événements… nourris, joue avec ou adopte une créature dans l\'app démo, ou envoie une météorite plus bas.',
@@ -736,6 +746,44 @@ if (poisonBtn) {
       statusEl.className = 'chaos-panel__status chaos-panel__status--err';
     } finally {
       setTimeout(() => { poisonBtn.disabled = false; }, CHAOS_CLIENT_COOLDOWN_MS);
+    }
+  });
+}
+
+// ---- Kill a broker ----
+const killBrokerBtn = document.getElementById('killBrokerBtn');
+if (killBrokerBtn) {
+  killBrokerBtn.addEventListener('click', async () => {
+    const statusEl = document.getElementById('killBrokerStatus');
+    killBrokerBtn.disabled = true;
+    statusEl.className = 'chaos-panel__status';
+    statusEl.textContent = t('kill_status_working');
+    let cooldown = 15000;
+    try {
+      const res = await fetch('/api/chaos/kill-broker', { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 429) {
+        statusEl.textContent = t('kill_status_cooldown');
+        statusEl.className = 'chaos-panel__status chaos-panel__status--err';
+        cooldown = Math.min(data.retryAfterMs || 60000, 10 * 60 * 1000);
+      } else if (res.status === 409) {
+        statusEl.textContent = t('kill_status_degraded');
+        statusEl.className = 'chaos-panel__status chaos-panel__status--err';
+        cooldown = 60000;
+      } else if (!res.ok) {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      } else {
+        statusEl.textContent = t('kill_status_done').replace('{broker}', data.killed || 'broker');
+        statusEl.className = 'chaos-panel__status chaos-panel__status--ok';
+        cooldown = 10 * 60 * 1000;
+        // Le compteur de brokers se rafraichit plus vite le temps de la panne.
+        [3000, 8000, 15000, 30000, 60000, 90000].forEach(ms => setTimeout(fetchKafkaStats, ms));
+      }
+    } catch (e) {
+      statusEl.textContent = t('chaos_status_error');
+      statusEl.className = 'chaos-panel__status chaos-panel__status--err';
+    } finally {
+      setTimeout(() => { killBrokerBtn.disabled = false; }, cooldown);
     }
   });
 }
@@ -1186,6 +1234,7 @@ async function fetchKafkaStats() {
     const d = await (await fetch('/api/kafka/stats')).json();
     const num = (v, f) => (v === null || v === undefined || Number.isNaN(v)) ? '—' : f(v);
     document.getElementById('kBrokers').textContent = num(d.brokers, v => `${v}/3`);
+    document.getElementById('kUnder').textContent = num(d.underReplicated, v => Math.round(v));
     document.getElementById('kStored').textContent = num(d.eventsStored, v => Math.round(v).toLocaleString());
     document.getElementById('kP95').textContent = num(d.p95Seconds, v => v < 1 ? `${Math.round(v * 1000)} ms` : `${v.toFixed(1)} s`);
     document.getElementById('kLag').textContent = num(d.consumerLag, v => Math.round(v));

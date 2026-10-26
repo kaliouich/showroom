@@ -442,6 +442,7 @@
 
     <div class="demo-live__stats" id="kafkaStats">
       <div class="demo-stat demo-stat--info"><span class="demo-stat__value" id="kBrokers">—</span><span class="demo-stat__label" data-i18n="events_k_brokers">Brokers up / 3</span></div>
+      <div class="demo-stat demo-stat--warn"><span class="demo-stat__value" id="kUnder">—</span><span class="demo-stat__label" data-i18n="events_k_under">Under-replicated partitions</span></div>
       <div class="demo-stat demo-stat--purple"><span class="demo-stat__value" id="kStored">—</span><span class="demo-stat__label" data-i18n="events_k_stored">Events stored</span></div>
       <div class="demo-stat demo-stat--info"><span class="demo-stat__value" id="kP95">—</span><span class="demo-stat__label" data-i18n="events_k_p95">End-to-end p95</span></div>
       <div class="demo-stat demo-stat--warn"><span class="demo-stat__value" id="kLag">—</span><span class="demo-stat__label" data-i18n="events_k_lag">Consumer lag</span></div>
@@ -455,6 +456,14 @@
       <ul class="event-feed__list" id="eventList">
         <li class="event-feed__empty" data-i18n="events_feed_empty">Waiting for events… feed, play with or adopt a creature in the demo app, or send a meteor below.</li>
       </ul>
+    </div>
+
+    <div class="chaos-panel" style="max-width:860px;margin:2rem auto 0;">
+      <p class="chaos-panel__text" data-i18n="kill_explainer"><strong>💥 Kill a broker</strong> deletes one of the three Kafka brokers with no graceful shutdown. With replication factor 3 and <code>min.insync.replicas=2</code> the stream keeps accepting writes: watch <em>Brokers up</em> drop to 2/3 and <em>Under-replicated partitions</em> spike, then Strimzi bring the third one back and the count return to 0. Feed a creature in the demo app during the outage: its event still lands in the feed above. The alerts stay quiet on purpose — they wait 3 minutes, and recovery takes about one.</p>
+      <div class="chaos-panel__action">
+        <button id="killBrokerBtn" class="btn btn--danger" data-i18n="kill_btn_label">💥 Kill a broker</button>
+        <div class="chaos-panel__status" id="killBrokerStatus"></div>
+      </div>
     </div>
 
     <p class="chaos-panel__note" style="max-width:860px;margin:1.5rem auto 0;" data-i18n="events_explainer">Each event is keyed by creature id, so one creature's story stays ordered inside a single partition. The topic, its ACLs and both service accounts are declared as <code>KafkaTopic</code> / <code>KafkaUser</code> custom resources in Git; the listener is TLS with SCRAM-SHA-512. Metrics and consumer lag are on the <a href="https://grafana.khalilaliouich.com/d/kafka-showroom" target="_blank">Kafka dashboard</a>.</p>
