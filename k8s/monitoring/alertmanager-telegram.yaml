@@ -23,6 +23,11 @@ spec:
       - receiver: "null"
         matchers:
           - { name: alertname, value: "KubeProxyDown|KubeControllerManagerDown|KubeSchedulerDown", matchType: "=~" }
+      # KubeJobFailed est remplacee par JobFailedRecently (platform-alerts.yaml) :
+      # la regle du chart ne s'eteint jamais tant que l'ancien Job echoue existe.
+      - receiver: "null"
+        matchers:
+          - { name: alertname, value: "KubeJobFailed", matchType: "=" }
       - receiver: telegram
         matchers:
           - { name: severity, value: "warning|critical", matchType: "=~" }

@@ -2,6 +2,7 @@
 Description=Mise a jour de Gitea si le depot demande une autre version
 After=network-online.target k3s.service
 Wants=network-online.target
+OnFailure=gitea-upgrade-failed.service
 
 [Service]
 Type=oneshot

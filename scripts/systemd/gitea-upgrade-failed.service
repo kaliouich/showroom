@@ -1,0 +1,8 @@
+[Unit]
+Description=Prevenir sur Telegram quand la mise a jour de Gitea echoue
+
+[Service]
+Type=oneshot
+User=ubuntu
+# Le jeton est lu depuis le fichier 600 de l'utilisateur, jamais ecrit ici.
+ExecStart=/bin/sh -c 'curl -fsS -m 20 "https://api.telegram.org/bot$(cat /home/ubuntu/.telegram-alert-token)/sendMessage" -d chat_id="$(cat /home/ubuntu/.telegram-alert-chat-id)" --data-urlencode text="⚠️ La mise a jour automatique de Gitea a echoue (annulee si elle avait commence). journalctl -u gitea-upgrade.service" >/dev/null'

@@ -3,6 +3,10 @@
 # que l'usage reel tournait autour de 50 %, et les brokers Kafka sont restes
 # Pending sans qu'aucune alerte ne parte. Les regles par defaut de
 # kube-prometheus (KubeCPUOvercommit) ne servent a rien sur un noeud unique.
+#
+# Les proxys Linkerd sont des sidecars natifs (initContainers en restartPolicy
+# Always) : le scheduler les compte, kube-state-metrics les range a part. Sans les
+# ajouter, le calcul sous-estimait la reservation de ~600 m (72 % au lieu de 86 %).
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -16,7 +20,7 @@ spec:
       interval: 1m
       rules:
         - alert: NodeCPURequestsHigh
-          expr: sum(kube_pod_container_resource_requests{resource="cpu"}) / sum(kube_node_status_allocatable{resource="cpu"}) > 0.85
+          expr: (sum(kube_pod_container_resource_requests{resource="cpu"}) + sum(kube_pod_init_container_resource_requests{resource="cpu",container="linkerd-proxy"})) / sum(kube_node_status_allocatable{resource="cpu"}) > 0.85
           for: 30m
           labels:
             severity: warning
@@ -24,7 +28,7 @@ spec:
             summary: "Le noeud a {{ $value | humanizePercentage }} de son CPU deja reserve"
             description: "Le scheduler compte les requests, pas l'usage. Au-dela de 95 % un nouveau pod reste Pending, et un rolling update peut se bloquer faute de place pour le pod de surge. Voir les pods les plus surdimensionnes avec la requete : sum by (namespace,pod) (kube_pod_container_resource_requests{resource=\"cpu\"}) - sum by (namespace,pod) (rate(container_cpu_usage_seconds_total[1h]))."
         - alert: NodeCPURequestsCritical
-          expr: sum(kube_pod_container_resource_requests{resource="cpu"}) / sum(kube_node_status_allocatable{resource="cpu"}) > 0.95
+          expr: (sum(kube_pod_container_resource_requests{resource="cpu"}) + sum(kube_pod_init_container_resource_requests{resource="cpu",container="linkerd-proxy"})) / sum(kube_node_status_allocatable{resource="cpu"}) > 0.95
           for: 10m
           labels:
             severity: critical
@@ -32,7 +36,7 @@ spec:
             summary: "Le noeud n'a presque plus de CPU reservable ({{ $value | humanizePercentage }})"
             description: "Plus rien de nouveau ne se planifiera. Reduire des requests ou liberer un workload."
         - alert: NodeMemoryRequestsHigh
-          expr: sum(kube_pod_container_resource_requests{resource="memory"}) / sum(kube_node_status_allocatable{resource="memory"}) > 0.85
+          expr: (sum(kube_pod_container_resource_requests{resource="memory"}) + sum(kube_pod_init_container_resource_requests{resource="memory",container="linkerd-proxy"})) / sum(kube_node_status_allocatable{resource="memory"}) > 0.85
           for: 30m
           labels:
             severity: warning
@@ -74,6 +78,19 @@ spec:
           annotations:
             summary: "Le runner Gitea Actions est arrete"
             description: "Plus aucune pipeline ne tourne : les pushes ne produisent plus d'image."
+        # Remplace KubeJobFailed (regle du chart), qui reste active tant que l'objet Job
+        # echoue existe : un job linkerd-heartbeat tombe en echec il y a 113 jours
+        # alertait encore, alors que toutes les executions suivantes reussissent.
+        # Ici seul un echec de moins de 48 h compte. Voir alertmanager-telegram.yaml.
+        - alert: JobFailedRecently
+          expr: |
+            kube_job_failed{condition="true"} > 0
+            and on (namespace, job_name) (time() - kube_job_status_start_time < 172800)
+          labels:
+            severity: warning
+          annotations:
+            summary: "Le job {{ $labels.namespace }}/{{ $labels.job_name }} a echoue"
+            description: "kubectl -n {{ $labels.namespace }} describe job {{ $labels.job_name }}"
         - alert: CIBuildFailed
           expr: increase(kube_job_status_failed{namespace="ci-builds"}[30m]) > 0
           labels:
