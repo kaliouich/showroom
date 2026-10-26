@@ -31,6 +31,15 @@
   ],
   "packageRules": [
     {
+      "description": "Images construites sur le noeud, sans registre : rien a chercher en amont.",
+      "matchPackageNames": [
+        "gitea-runner-ci",
+        "event-feed",
+        "showcase-website"
+      ],
+      "enabled": false
+    },
+    {
       "description": "Le reste : un lot par semaine, relu avant fusion. Premiere regle, pour que les suivantes (majeures, Gitea) la surchargent.",
       "matchPackageNames": [
         "*"
