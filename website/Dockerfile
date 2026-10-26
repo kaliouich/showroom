@@ -6,18 +6,18 @@
 # node_modules/ de l'app. node server.js n'a jamais besoin de npm au runtime,
 # donc l'etape finale ne le contient pas — le probleme disparait avec sa
 # cause plutot que d'ignorer des CVE une par une.
-FROM node:20-alpine AS build
+FROM node:24-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 # npm ci + un lockfile committe : un build reproductible plutot que
 # "quoi qu'il y ait de nouveau sur npm au moment du build".
 RUN npm ci --omit=dev
 
-FROM node:20-alpine
+FROM node:24-alpine
 WORKDIR /app
 
 # Paquets systeme Alpine a jour : la version d'openssl embarquee dans l'image
-# de base a accumule des CVE HIGH entre deux versions du tag node:20-alpine.
+# de base a accumule des CVE HIGH entre deux versions du tag node:24-alpine.
 RUN apk upgrade --no-cache \
     && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 

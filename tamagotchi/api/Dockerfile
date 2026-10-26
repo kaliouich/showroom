@@ -1,4 +1,4 @@
-FROM node:20-alpine
+FROM node:24-alpine
 LABEL org.opencontainers.image.source="http://git.88.96.58.76.nip.io/khalil/tamagotchi-service"
 WORKDIR /app
 COPY package.json ./

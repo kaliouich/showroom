@@ -26,7 +26,7 @@ spec:
     spec:
       containers:
         - name: event-feed
-          image: event-feed:v1
+          image: event-feed:v2
           imagePullPolicy: Never
           ports:
             - name: http
