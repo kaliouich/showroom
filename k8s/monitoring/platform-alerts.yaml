@@ -1,0 +1,91 @@
+# Alertes de capacite et de CI. Elles couvrent ce qui est reste invisible pendant
+# des heures le 2026-10-25 : le noeud etait plein en CPU *demande* (97 %) alors
+# que l'usage reel tournait autour de 50 %, et les brokers Kafka sont restes
+# Pending sans qu'aucune alerte ne parte. Les regles par defaut de
+# kube-prometheus (KubeCPUOvercommit) ne servent a rien sur un noeud unique.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: platform-capacity
+  namespace: monitoring
+  labels:
+    release: kube-prometheus
+spec:
+  groups:
+    - name: platform.capacity
+      interval: 1m
+      rules:
+        - alert: NodeCPURequestsHigh
+          expr: sum(kube_pod_container_resource_requests{resource="cpu"}) / sum(kube_node_status_allocatable{resource="cpu"}) > 0.85
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Le noeud a {{ $value | humanizePercentage }} de son CPU deja reserve"
+            description: "Le scheduler compte les requests, pas l'usage. Au-dela de 95 % un nouveau pod reste Pending, et un rolling update peut se bloquer faute de place pour le pod de surge. Voir les pods les plus surdimensionnes avec la requete : sum by (namespace,pod) (kube_pod_container_resource_requests{resource=\"cpu\"}) - sum by (namespace,pod) (rate(container_cpu_usage_seconds_total[1h]))."
+        - alert: NodeCPURequestsCritical
+          expr: sum(kube_pod_container_resource_requests{resource="cpu"}) / sum(kube_node_status_allocatable{resource="cpu"}) > 0.95
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Le noeud n'a presque plus de CPU reservable ({{ $value | humanizePercentage }})"
+            description: "Plus rien de nouveau ne se planifiera. Reduire des requests ou liberer un workload."
+        - alert: NodeMemoryRequestsHigh
+          expr: sum(kube_pod_container_resource_requests{resource="memory"}) / sum(kube_node_status_allocatable{resource="memory"}) > 0.85
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Le noeud a {{ $value | humanizePercentage }} de sa memoire deja reservee"
+        - alert: PodUnschedulable
+          expr: max by (namespace, pod) (kube_pod_status_unschedulable) == 1
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "{{ $labels.namespace }}/{{ $labels.pod }} ne peut pas etre planifie"
+            description: "Souvent un manque de CPU ou de memoire reservable. kubectl -n {{ $labels.namespace }} describe pod {{ $labels.pod }}."
+        - alert: NodeCPUUsageHigh
+          expr: 1 - avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) > 0.85
+          for: 20m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Le CPU du noeud est utilise a {{ $value | humanizePercentage }}"
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: ci-pipeline
+  namespace: monitoring
+  labels:
+    release: kube-prometheus
+spec:
+  groups:
+    - name: ci.pipeline
+      interval: 1m
+      rules:
+        - alert: GiteaRunnerDown
+          expr: kube_deployment_status_replicas_available{namespace="gitea",deployment="gitea-act-runner"} < 1
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Le runner Gitea Actions est arrete"
+            description: "Plus aucune pipeline ne tourne : les pushes ne produisent plus d'image."
+        - alert: CIBuildFailed
+          expr: increase(kube_job_status_failed{namespace="ci-builds"}[30m]) > 0
+          labels:
+            severity: warning
+          annotations:
+            summary: "Un build d'image a echoue ({{ $labels.job_name }})"
+            description: "kubectl -n ci-builds logs job/{{ $labels.job_name }} --all-containers"
+        - alert: CIBuildStuck
+          expr: max by (pod) (kube_pod_status_phase{namespace="ci-builds",phase="Pending"}) == 1
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Un build attend depuis 10 min ({{ $labels.pod }})"
+            description: "Probablement faute de CPU reservable sur le noeud."
