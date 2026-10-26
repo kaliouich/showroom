@@ -28,7 +28,10 @@ metadata:
 spec:
   limits:
     - type: Container
-      defaultRequest: { memory: 256Mi, cpu: 25m }
+      # 96Mi / 10m depuis le 2026-10-26 (256Mi / 25m avant) : sept conteneurs sans
+      # requests explicites en reservaient 1,8 Gio pour 20 a 120 Mio utilises. Le
+      # application-controller (725 Mio au pic) a ses requests explicites.
+      defaultRequest: { memory: 96Mi, cpu: 10m }
       default: { memory: 1536Mi, cpu: "1" }
 ---
 apiVersion: v1

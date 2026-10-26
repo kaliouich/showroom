@@ -62,16 +62,30 @@ postgresql:
   primary:
     persistence:
       storageClass: local-path
+    # Mesure sur 7 jours : p95 de 7 m de CPU et 87 Mio de memoire. 100 m
+    # reserves pour rien ; les limites restent celles du chart.
+    resources:
+      requests: { cpu: 25m, memory: 128Mi, ephemeral-storage: 50Mi }
+      limits: { cpu: 150m, memory: 192Mi, ephemeral-storage: 2Gi }
 postgresql-ha:
   enabled: false
 
+# Les init containers du chart demandaient 100 m / 128 Mio. Le scheduler retient
+# le maximum entre eux et la somme des conteneurs : tant qu'ils restaient la, baisser
+# la demande du conteneur gitea ne changeait rien a la reservation du pod.
+initContainers:
+  resources:
+    requests: { cpu: 10m, memory: 64Mi }
+
+# Mesure sur 7 jours : p95 de 11 m de CPU, pic memoire de 442 Mio. La limite de
+# 512 Mio laissait 14 % de marge avant un OOMKill ; la demande suit l'usage reel.
 resources:
   limits:
     cpu: 500m
-    memory: 512Mi
+    memory: 768Mi
   requests:
-    cpu: 100m
-    memory: 256Mi
+    cpu: 25m
+    memory: 384Mi
 
 # Plus de Valkey. Une seule instance de Gitea n'a rien a partager : cache en
 # memoire, sessions dans PostgreSQL (elles survivent aux redemarrages), file
