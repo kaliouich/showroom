@@ -1,0 +1,42 @@
+# Routage des alertes vers Telegram. Avant ce fichier, Alertmanager envoyait tout
+# vers un recepteur vide : une alerte pouvait se declencher pendant 24 jours (Gitea,
+# octobre 2026) sans que personne ne la voie.
+#
+# Le jeton du bot vit dans le Secret telegram-alerts (cree par
+# scripts/setup-telegram-alerts.sh, jamais dans le depot). L'identifiant de
+# conversation est insere au deploiement : CHAT_ID_PLACEHOLDER.
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: telegram
+  namespace: monitoring
+spec:
+  route:
+    receiver: telegram
+    groupBy: [alertname, namespace]
+    groupWait: 30s
+    groupInterval: 5m
+    repeatInterval: 12h
+    routes:
+      # Faux positifs connus de k3s : ces composants tournent dans le processus
+      # k3s, pas en pods, donc Prometheus ne les voit pas.
+      - receiver: "null"
+        matchers:
+          - { name: alertname, value: "KubeProxyDown|KubeControllerManagerDown|KubeSchedulerDown", matchType: "=~" }
+      - receiver: telegram
+        matchers:
+          - { name: severity, value: "warning|critical", matchType: "=~" }
+  receivers:
+    - name: "null"
+    - name: telegram
+      telegramConfigs:
+        - botToken:
+            name: telegram-alerts
+            key: token
+          chatID: CHAT_ID_PLACEHOLDER
+          sendResolved: true
+          parseMode: HTML
+          message: |-
+            {{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} <b>{{ .Status | toUpper }}</b> — {{ .CommonLabels.alertname }}
+            {{ range .Alerts }}• {{ .Annotations.summary }}
+            {{ end }}
