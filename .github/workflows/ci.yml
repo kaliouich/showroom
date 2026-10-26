@@ -87,8 +87,9 @@ jobs:
           # Prometheus Operator, ArgoCD) n'ont pas de schema dans le catalogue
           # par defaut. Glob explicite sur .yaml/.yml : k8s/ contient aussi des
           # runbooks en Markdown que kubeconform n'a pas a essayer de parser.
+          # values.yaml : valeurs d'un chart Helm, pas un manifeste (pas de 'kind').
           ./kubeconform -summary -ignore-missing-schemas -strict \
-            $(find k8s infra/bootstrap/manifests -name '*.yaml' -o -name '*.yml')
+            $(find k8s infra/bootstrap/manifests \( -name '*.yaml' -o -name '*.yml' \) ! -name 'values.yaml')
 
   terraform:
     name: Validation Terraform (infra/terraform)
