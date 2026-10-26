@@ -56,26 +56,30 @@ de 2.39.8 et execute des migrations de base sans qu'on l'ait decide. L'image est
 creature ranimee en environ 2 minutes). Le manifeste `n8n.yaml` du depot est une ancienne copie, le
 deploiement en place a evolue sans lui.
 
-Noeud : 97 % -> 57 % du CPU demande, 88 % -> 64 % de la memoire demandee.
+## Corrige ensuite : Loki et la passerelle
+
+**Loki** : ses donnees etaient dans un `emptyDir` (recreer le pod effacait tout, et rien ne bornait leur
+taille : 1,7 Gio). Valeurs maintenant dans `k8s/monitoring/loki-values.yaml` : volume persistant de
+10 Gi (`local-path`), retention de 14 jours par le compactor (local-path n'applique pas la taille du
+volume), requests 25 m / 256 Mio. Le StatefulSet a ete supprime puis recree par `helm upgrade`
+(`volumeClaimTemplates` est immuable). Les anciens journaux ont ete archives avant la bascule dans
+`/var/backups/loki/` (1 Gio, root). Verifie : le nombre de lignes d'une fenetre de 10 minutes est
+identique avant et apres suppression du pod.
+
+**Passerelle Envoy** : defauts d'Envoy Gateway (100 m, 512 Mio) pour 46 Mio et 2 m utilises. Une
+ressource `EnvoyProxy` (`infra/bootstrap/manifests/gateway.yaml`) donne 25 m / 128 Mio, limite 512 Mio,
+referencee depuis le Gateway (`spec.infrastructure.parametersRef`). Le pod a ete remplace en
+mise a jour progressive : 100 requetes sur 100 ont reussi pendant le changement.
+
+Noeud : 97 % -> 53 % du CPU demande, 88 % -> 61 % de la memoire demandee.
 
 ## Reste a faire
 
-**Loki : ne pas redemarrer le pod avant d'avoir regle le stockage.** Son volume `storage` est un
-`emptyDir`, donc recreer le pod efface tous les journaux (ils ont servi a l'analyse de l'incident
-Gitea). Il faut une persistance (PVC ou hostPath) via les valeurs du chart, au prix de perdre les
-journaux actuels au moment de la bascule. Ses requests (768 Mio / 100 m pour 160 Mio / 4 m) se
-corrigeront a ce moment-la.
+Alertmanager n'a pas de stockage : un redemarrage perd les silences et l'historique de notifications
+(au pire un message en double).
 
-Alertmanager n'a pas de stockage non plus : un redemarrage perd les silences et l'historique de
-notifications (au pire un message en double).
-
-Sur-dimensionne :
-
-- `envoy` de la passerelle : 512 Mio / 100 m pour 46 Mio et 2 m. Ces valeurs viennent des defauts
-  d'Envoy Gateway ; il n'existe pas de ressource `EnvoyProxy`, il faudrait en creer une et la
-  referencer dans la GatewayClass (touche l'entree publique).
-- 100 m de CPU pour moins de 10 m : CoreDNS et metrics-server (geres par k3s, revenus a chaque mise
-  a jour), PostgreSQL du Tamagotchi, `habit-game` et `habit-postgres` (autre depot).
+100 m de CPU pour moins de 10 m : CoreDNS et metrics-server (geres par k3s, revenus a chaque mise
+a jour), PostgreSQL du Tamagotchi, `habit-game` et `habit-postgres` (autre depot).
 
 Sous-dimensionne (aucune pression memoire aujourd'hui) : Grafana (256 Mio pour 505), trivy-operator
 (128 pour 374), prometheus de linkerd-viz (128 pour 361), strimzi-cluster-operator (256 pour 311),

@@ -8,6 +8,24 @@ metadata:
 spec:
   controllerName: gateway.envoyproxy.io/gatewayclass-controller
 ---
+# Dimensionnement du proxy Envoy de la passerelle. Les valeurs par defaut d'Envoy Gateway
+# (100 m, 512 Mio) reservaient dix fois l'usage mesure sur 7 jours : 46 Mio et 2 m de CPU.
+# La limite memoire reste a 512 Mio pour absorber un pic de connexions.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: main-gateway-proxy
+  namespace: default
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyDeployment:
+        container:
+          resources:
+            requests: { cpu: 25m, memory: 128Mi }
+            limits: { memory: 512Mi }
+---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
@@ -17,6 +35,11 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   gatewayClassName: eg
+  infrastructure:
+    parametersRef:
+      group: gateway.envoyproxy.io
+      kind: EnvoyProxy
+      name: main-gateway-proxy
   listeners:
     - name: http
       protocol: HTTP

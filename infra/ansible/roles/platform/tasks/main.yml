@@ -155,13 +155,9 @@
     release_namespace: monitoring
     wait: true
     kubeconfig: "{{ kubeconfig }}"
-    values:
-      # Grafana vient deja de kube-prometheus-stack : en installer un second
-      # doublerait la consommation memoire sur un noeud de 24 Go.
-      grafana:
-        enabled: false
-      promtail:
-        enabled: true
+    # Valeurs dans k8s/monitoring/loki-values.yaml (persistance, retention 14 jours,
+    # requests). Le stockage etait un emptyDir : recreer le pod effacait les journaux.
+    values: "{{ lookup('file', repo_root ~ '/k8s/monitoring/loki-values.yaml') | from_yaml }}"
 
 - name: Kyverno
   kubernetes.core.helm:

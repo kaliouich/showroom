@@ -1,0 +1,31 @@
+# Valeurs Helm de Loki (chart grafana/loki-stack). Source unique, lue par Ansible.
+#
+# Avant le 2026-10-26 les donnees de Loki vivaient dans un emptyDir : recreer le pod
+# effacait tous les journaux (1,7 Gio, dont ceux de l'enquete sur Gitea), et aucune
+# retention ne bornait leur taille. Maintenant :
+#   - un volume persistant (local-path) ;
+#   - une retention de 14 jours, appliquee par le compactor. local-path n'applique pas la
+#     taille du volume : sans retention, les journaux finiraient par remplir le disque du noeud.
+grafana:
+  enabled: false   # celui de kube-prometheus-stack suffit
+
+promtail:
+  enabled: true
+
+loki:
+  persistence:
+    enabled: true
+    accessModes: [ReadWriteOnce]
+    size: 10Gi
+    storageClassName: local-path
+  resources:
+    requests: { cpu: 25m, memory: 256Mi }
+    limits: { memory: 512Mi }
+  config:
+    compactor:
+      retention_enabled: true
+      compaction_interval: 10m
+      retention_delete_delay: 2h
+      retention_delete_worker_count: 150
+    limits_config:
+      retention_period: 336h
