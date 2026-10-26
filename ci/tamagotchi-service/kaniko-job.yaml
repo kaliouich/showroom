@@ -1,0 +1,71 @@
+# Modele du Job de build, rempli par le workflow avec envsubst.
+# Variables : IMAGE (tamagotchi-api | tamagotchi-frontend), CONTEXT_DIR (api |
+# frontend), SHA, RUN_ID.
+# Les identifiants viennent de deux Secrets crees d'avance dans ci-builds :
+#   ci-git       (username, password) : jeton en lecture seule pour le clone ;
+#   ci-registry  (config.json)        : jeton d'ecriture limite aux paquets.
+# Le workflow n'a jamais acces a leur valeur.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: build-${IMAGE}-${RUN_ID}
+  namespace: ci-builds
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 1200
+  ttlSecondsAfterFinished: 900
+  template:
+    metadata:
+      annotations:
+        linkerd.io/inject: disabled
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      initContainers:
+        - name: clone
+          image: gitea-runner-ci:v1
+          imagePullPolicy: Never
+          command: [sh, -ec]
+          args:
+            - |
+              git clone -q http://gitea-http.gitea.svc.cluster.local:3000/khalil/tamagotchi-service.git /ws/src
+              git -C /ws/src checkout -q ${SHA}
+          env:
+            - { name: GIT_CONFIG_COUNT, value: "1" }
+            - { name: GIT_CONFIG_KEY_0, value: credential.helper }
+            - { name: GIT_CONFIG_VALUE_0, value: "!f() { echo username=$GIT_USER; echo password=$GIT_TOKEN; }; f" }
+            - name: GIT_USER
+              valueFrom: { secretKeyRef: { name: ci-git, key: username } }
+            - name: GIT_TOKEN
+              valueFrom: { secretKeyRef: { name: ci-git, key: password } }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: [ALL] }
+          resources:
+            requests: { cpu: 10m, memory: 64Mi }
+            limits: { memory: 512Mi }
+          volumeMounts:
+            - { name: ws, mountPath: /ws }
+      containers:
+        - name: kaniko
+          image: gcr.io/kaniko-project/executor:v1.24.0
+          args:
+            - --context=/ws/src/${CONTEXT_DIR}
+            - --destination=gitea-http.gitea.svc.cluster.local:3000/khalil/${IMAGE}:${SHA}
+            - --insecure
+            - --cache=false
+            - --snapshot-mode=redo
+          resources:
+            requests: { cpu: 50m, memory: 256Mi }
+            limits: { memory: 2Gi }
+          volumeMounts:
+            - { name: ws, mountPath: /ws }
+            - { name: registry, mountPath: /kaniko/.docker, readOnly: true }
+      volumes:
+        - name: ws
+          emptyDir: {}
+        - name: registry
+          secret:
+            secretName: ci-registry
+            items:
+              - { key: config.json, path: config.json }

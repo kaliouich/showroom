@@ -1,0 +1,63 @@
+name: CI/CD Pipeline
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'api-deployment.yaml'
+      - 'frontend-deployment.yaml'
+
+# Runner en mode hote, sans daemon Docker : les images sont construites par des
+# Jobs Kaniko (namespace ci-builds). Aucune action tierce n'est telechargee.
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          git -c http.extraHeader="Authorization: token $TOKEN" clone -q "http://gitea-http.gitea.svc.cluster.local:3000/${{ github.repository }}.git" src
+          git -C src checkout -q "${{ github.sha }}"
+      - name: Install dependencies and check the API
+        working-directory: src/api
+        run: npm install --ignore-scripts && node -c server.js
+
+  build-push-deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Build images with Kaniko
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          git -c http.extraHeader="Authorization: token $TOKEN" clone -q "http://gitea-http.gitea.svc.cluster.local:3000/${{ github.repository }}.git" src
+          git -C src checkout -q "${{ github.sha }}"
+          export SHA="${{ github.sha }}" RUN_ID="${{ github.run_id }}"
+          for pair in tamagotchi-api:api tamagotchi-frontend:frontend; do
+            export IMAGE="${pair%%:*}" CONTEXT_DIR="${pair##*:}"
+            envsubst '${IMAGE} ${CONTEXT_DIR} ${SHA} ${RUN_ID}' < src/ci/kaniko-job.yaml | kubectl create -f -
+          done
+          for img in tamagotchi-api tamagotchi-frontend; do
+            kubectl -n ci-builds wait --for=condition=complete --timeout=20m "job/build-${img}-${RUN_ID}" || {
+              kubectl -n ci-builds logs "job/build-${img}-${RUN_ID}" --all-containers --tail=50 || true
+              exit 1
+            }
+          done
+
+      - name: Update Kubernetes manifests
+        working-directory: src
+        run: |
+          sed -i "s|image: .*tamagotchi-api:.*|image: git.khalilaliouich.com/${{ github.repository_owner }}/tamagotchi-api:${{ github.sha }}|g" api-deployment.yaml
+          sed -i "s|image: .*tamagotchi-frontend:.*|image: git.khalilaliouich.com/${{ github.repository_owner }}/tamagotchi-frontend:${{ github.sha }}|g" frontend-deployment.yaml
+
+      - name: Commit and push
+        working-directory: src
+        run: |
+          git config user.name "gitea-actions[bot]"
+          git config user.email "gitea-actions@gitea.local"
+          git remote set-url origin "http://${{ github.actor }}:${{ secrets.CR_PAT }}@gitea-http.gitea.svc.cluster.local:3000/${{ github.repository }}.git"
+          git add api-deployment.yaml frontend-deployment.yaml
+          git commit -m "chore: deploy version ${{ github.sha }} [skip ci]" || echo "No changes to commit"
+          git push origin HEAD:main
