@@ -40,27 +40,46 @@ Deux pieges rencontres :
 
 Noeud : 97 % -> 62 % du CPU demande, 88 % -> 62 % de la memoire demandee.
 
-## Reste a faire (demande un redemarrage sensible)
+## Corrige ensuite, apres verification de la persistance
+
+| Composant | Avant | Apres | Remarque |
+|---|---|---|---|
+| Prometheus | 512 Mio, limite 3 Gio | 2400 Mio / 150 m, limite 4 Gio | 2,2 Gio de pic pour ~250 000 series ; PVC de 15 Gi, WAL rejoue en 12 s, historique intact |
+| config-reloader de Prometheus et d'Alertmanager | 512 Mio / 50 m | 64 Mio / 10 m | prennent le nouveau defaut du LimitRange |
+| n8n | 128 Mio | 640 Mio, strategie Recreate, image figee | voir ci-dessous |
+
+**n8n** : la strategie etait RollingUpdate sur un volume hostPath (SQLite) : pendant un
+redemarrage l'ancien et le nouveau pod ecrivaient le meme fichier. Elle est passee en Recreate. L'image
+etait `n8nio/n8n:latest` avec `imagePullPolicy: Always` : le redemarrage a installe 2.44.7 a la place
+de 2.39.8 et execute des migrations de base sans qu'on l'ait decide. L'image est maintenant figee sur
+`2.44.7` (`IfNotPresent`) ; la chaine d'auto-reparation a ete rejouee de bout en bout (meteorite ->
+creature ranimee en environ 2 minutes). Le manifeste `n8n.yaml` du depot est une ancienne copie, le
+deploiement en place a evolue sans lui.
+
+Noeud : 97 % -> 57 % du CPU demande, 88 % -> 64 % de la memoire demandee.
+
+## Reste a faire
+
+**Loki : ne pas redemarrer le pod avant d'avoir regle le stockage.** Son volume `storage` est un
+`emptyDir`, donc recreer le pod efface tous les journaux (ils ont servi a l'analyse de l'incident
+Gitea). Il faut une persistance (PVC ou hostPath) via les valeurs du chart, au prix de perdre les
+journaux actuels au moment de la bascule. Ses requests (768 Mio / 100 m pour 160 Mio / 4 m) se
+corrigeront a ce moment-la.
+
+Alertmanager n'a pas de stockage non plus : un redemarrage perd les silences et l'historique de
+notifications (au pire un message en double).
 
 Sur-dimensionne :
 
-- `config-reloader` de Prometheus et d'Alertmanager : 512 Mio chacun pour 15 a 23 Mio utilises.
-- `envoy` de la passerelle : 512 Mio / 100 m pour 46 Mio et 2 m ; se regle dans la ressource
-  `EnvoyProxy` (coupure breve du site).
+- `envoy` de la passerelle : 512 Mio / 100 m pour 46 Mio et 2 m. Ces valeurs viennent des defauts
+  d'Envoy Gateway ; il n'existe pas de ressource `EnvoyProxy`, il faudrait en creer une et la
+  referencer dans la GatewayClass (touche l'entree publique).
 - 100 m de CPU pour moins de 10 m : CoreDNS et metrics-server (geres par k3s, revenus a chaque mise
-  a jour), PostgreSQL du Tamagotchi, `habit-game` et `habit-postgres` (autre depot), Loki.
+  a jour), PostgreSQL du Tamagotchi, `habit-game` et `habit-postgres` (autre depot).
 
-Sous-dimensionne (risque d'eviction sous pression memoire, aucune pression aujourd'hui) :
-
-| Conteneur | Demande | Pic 7 j |
-|---|---|---|
-| Prometheus | 512 Mio | 2,2 Gio |
-| n8n | 128 Mio | 584 Mio |
-| Grafana | 256 Mio | 505 Mio |
-| trivy-operator | 128 Mio | 374 Mio |
-| prometheus de linkerd-viz | 128 Mio | 361 Mio |
-| strimzi-cluster-operator | 256 Mio | 311 Mio |
-| user-operator / topic-operator (Kafka) | 128 Mio | 218 / 188 Mio |
+Sous-dimensionne (aucune pression memoire aujourd'hui) : Grafana (256 Mio pour 505), trivy-operator
+(128 pour 374), prometheus de linkerd-viz (128 pour 361), strimzi-cluster-operator (256 pour 311),
+user-operator et topic-operator de Kafka (128 pour 218 et 188).
 
 ## Garde-fous
 

@@ -89,11 +89,15 @@ kube_prometheus_values:
             resources:
               requests:
                 storage: 15Gi
+      # Mesure sur 7 jours : 2,2 Gio de pic pour ~250 000 series. La demande etait de
+      # 512 Mio (premier pod evince en cas de pression memoire) et la limite de 3 Gio
+      # ne laissait que 800 Mio de marge pour le rejeu du WAL au demarrage.
       resources:
         limits:
-          memory: 3Gi
+          memory: 4Gi
         requests:
-          memory: 512Mi
+          cpu: 150m
+          memory: 2400Mi
 
 # Les valeurs Helm de Gitea vivent dans k8s/gitea/values.yaml (source unique,
 # lue par le role platform) : elles sont versionnees avec le reste du durcissement.
