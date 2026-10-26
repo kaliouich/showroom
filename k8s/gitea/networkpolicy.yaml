@@ -60,3 +60,22 @@ spec:
               - 172.16.0.0/12
               - 192.168.0.0/16
               - 169.254.0.0/16
+    # API Kubernetes (le runner cree les Jobs de build ; RBAC limite a ci-builds).
+    - to:
+        - ipBlock:
+            cidr: 10.0.0.129/32
+      ports:
+        - { protocol: TCP, port: 6443 }
+---
+# Le runner n'a besoin d'aucune connexion entrante : il va chercher ses taches
+# lui-meme aupres de Gitea.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: runner-no-ingress
+  namespace: gitea
+spec:
+  podSelector:
+    matchLabels:
+      app: gitea-act-runner
+  policyTypes: [Ingress]

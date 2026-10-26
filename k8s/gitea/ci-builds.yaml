@@ -1,0 +1,102 @@
+# Namespace de construction des images. Le runner Gitea Actions n'a pas de
+# daemon Docker (donc aucun conteneur privilegie) : pour chaque build il cree un
+# Job Kaniko ici. Kaniko construit l'image sans daemon, sans privilege, et la
+# pousse dans le registre de Gitea.
+#
+# Ce que le runner peut faire : creer, lire et supprimer des Jobs dans CE
+# namespace, rien d'autre. Il ne lit aucun Secret et ne touche pas au namespace
+# gitea. La norme Pod Security "baseline" est imposee ici : meme un workflow
+# malveillant ne peut pas y lancer de pod privilegie, monter le disque de l'hote
+# ou utiliser le reseau de l'hote.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ci-builds
+  labels:
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/enforce-version: latest
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gitea-runner
+  namespace: gitea
+automountServiceAccountToken: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: build-jobs
+  namespace: ci-builds
+rules:
+  - apiGroups: [batch]
+    resources: [jobs]
+    verbs: [create, get, list, watch, delete]
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list, watch]
+  - apiGroups: [""]
+    resources: [pods/log]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: gitea-runner-build-jobs
+  namespace: ci-builds
+subjects:
+  - kind: ServiceAccount
+    name: gitea-runner
+    namespace: gitea
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: build-jobs
+---
+# Les builds peuvent joindre Gitea (clone, registre), le DNS et Internet (images
+# de base, paquets npm) mais aucun autre service du cluster ni le reseau prive.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: build-egress
+  namespace: ci-builds
+spec:
+  podSelector: {}
+  policyTypes: [Egress, Ingress]
+  ingress: []
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: gitea
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: gitea
+      ports:
+        - { protocol: TCP, port: 3000 }
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except: [10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16]
+---
+# Plafond de ressources : un build ne doit pas affamer le noeud.
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: builds
+  namespace: ci-builds
+spec:
+  hard:
+    pods: "3"
+    limits.memory: 6Gi

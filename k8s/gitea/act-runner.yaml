@@ -1,0 +1,125 @@
+# Runner Gitea Actions, sans privilege. Remplace l'ancien deploiement (image
+# gitea/act_runner:latest obsolete, conteneur dind privilegie, jeton
+# d'enregistrement en clair dans la spec). Ce qui change :
+#   - mode "hote" : les etapes d'un workflow s'executent dans ce conteneur, il
+#     n'y a plus de daemon Docker, donc plus de conteneur privilegie ni
+#     d'espace de noms utilisateur (le noeud les interdit, et c'est voulu) ;
+#   - les images sont construites par un Job Kaniko dans le namespace
+#     ci-builds (voir ci-builds.yaml), sans daemon et sans privilege ;
+#   - conteneur non root, systeme de fichiers en lecture seule, aucune capacite ;
+#   - le jeton d'enregistrement vit dans un Secret monte en fichier (cree hors
+#     du depot, voir scripts/register-gitea-runner.sh), jamais dans la spec ;
+#   - l'etat du runner (/data) est persistant : sans cela chaque redemarrage
+#     enregistrait un nouveau runner (25 doublons s'etaient accumules) ;
+#   - pas de maillage Linkerd, aucune connexion entrante (NetworkPolicy),
+#     sorties limitees a Internet.
+#
+# Image : scripts/build-runner-image.sh (construite sur le noeud).
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: runner-config
+  namespace: gitea
+data:
+  config.yaml: |
+    log:
+      level: info
+    runner:
+      file: /data/.runner
+      capacity: 1
+      timeout: 1h
+      fetch_timeout: 5s
+      fetch_interval: 2s
+      labels:
+        - "ubuntu-latest:host"
+    cache:
+      enabled: false
+    host:
+      workdir_parent: /data/work
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: runner-data
+  namespace: gitea
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 200Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitea-act-runner
+  namespace: gitea
+  labels:
+    app: gitea-act-runner
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: gitea-act-runner
+  template:
+    metadata:
+      labels:
+        app: gitea-act-runner
+      annotations:
+        linkerd.io/inject: disabled
+    spec:
+      serviceAccountName: gitea-runner
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: runner
+          image: gitea-runner-ci:v1
+          imagePullPolicy: Never
+          env:
+            - name: GITEA_INSTANCE_URL
+              value: http://gitea-http.gitea.svc.cluster.local:3000
+            - name: GITEA_RUNNER_REGISTRATION_TOKEN_FILE
+              value: /secrets/token
+            - name: GITEA_RUNNER_NAME
+              value: k8s-runner
+            - name: CONFIG_FILE
+              value: /config/config.yaml
+            - name: HOME
+              value: /tmp/home
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            limits:
+              memory: 2Gi
+          volumeMounts:
+            - { name: data, mountPath: /data }
+            - { name: config, mountPath: /config, readOnly: true }
+            - { name: token, mountPath: /secrets, readOnly: true }
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: runner-data
+        - name: config
+          configMap:
+            name: runner-config
+        - name: token
+          secret:
+            secretName: gitea-runner-token
+        - name: tmp
+          emptyDir:
+            sizeLimit: 4Gi
