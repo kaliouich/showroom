@@ -31,6 +31,27 @@
   ],
   "packageRules": [
     {
+      "description": "Le reste : un lot par semaine, relu avant fusion. Premiere regle, pour que les suivantes (majeures, Gitea) la surchargent.",
+      "matchPackageNames": [
+        "*"
+      ],
+      "schedule": [
+        "before 8am on monday"
+      ],
+      "groupName": "mises a jour hebdomadaires"
+    },
+    {
+      "description": "Les majeures ne sont jamais fusionnees seules.",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false,
+      "labels": [
+        "dependencies",
+        "major"
+      ]
+    },
+    {
       "description": "Gitea est expose sur Internet (incident 12) : chart et image ensemble, a toute heure, fusion automatique des correctifs et mineures.",
       "matchPackageNames": [
         "gitea",
@@ -51,30 +72,6 @@
         "patch"
       ],
       "automerge": true
-    },
-    {
-      "description": "Les majeures ne sont jamais fusionnees seules.",
-      "matchUpdateTypes": [
-        "major"
-      ],
-      "automerge": false,
-      "labels": [
-        "dependencies",
-        "major"
-      ]
-    },
-    {
-      "description": "Le reste : un lot par semaine, relu avant fusion.",
-      "matchPackageNames": [
-        "*",
-        "!gitea",
-        "!gitea/gitea",
-        "!docker.io/gitea/gitea"
-      ],
-      "schedule": [
-        "before 8am on monday"
-      ],
-      "groupName": "mises a jour hebdomadaires"
     }
   ],
   "vulnerabilityAlerts": {
