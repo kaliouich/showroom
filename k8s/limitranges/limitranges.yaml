@@ -13,7 +13,11 @@ metadata:
 spec:
   limits:
     - type: Container
-      defaultRequest: { memory: 512Mi, cpu: 50m }
+      # 64Mi / 10m depuis le 2026-10-26 (512Mi / 50m avant). Seize conteneurs
+      # sans requests explicites (proxys Linkerd, config-reloader, sidecars Grafana,
+      # kube-state-metrics, node-exporter, promtail) reservaient 8 Gio et 800 m
+      # pour quelques dizaines de Mio utilises. La limite (3Gi) ne change pas.
+      defaultRequest: { memory: 64Mi, cpu: 10m }
       default: { memory: 3Gi, cpu: "2" }
 ---
 apiVersion: v1
