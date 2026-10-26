@@ -82,7 +82,12 @@ graph TB
   répliqué 3 fois, opéré par [Strimzi](k8s/kafka/) (KRaft, TLS + SCRAM, topic et
   utilisateurs déclarés en CR). Un consumer le relaie en direct sur le site ;
   lag et partitions sous-répliquées ont leur dashboard Grafana et leurs
-  alertes. Limite assumée : les 3 brokers partagent la même VM.
+  alertes. Un bouton « tuer un broker » supprime l'un des trois pods sans arrêt
+  propre : le flux continue (réplication 3, `min.insync.replicas=2`) et
+  l'opérateur remet le broker en place. Le site reste en lecture seule ; un
+  petit service ([`broker-chaos`](kafka-apps/broker-chaos/)), seul autorisé à
+  supprimer ces trois pods, refuse d'agir si le cluster est déjà dégradé.
+  Limite assumée : les 3 brokers partagent la même VM.
 - **Les pannes rencontrées sont documentées**, causes racines et commandes de
   résolution incluses : [`TECHNICAL_ISSUES_RESOLVED.md`](TECHNICAL_ISSUES_RESOLVED.md)
   et la page [Issues](https://khalilaliouich.com/issues.html) du site.
