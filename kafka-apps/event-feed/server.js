@@ -98,7 +98,9 @@ app.get('/stream', (req, res) => {
   res.write(': connected\n\n');
   clients.add(res);
   sseClients.set(clients.size);
-  const ping = setInterval(() => res.write(': ping\n\n'), 25000);
+  // Battement nomme : un commentaire SSE (": ping") est invisible pour le navigateur, alors qu'un
+  // evenement nomme permet au site de detecter un flux silencieusement coupe.
+  const ping = setInterval(() => res.write('event: ping\ndata: {}\n\n'), 25000);
   req.on('close', () => {
     clearInterval(ping);
     clients.delete(res);

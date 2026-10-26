@@ -1215,18 +1215,83 @@ function pushEvent(list, evt) {
   while (list.children.length > EVENT_LIST_MAX) list.lastChild.remove();
 }
 
+// Flux en direct. Un EventSource se reconnecte seul apres une coupure reseau, mais pas
+// apres une reponse HTTP autre que 200 (502 pendant un redemarrage de la passerelle ou du
+// site, 503 si le plafond de connexions est atteint) : il passe alors a CLOSED pour de bon
+// et le fil reste fige jusqu'au rechargement de la page. D'ou la reconnexion explicite, un
+// chien de garde sur les battements du serveur, et un rattrapage de ce qui a ete manque.
+const FEED_STALE_MS = 70000; // trois battements de 25 s manques
+let feedSource = null;
+let feedRetry = 0;
+let feedLastSeen = 0;
+let feedPingSeen = false; // le chien de garde n'agit que si le serveur envoie des battements
+let feedTimer = null;
+const feedSeen = new Set();
+
+function feedPush(list, evt) {
+  if (evt.id) {
+    if (feedSeen.has(evt.id)) return;
+    feedSeen.add(evt.id);
+    if (feedSeen.size > 500) feedSeen.delete(feedSeen.values().next().value);
+  }
+  pushEvent(list, evt);
+}
+
+async function feedBackfill(list) {
+  try {
+    const res = await fetch('/api/events/recent');
+    if (res.ok) (await res.json()).reverse().forEach(e => feedPush(list, e));
+  } catch (e) { /* le flux live prendra le relais */ }
+}
+
+function feedReconnect(list, dot, delayMs) {
+  clearTimeout(feedTimer);
+  feedTimer = setTimeout(() => feedConnect(list, dot), delayMs);
+}
+
+function feedConnect(list, dot) {
+  if (feedSource) feedSource.close();
+  const es = new EventSource('/api/events/stream');
+  feedSource = es;
+  // Le delai de peremption repart a chaque tentative : sinon le chien de garde relancerait la
+  // connexion en boucle tant que le serveur n'a pas encore repondu.
+  feedLastSeen = Date.now();
+  es.onopen = () => {
+    dot.classList.add('event-feed__dot--on');
+    feedRetry = 0;
+    feedLastSeen = Date.now();
+    feedBackfill(list); // ce qui s'est passe pendant la coupure
+  };
+  es.onerror = () => {
+    dot.classList.remove('event-feed__dot--on');
+    // CLOSED : le navigateur ne retentera pas. Les autres erreurs, il les retente seul.
+    if (es.readyState === EventSource.CLOSED) {
+      feedReconnect(list, dot, Math.min(30000, 1000 * 2 ** feedRetry++));
+    }
+  };
+  es.addEventListener('ping', () => { feedPingSeen = true; feedLastSeen = Date.now(); });
+  es.onmessage = (m) => {
+    feedLastSeen = Date.now();
+    try { feedPush(list, JSON.parse(m.data)); } catch (e) { /* ignore */ }
+  };
+}
+
+function feedStale() {
+  return feedPingSeen && Date.now() - feedLastSeen > FEED_STALE_MS;
+}
+
 async function initEventFeed() {
   const list = document.getElementById('eventList');
   if (!list) return;
-  try {
-    const res = await fetch('/api/events/recent');
-    if (res.ok) (await res.json()).reverse().forEach(e => pushEvent(list, e));
-  } catch (e) { /* le flux live prendra le relais */ }
   const dot = document.getElementById('eventDot');
-  const es = new EventSource('/api/events/stream');
-  es.onopen = () => dot.classList.add('event-feed__dot--on');
-  es.onerror = () => dot.classList.remove('event-feed__dot--on'); // EventSource se reconnecte seul
-  es.onmessage = (m) => { try { pushEvent(list, JSON.parse(m.data)); } catch (e) { /* ignore */ } };
+  await feedBackfill(list);
+  feedConnect(list, dot);
+  setInterval(() => { if (feedStale()) feedConnect(list, dot); }, 15000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && (feedStale() || (feedSource && feedSource.readyState === EventSource.CLOSED))) {
+      feedConnect(list, dot);
+    }
+  });
 }
 
 async function fetchKafkaStats() {

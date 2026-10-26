@@ -270,9 +270,19 @@ app.get('/api/events/recent', (req, res) => {
   r.on('timeout', () => r.destroy());
 });
 
+// Une reponse d'erreur HTTP fige un EventSource pour de bon (il ne se reconnecte pas apres un
+// statut autre que 200). Quand le flux ne peut pas etre servi, on repond donc 200, on indique
+// au navigateur quand retenter (retry:) et on ferme : il revient tout seul.
+function retryLater(res, ms) {
+  res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' });
+  res.end(`retry: ${ms}\n\n`);
+}
+
 app.get('/api/events/stream', (req, res) => {
-  if (openStreams >= MAX_STREAMS) return res.status(503).end();
+  if (openStreams >= MAX_STREAMS) return retryLater(res, 15000);
   const up = http.get({ host: EVENT_FEED.hostname, port: EVENT_FEED.port, path: '/stream' }, (r) => {
+    // Le visiteur est parti avant la reponse : 'close' est deja passe, personne ne decrementerait.
+    if (res.destroyed) { r.destroy(); return; }
     openStreams++;
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
@@ -285,7 +295,7 @@ app.get('/api/events/stream', (req, res) => {
     res.on('close', () => { done(); up.destroy(); });
     r.on('end', () => res.end());
   });
-  up.on('error', () => { if (!res.headersSent) res.status(502).end(); else res.end(); });
+  up.on('error', () => { if (!res.headersSent) retryLater(res, 5000); else res.end(); });
 });
 
 // Bouton « tuer un broker ». Le site n'a aucun droit d'ecriture sur Kubernetes :
