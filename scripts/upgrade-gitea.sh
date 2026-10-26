@@ -5,6 +5,8 @@
 #
 #   scripts/upgrade-gitea.sh --check   dit ce qui changerait, ne touche a rien
 #   scripts/upgrade-gitea.sh           sauvegarde, met a jour, verifie, annule si ca casse
+#   scripts/upgrade-gitea.sh --force   idem meme si les versions sont identiques
+#                                      (changement de configuration dans values.yaml)
 #
 # Gitea est expose sur Internet : un correctif de securite doit etre applique
 # en jours, pas en mois (incident 12, 60 jours de retard).
@@ -23,7 +25,7 @@ have_tag="$(kubectl -n gitea get deploy gitea -o jsonpath='{.spec.template.spec.
 
 echo "chart : en place $have_chart, voulu $want_chart"
 echo "image : en place $have_tag, voulue $want_tag"
-if [ "$have_chart" = "$want_chart" ] && [ "$have_tag" = "$want_tag" ]; then
+if [ "$mode" != "--force" ] && [ "$have_chart" = "$want_chart" ] && [ "$have_tag" = "$want_tag" ]; then
   echo "rien a faire"; exit 0
 fi
 [ "$mode" = "--check" ] && { echo "mise a jour necessaire"; exit 0; }

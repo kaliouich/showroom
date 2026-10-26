@@ -23,14 +23,14 @@ persistence:
   storageClass: local-path
 
 gitea:
-  # Linkerd : depuis un pod maille, la connexion vers PostgreSQL et Valkey est reinitialisee
+  # Linkerd : depuis un pod maille, la connexion vers PostgreSQL est reinitialisee
   # par le proxy du serveur (psql et Gitea : "server closed the connection
   # unexpectedly"), alors qu'un pod non maille se connecte sans probleme. Cause
   # non isolee ; en attendant, le trafic sortant vers 5432 contourne le proxy
   # (il reste dans le namespace, et la NetworkPolicy k8s/gitea/networkpolicy.yaml
   # le limite).
   podAnnotations:
-    config.linkerd.io/skip-outbound-ports: "5432,6379"
+    config.linkerd.io/skip-outbound-ports: "5432"
   admin:
     # Le mot de passe n'est pas ici : il vit dans le secret
     # gitea-admin-credentials, hors du depot. Sans cette reference, le chart
@@ -50,6 +50,12 @@ gitea:
       ENABLED: false
     api:
       ENABLE_SWAGGER: false
+    cache:
+      ADAPTER: memory
+    session:
+      PROVIDER: db
+    queue:
+      TYPE: level
 
 postgresql:
   enabled: true
@@ -67,12 +73,12 @@ resources:
     cpu: 100m
     memory: 256Mi
 
+# Plus de Valkey. Une seule instance de Gitea n'a rien a partager : cache en
+# memoire, sessions dans PostgreSQL (elles survivent aux redemarrages), file
+# d'attente sur disque. Le chart Bitnami n'est plus publie (l'image vient de
+# "bitnamilegacy", sans correctifs), le cluster Valkey avait deja mis Gitea a terre
+# le 2026-08-10 et coutait trois pods et 300 m de CPU reserve pour rien.
 valkey-cluster:
-  enabled: true
-  # Sans persistance, chaque recreation de pod fait perdre a Valkey son
-  # identite de cluster et met Gitea a terre. C'est exactement ce qui s'est
-  # produit le 2026-08-10. Voir k8s/RUNBOOK-valkey.md.
-  persistence:
-    enabled: true
-    size: 1Gi
-    storageClass: local-path
+  enabled: false
+valkey:
+  enabled: false

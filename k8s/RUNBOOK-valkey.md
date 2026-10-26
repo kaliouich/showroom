@@ -1,5 +1,9 @@
 # Valkey (sessions Gitea) — incident du 2026-08-08 et correctif
 
+> **Obsolete depuis le 2026-10-26.** Gitea n'utilise plus Valkey (cache en memoire, sessions dans
+> PostgreSQL, file d'attente sur disque) : voir `k8s/gitea/values.yaml`. Les manifestes de
+> reparation cites ci-dessous ont ete supprimes ; ce document garde l'historique de l'incident.
+
 ## Ce qui s'est passé
 
 Un `rollout restart` du namespace `gitea` a fait tomber Gitea (502 puis 500)
