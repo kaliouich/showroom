@@ -50,7 +50,7 @@
       "groupName": "mises a jour hebdomadaires"
     },
     {
-      "description": "Les majeures ne sont jamais fusionnees seules.",
+      "description": "Les majeures : une par paquet, jamais fusionnees seules, et seulement sur demande depuis le tableau de bord (case a cocher).",
       "matchUpdateTypes": [
         "major"
       ],
@@ -58,7 +58,19 @@
       "labels": [
         "dependencies",
         "major"
-      ]
+      ],
+      "groupName": null,
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Postgres 16 -> 18 : le repertoire de donnees n'est pas lisible d'une majeure a l'autre, un simple changement d'image planterait le pod. Migration par dump/restore, a la main.",
+      "matchPackageNames": [
+        "postgres"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "enabled": false
     },
     {
       "description": "Gitea est expose sur Internet (incident 12) : chart et image ensemble, a toute heure, fusion automatique des correctifs et mineures.",
