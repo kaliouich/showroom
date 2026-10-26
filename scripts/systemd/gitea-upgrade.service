@@ -1,0 +1,12 @@
+[Unit]
+Description=Mise a jour de Gitea si le depot demande une autre version
+After=network-online.target k3s.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+WorkingDirectory=/home/ubuntu/showroom-vitrine
+# fast-forward uniquement : jamais de fusion automatique en local
+ExecStart=/usr/bin/git pull --ff-only
+ExecStart=/home/ubuntu/showroom-vitrine/scripts/upgrade-gitea.sh

@@ -1,0 +1,88 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "timezone": "Europe/Paris",
+  "labels": [
+    "dependencies"
+  ],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 4,
+  "dependencyDashboard": true,
+  "dependencyDashboardTitle": "Mises a jour en attente",
+  "kubernetes": {
+    "managerFilePatterns": [
+      "/^k8s/.+\\.ya?ml$/",
+      "/^ci/.+\\.ya?ml$/"
+    ]
+  },
+  "customManagers": [
+    {
+      "description": "Versions de charts Helm de infra/ansible/group_vars/all.yml, annotees par un commentaire 'renovate:'",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^infra/ansible/group_vars/all\\.yml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)(?: registryUrl=(?<registryUrl>\\S+))?\\n(?:\\s*#.*\\n)*\\s+\\w+: (?<currentValue>\\S+)"
+      ]
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Gitea est expose sur Internet (incident 12) : chart et image ensemble, a toute heure, fusion automatique des correctifs et mineures.",
+      "matchPackageNames": [
+        "gitea",
+        "gitea/gitea",
+        "docker.io/gitea/gitea"
+      ],
+      "groupName": "gitea",
+      "schedule": [
+        "at any time"
+      ],
+      "labels": [
+        "dependencies",
+        "security"
+      ],
+      "prPriority": 10,
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "automerge": true
+    },
+    {
+      "description": "Les majeures ne sont jamais fusionnees seules.",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false,
+      "labels": [
+        "dependencies",
+        "major"
+      ]
+    },
+    {
+      "description": "Le reste : un lot par semaine, relu avant fusion.",
+      "matchPackageNames": [
+        "*",
+        "!gitea",
+        "!gitea/gitea",
+        "!docker.io/gitea/gitea"
+      ],
+      "schedule": [
+        "before 8am on monday"
+      ],
+      "groupName": "mises a jour hebdomadaires"
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "labels": [
+      "security"
+    ],
+    "schedule": [
+      "at any time"
+    ]
+  }
+}
