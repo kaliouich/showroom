@@ -24,6 +24,7 @@ spec:
           for: 30m
           labels:
             severity: warning
+            product: kubernetes
           annotations:
             summary: "Le noeud a {{ $value | humanizePercentage }} de son CPU deja reserve"
             description: "Le scheduler compte les requests, pas l'usage. Au-dela de 95 % un nouveau pod reste Pending, et un rolling update peut se bloquer faute de place pour le pod de surge. Voir les pods les plus surdimensionnes avec la requete : sum by (namespace,pod) (kube_pod_container_resource_requests{resource=\"cpu\"}) - sum by (namespace,pod) (rate(container_cpu_usage_seconds_total[1h]))."
@@ -32,6 +33,7 @@ spec:
           for: 10m
           labels:
             severity: critical
+            product: kubernetes
           annotations:
             summary: "Le noeud n'a presque plus de CPU reservable ({{ $value | humanizePercentage }})"
             description: "Plus rien de nouveau ne se planifiera. Reduire des requests ou liberer un workload."
@@ -40,6 +42,7 @@ spec:
           for: 30m
           labels:
             severity: warning
+            product: kubernetes
           annotations:
             summary: "Le noeud a {{ $value | humanizePercentage }} de sa memoire deja reservee"
         - alert: PodUnschedulable
@@ -47,6 +50,7 @@ spec:
           for: 10m
           labels:
             severity: critical
+            product: kubernetes
           annotations:
             summary: "{{ $labels.namespace }}/{{ $labels.pod }} ne peut pas etre planifie"
             description: "Souvent un manque de CPU ou de memoire reservable. kubectl -n {{ $labels.namespace }} describe pod {{ $labels.pod }}."
@@ -55,6 +59,7 @@ spec:
           for: 20m
           labels:
             severity: warning
+            product: kubernetes
           annotations:
             summary: "Le CPU du noeud est utilise a {{ $value | humanizePercentage }}"
 ---
@@ -75,6 +80,7 @@ spec:
           for: 15m
           labels:
             severity: warning
+            product: ci
           annotations:
             summary: "Le runner Gitea Actions est arrete"
             description: "Plus aucune pipeline ne tourne : les pushes ne produisent plus d'image."
@@ -88,6 +94,7 @@ spec:
             and on (namespace, job_name) (time() - kube_job_status_start_time < 172800)
           labels:
             severity: warning
+            product: ci
           annotations:
             summary: "Le job {{ $labels.namespace }}/{{ $labels.job_name }} a echoue"
             description: "kubectl -n {{ $labels.namespace }} describe job {{ $labels.job_name }}"
@@ -95,6 +102,7 @@ spec:
           expr: increase(kube_job_status_failed{namespace="ci-builds"}[30m]) > 0
           labels:
             severity: warning
+            product: ci
           annotations:
             summary: "Un build d'image a echoue ({{ $labels.job_name }})"
             description: "kubectl -n ci-builds logs job/{{ $labels.job_name }} --all-containers"
@@ -103,6 +111,7 @@ spec:
           for: 10m
           labels:
             severity: warning
+            product: ci
           annotations:
             summary: "Un build attend depuis 10 min ({{ $labels.pod }})"
             description: "Probablement faute de CPU reservable sur le noeud."

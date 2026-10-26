@@ -1,0 +1,36 @@
+# Surveillance de la chaine d'alerte elle-meme (produit : prometheus).
+#
+# Les alertes du chart couvrent deja Prometheus, Alertmanager et l'operateur
+# (cibles manquantes, regles en echec, notifications en echec). Il leur manque ce
+# que le chart ne peut pas faire : prevenir quand Alertmanager ou Telegram ne
+# marche plus, car l'alerte « notifications en echec » passe par ce meme canal.
+# D'ou un battement de coeur quotidien : si le message n'arrive plus, la chaine
+# est cassee.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: prometheus-meta
+  namespace: monitoring
+  labels:
+    release: kube-prometheus
+spec:
+  groups:
+    - name: prometheus.meta
+      interval: 1m
+      rules:
+        - alert: PlatformHeartbeat
+          expr: vector(1)
+          labels:
+            severity: heartbeat
+            product: prometheus
+          annotations:
+            summary: "La chaine d'alerte fonctionne (Prometheus, Alertmanager, Telegram)"
+        - alert: PrometheusEvaluationSlow
+          expr: max(prometheus_rule_group_last_duration_seconds / prometheus_rule_group_interval_seconds) > 0.8
+          for: 15m
+          labels:
+            severity: warning
+            product: prometheus
+          annotations:
+            summary: "Un groupe de regles prend plus de 80 % de son intervalle d'evaluation"
+            description: "Les alertes risquent d'etre evaluees en retard. Trop de series ou un noeud sature."

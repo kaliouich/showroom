@@ -28,11 +28,24 @@ spec:
       - receiver: "null"
         matchers:
           - { name: alertname, value: "KubeJobFailed", matchType: "=" }
+      # Battement de coeur quotidien (prometheus-meta-alerts.yaml) : le silence est le signal.
+      - receiver: telegram-heartbeat
+        repeatInterval: 24h
+        matchers:
+          - { name: alertname, value: "PlatformHeartbeat", matchType: "=" }
       - receiver: telegram
         matchers:
           - { name: severity, value: "warning|critical", matchType: "=~" }
   receivers:
     - name: "null"
+    - name: telegram-heartbeat
+      telegramConfigs:
+        - botToken:
+            name: telegram-alerts
+            key: token
+          chatID: CHAT_ID_PLACEHOLDER
+          disableNotifications: true
+          message: "💚 La chaîne d'alerte fonctionne (Prometheus → Alertmanager → Telegram). Si ce message n'arrive plus, elle est cassée."
     - name: telegram
       telegramConfigs:
         - botToken:
@@ -42,6 +55,6 @@ spec:
           sendResolved: true
           parseMode: HTML
           message: |-
-            {{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} <b>{{ .Status | toUpper }}</b> — {{ .CommonLabels.alertname }}
+            {{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} <b>{{ .Status | toUpper }}</b> [{{ .CommonLabels.product }}] — {{ .CommonLabels.alertname }}
             {{ range .Alerts }}• {{ .Annotations.summary }}
             {{ end }}

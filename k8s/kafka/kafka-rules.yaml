@@ -20,6 +20,7 @@ spec:
           for: 3m
           labels:
             severity: warning
+            product: kafka
           annotations:
             summary: "Moins de 3 brokers Kafka repondent"
             description: "{{ $value }} broker(s) sur 3. Strimzi relance normalement le pod en moins de 2 minutes."
@@ -28,6 +29,7 @@ spec:
           for: 5m
           labels:
             severity: warning
+            product: kafka
           annotations:
             summary: "Partitions Kafka sous-repliquees"
             description: "{{ $value }} partition(s) n'ont pas tous leurs replicas en sync depuis 5 minutes."
@@ -36,6 +38,7 @@ spec:
           for: 5m
           labels:
             severity: warning
+            product: kafka
           annotations:
             summary: "Le consumer event-feed prend du retard"
             description: "Lag de {{ $value }} messages depuis 5 minutes."
@@ -44,5 +47,97 @@ spec:
           for: 5m
           labels:
             severity: critical
+            product: kafka
           annotations:
             summary: "event-feed n'est plus connecte a Kafka"
+    # Donnees : ce qui peut faire perdre ou rendre illisible un message.
+    - name: kafka.data
+      interval: 30s
+      rules:
+        - alert: KafkaOfflinePartitions
+          expr: sum(kafka_controller_kafkacontroller_offlinepartitionscount) > 0
+          for: 1m
+          labels:
+            severity: critical
+            product: kafka
+          annotations:
+            summary: "{{ $value }} partition(s) Kafka sans leader"
+            description: "Lecture et ecriture impossibles sur ces partitions. Contrairement a la sous-replication, ce n'est pas un etat de transition acceptable."
+        - alert: KafkaNoActiveController
+          expr: sum(kafka_controller_kafkacontroller_activecontrollercount) != 1
+          for: 2m
+          labels:
+            severity: critical
+            product: kafka
+          annotations:
+            summary: "Kafka a {{ $value }} controleur(s) actif(s) au lieu d'un"
+        - alert: KafkaUncleanLeaderElection
+          expr: sum(increase(kafka_controller_controllerstats_uncleanleaderelectionspersec_total[10m])) > 0
+          labels:
+            severity: critical
+            product: kafka
+          annotations:
+            summary: "Election de leader non propre : des messages ont pu etre perdus"
+        - alert: KafkaLogDirOffline
+          expr: sum(kafka_log_logmanager_offlinelogdirectorycount) > 0
+          for: 1m
+          labels:
+            severity: critical
+            product: kafka
+          annotations:
+            summary: "Un repertoire de donnees Kafka est hors ligne"
+        - alert: KafkaBrokerLogSizeHigh
+          # local-path n'applique pas la taille demandee au PVC (5Gi) : sans cette
+          # alerte, un topic qui deborde mangerait le disque du noeud entier.
+          expr: sum by (pod) (kafka_log_log_size) > 4 * 1024 * 1024 * 1024
+          for: 10m
+          labels:
+            severity: warning
+            product: kafka
+          annotations:
+            summary: "{{ $labels.pod }} stocke {{ $value | humanize1024 }}o (PVC declare : 5 Gio, non applique par local-path)"
+    # Producteur et clients : ce que voit l'application, pas seulement le cluster.
+    - name: kafka.clients
+      interval: 30s
+      rules:
+        - alert: KafkaProduceErrors
+          # Seules les erreurs de Produce comptent. FENCED_LEADER_EPOCH, NOT_LEADER ou
+          # REBALANCE_IN_PROGRESS apparaissent a chaque redemarrage de broker.
+          expr: sum(rate(kafka_network_requestmetrics_errorspersec_total{request="Produce",error!="NONE"}[5m])) > 0
+          for: 10m
+          labels:
+            severity: warning
+            product: kafka
+          annotations:
+            summary: "Des ecritures Kafka echouent depuis 10 minutes"
+        - alert: TamagotchiEventsPublishFailing
+          # La publication est « best effort » par conception : l'API reussit meme si
+          # Kafka est tombe. Cette alerte est donc le seul signal d'un flux qui se vide.
+          expr: sum(increase(tamagotchi_events_publish_failed_total[10m])) > 0
+          for: 5m
+          labels:
+            severity: warning
+            product: kafka
+          annotations:
+            summary: "L'API n'arrive plus a publier ses evenements sur Kafka"
+        - alert: TamagotchiEventsProducerDisconnected
+          expr: max(tamagotchi_events_producer_ready) == 0
+          for: 5m
+          labels:
+            severity: warning
+            product: kafka
+          annotations:
+            summary: "Le producteur Kafka de l'API est deconnecte"
+    # Visibilite : sans metriques, toutes les alertes ci-dessus se taisent a tort.
+    - name: kafka.visibility
+      interval: 30s
+      rules:
+        - alert: KafkaMetricsMissing
+          expr: absent(kafka_controller_kafkacontroller_activecontrollercount)
+          for: 5m
+          labels:
+            severity: critical
+            product: kafka
+          annotations:
+            summary: "Plus aucune metrique Kafka dans Prometheus"
+            description: "Les alertes Kafka sont aveugles. Verifier le PodMonitor (label release=kube-prometheus) et les pods showroom-dual-role-*."
