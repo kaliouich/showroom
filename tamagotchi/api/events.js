@@ -12,15 +12,26 @@ const client = require('prom-client');
 const BROKERS = process.env.KAFKA_BROKERS;
 const TOPIC = process.env.KAFKA_TOPIC || 'tamagotchi.events';
 
+// Pas de registre ici : server.js expose son propre registre, et c'est lui qui
+// enregistre ces metriques (events.metrics). Sur le registre par defaut elles
+// n'atteignaient jamais Prometheus, donc un echec de publication, silencieux par
+// conception, restait invisible.
 const publishedTotal = new client.Counter({
   name: 'tamagotchi_events_published_total',
   help: 'Evenements publies vers Kafka',
   labelNames: ['type'],
+  registers: [],
 });
 const failedTotal = new client.Counter({
   name: 'tamagotchi_events_publish_failed_total',
   help: 'Evenements non publies (Kafka indisponible ou erreur d envoi)',
   labelNames: ['type'],
+  registers: [],
+});
+const producerReady = new client.Gauge({
+  name: 'tamagotchi_events_producer_ready',
+  help: '1 si le producteur Kafka est connecte, 0 sinon (absent quand Kafka est desactive)',
+  registers: [],
 });
 
 let producer = null;
@@ -42,10 +53,11 @@ async function start() {
       password: process.env.KAFKA_PASSWORD,
     },
   });
+  producerReady.set(0);
   // idempotent : un retry reseau ne duplique pas l'evenement dans la partition.
   producer = kafka.producer({ idempotent: true, maxInFlightRequests: 1 });
-  producer.on(producer.events.CONNECT, () => { ready = true; });
-  producer.on(producer.events.DISCONNECT, () => { ready = false; });
+  producer.on(producer.events.CONNECT, () => { ready = true; producerReady.set(1); });
+  producer.on(producer.events.DISCONNECT, () => { ready = false; producerReady.set(0); });
   try {
     await producer.connect();
   } catch (err) {
@@ -83,4 +95,4 @@ function publish(type, creature, source = 'api') {
     });
 }
 
-module.exports = { start, publish };
+module.exports = { start, publish, metrics: [publishedTotal, failedTotal, producerReady] };

@@ -14,6 +14,7 @@ app.use(express.json());
 // ============================================================================
 const register = new client.Registry();
 client.collectDefaultMetrics({ register });
+events.metrics.forEach((m) => register.registerMetric(m));
 
 // Custom Tamagotchi metrics
 const hungerGauge = new client.Gauge({
