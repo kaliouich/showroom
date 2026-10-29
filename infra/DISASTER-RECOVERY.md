@@ -87,7 +87,7 @@ sudo ansible-playbook -i localhost, -c local site.yml
 
 Le playbook pose, dans l'ordre : les paquets et le pare-feu du noeud, K3s,
 les CRD Gateway API, cert-manager, Envoy Gateway, la Gateway et le
-ClusterIssuer, Linkerd, ArgoCD, kube-prometheus, Loki, Kyverno, Trivy, Gitea,
+ClusterIssuer, Linkerd, ArgoCD, kube-prometheus, Loki, Trivy, Gitea,
 les LimitRange, les applications, puis les routes HTTP en dernier — elles
 referencent des Services qui doivent deja exister.
 

@@ -16,8 +16,6 @@ versions:
   # renovate: datasource=helm depName=kube-prometheus-stack registryUrl=https://prometheus-community.github.io/helm-charts
   kube_prom: 87.10.1
   loki: 2.10.3
-  # renovate: datasource=helm depName=kyverno registryUrl=https://kyverno.github.io/kyverno/
-  kyverno: 3.8.1
   trivy: 0.33.2
   # Chart 12.7.0 (appVersion 1.27.0) ; l'image est forcee a 28.2.0 dans
   # k8s/gitea/values.yaml. Voir TECHNICAL_ISSUES_RESOLVED.md, incident 12.

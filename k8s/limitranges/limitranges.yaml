@@ -38,17 +38,6 @@ apiVersion: v1
 kind: LimitRange
 metadata:
   name: default-limits
-  namespace: linkerd-viz
-spec:
-  limits:
-    - type: Container
-      defaultRequest: { memory: 128Mi, cpu: 25m }
-      default: { memory: 1Gi, cpu: "1" }
----
-apiVersion: v1
-kind: LimitRange
-metadata:
-  name: default-limits
   namespace: linkerd
 spec:
   limits:
@@ -143,17 +132,6 @@ spec:
     - type: Container
       defaultRequest: { memory: 64Mi, cpu: 10m }
       default: { memory: 512Mi, cpu: 500m }
----
-apiVersion: v1
-kind: LimitRange
-metadata:
-  name: default-limits
-  namespace: kyverno
-spec:
-  limits:
-    - type: Container
-      defaultRequest: { memory: 128Mi, cpu: 10m }
-      default: { memory: 1Gi, cpu: "1" }
 ---
 apiVersion: v1
 kind: LimitRange

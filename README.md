@@ -48,7 +48,6 @@ graph TB
             CM[cert-manager]
             LD["Linkerd<br/>(mTLS)"]
             TV[Trivy]
-            KV[Kyverno]
         end
     end
 

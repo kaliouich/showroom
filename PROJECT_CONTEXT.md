@@ -28,8 +28,7 @@ cliquant, plutôt que de croire un CV.
 ## Composants
 
 **Plateforme** — ArgoCD `v3.4.4` (GitOps), Gitea `1.26.1` (forge Git et
-registre), Linkerd `edge-26.6.3` (service mesh), Kyverno `v1.18.1`
-(politiques), Trivy Operator (analyse de vulnérabilités).
+registre), Linkerd `edge-26.6.3` (service mesh), Trivy Operator (analyse de vulnérabilités).
 
 **Observabilité** — kube-prometheus-stack `87.10.1` (Prometheus, Grafana,
 Alertmanager), Loki `2.9.3` avec Promtail, Uptime Kuma pour la surveillance
@@ -56,7 +55,7 @@ avant, en double avec les rôles Ansible, et ont été retirés le 2026-08-11.
 
 **`infra/ansible/`** — la couche cluster, en 5 rôles : `base` (paquets,
 pare-feu), `k3s`, `platform` (CRD Gateway API, cert-manager, Envoy Gateway, la
-Gateway et le ClusterIssuer, Linkerd, ArgoCD, kube-prometheus, Loki, Kyverno,
+Gateway et le ClusterIssuer, Linkerd, ArgoCD, kube-prometheus, Loki,
 Trivy, Gitea, les LimitRange), `apps` (le site, Tamagotchi, n8n, les routes
 HTTP), `backup`. Contrairement à Terraform, il est idempotent et se rejoue sur
 un cluster existant pour corriger une dérive. Les valeurs Helm sont des

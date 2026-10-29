@@ -19,7 +19,6 @@ ENVOY_GATEWAY=1.8.2
 GITEA=12.6.0
 KUBE_PROM=87.10.1
 LOKI=2.10.3
-KYVERNO=3.8.1
 TRIVY=0.33.2
 # Composants installes par manifeste
 ARGOCD=v3.4.4
@@ -34,7 +33,6 @@ helm repo add jetstack https://charts.jetstack.io --force-update
 helm repo add gitea-charts https://dl.gitea.com/charts/ --force-update
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts --force-update
 helm repo add grafana https://grafana.github.io/helm-charts --force-update
-helm repo add kyverno https://kyverno.github.io/kyverno/ --force-update
 helm repo add aqua https://aquasecurity.github.io/helm-charts/ --force-update
 helm repo update
 
@@ -63,7 +61,6 @@ if ! kubectl get ns linkerd >/dev/null 2>&1; then
   linkerd install --crds | kubectl apply -f -
   linkerd install | kubectl apply -f -
   linkerd check --wait 5m || true
-  linkerd viz install | kubectl apply -f -
 fi
 # ArgoCD s'appuie massivement sur gRPC en interne : le proxy Linkerd
 # l'intercepte et casse les handshakes TLS. Incident deja vecu, cf. issues.html
@@ -86,10 +83,6 @@ step "Loki ${LOKI}"
 helm upgrade --install loki grafana/loki-stack \
   -n monitoring --version "${LOKI}" \
   --set grafana.enabled=false --set promtail.enabled=true --wait
-
-step "Kyverno ${KYVERNO}"
-helm upgrade --install kyverno kyverno/kyverno -n kyverno --create-namespace \
-  --version "${KYVERNO}" --wait
 
 step "Trivy Operator ${TRIVY}"
 helm upgrade --install trivy-operator aqua/trivy-operator \

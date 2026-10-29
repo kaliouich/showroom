@@ -18,7 +18,6 @@
     - { name: gitea-charts, url: "https://dl.gitea.com/charts/" }
     - { name: prometheus-community, url: "https://prometheus-community.github.io/helm-charts" }
     - { name: grafana, url: "https://grafana.github.io/helm-charts" }
-    - { name: kyverno, url: "https://kyverno.github.io/kyverno/" }
     - { name: aqua, url: "https://aquasecurity.github.io/helm-charts/" }
     - { name: strimzi, url: "https://strimzi.io/charts/" }
 
@@ -71,7 +70,6 @@
     linkerd install --crds | kubectl apply -f -
     linkerd install | kubectl apply -f -
     linkerd check --wait 5m || true
-    linkerd viz install | kubectl apply -f -
   args:
     executable: /bin/bash
   environment:
@@ -158,36 +156,6 @@
     # Valeurs dans k8s/monitoring/loki-values.yaml (persistance, retention 14 jours,
     # requests). Le stockage etait un emptyDir : recreer le pod effacait les journaux.
     values: "{{ lookup('file', repo_root ~ '/k8s/monitoring/loki-values.yaml') | from_yaml }}"
-
-- name: Kyverno
-  kubernetes.core.helm:
-    name: kyverno
-    chart_ref: kyverno/kyverno
-    chart_version: "{{ versions.kyverno }}"
-    release_namespace: kyverno
-    create_namespace: true
-    wait: true
-    kubeconfig: "{{ kubeconfig }}"
-    # Aucune policy chargee, 2 a 4 m de CPU mesures par controleur : les 100m
-    # par defaut gardaient le noeud plein en requests (incident 11).
-    values:
-      admissionController:
-        container:
-          resources:
-            requests:
-              cpu: 25m
-      backgroundController:
-        resources:
-          requests:
-            cpu: 25m
-      cleanupController:
-        resources:
-          requests:
-            cpu: 25m
-      reportsController:
-        resources:
-          requests:
-            cpu: 25m
 
 - name: Trivy Operator
   kubernetes.core.helm:
