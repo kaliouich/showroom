@@ -636,7 +636,7 @@ kubectl rollout restart deployment/showcase-website -n showcase</code></pre>
           </div>
           <div class="issue-section">
             <h4><span class="badge-success" data-i18n="badge_fix">Fix</span></h4>
-            <p data-i18n="issue_11_fix">Right-sized Kyverno's controllers to 25m, then hit a second trap: the rolling update deadlocked because its surge pods needed CPU the full node did not have, so the old pods never terminated. Deleting the old pods freed the room. Kafka brokers request 50m each; their memory limit and JVM heap are the real bound.</p>
+            <p data-i18n="issue_11_fix">Right-sized Kyverno's controllers to 25m, then hit a second trap: the rolling update deadlocked because its surge pods needed CPU the full node did not have, so the old pods never terminated. Deleting the old pods freed the room. Kafka brokers request 50m each; their memory limit and JVM heap are the real bound. Kyverno has since been removed altogether: with no policy written, it was only reserving CPU and memory.</p>
             <pre><code>kubectl describe node | grep -A4 "Allocated resources"</code></pre>
           </div>
           <div class="issue-section issue-section--lesson">
