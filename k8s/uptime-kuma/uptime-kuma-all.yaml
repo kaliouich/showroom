@@ -23,6 +23,9 @@ metadata:
   namespace: uptime-kuma
 spec:
   replicas: 1
+  # Recreate : la base SQLite n'admet qu'un seul pod a la fois.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: uptime-kuma
@@ -35,7 +38,12 @@ spec:
     spec:
       containers:
         - name: uptime-kuma
-          image: louislam/uptime-kuma:1
+          # 1.x n'est plus publie (derniere : 1.23.17, 15 CVE critiques selon Trivy). Passage a la
+          # 2.x le 2026-10-29 apres copie du volume ; la base est migree au premier demarrage et
+          # ne revient pas en arriere sans cette copie.
+          image: louislam/uptime-kuma:2.5.8
+          env:
+            - { name: UPTIME_KUMA_DB_TYPE, value: sqlite }
           ports:
             - containerPort: 3001
           volumeMounts:
