@@ -70,6 +70,9 @@ kubectl annotate ns argocd linkerd.io/inject=disabled --overwrite
 
 step "ArgoCD ${ARGOCD}"
 kubectl apply -n argocd -f "https://raw.githubusercontent.com/argoproj/argo-cd/${ARGOCD}/manifests/install.yaml"
+# Dex (SSO) n'est pas configure : on le retire (8 CVE critiques, remis par chaque mise a jour du manifeste).
+kubectl -n argocd delete deployment,service,serviceaccount,role,rolebinding,networkpolicy \
+  -l app.kubernetes.io/name=argocd-dex-server --ignore-not-found
 wait_ns argocd
 
 step "kube-prometheus-stack ${KUBE_PROM}"
