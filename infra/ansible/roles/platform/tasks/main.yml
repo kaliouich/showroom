@@ -70,6 +70,7 @@
     linkerd install --crds | kubectl apply -f -
     linkerd install | kubectl apply -f -
     linkerd check --wait 5m || true
+    linkerd viz install | kubectl apply -f -
   args:
     executable: /bin/bash
   environment:

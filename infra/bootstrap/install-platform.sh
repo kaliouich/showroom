@@ -61,6 +61,7 @@ if ! kubectl get ns linkerd >/dev/null 2>&1; then
   linkerd install --crds | kubectl apply -f -
   linkerd install | kubectl apply -f -
   linkerd check --wait 5m || true
+  linkerd viz install | kubectl apply -f -
 fi
 # ArgoCD s'appuie massivement sur gRPC en interne : le proxy Linkerd
 # l'intercepte et casse les handshakes TLS. Incident deja vecu, cf. issues.html
