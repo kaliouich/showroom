@@ -93,7 +93,8 @@ helm upgrade --install kyverno kyverno/kyverno -n kyverno --create-namespace \
 
 step "Trivy Operator ${TRIVY}"
 helm upgrade --install trivy-operator aqua/trivy-operator \
-  -n trivy-system --create-namespace --version "${TRIVY}" --wait
+  -n trivy-system --create-namespace --version "${TRIVY}" \
+  --set operator.scanJobsConcurrentLimit=2 --wait
 
 step "Gitea ${GITEA}"
 helm upgrade --install gitea gitea-charts/gitea \

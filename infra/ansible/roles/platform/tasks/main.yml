@@ -198,6 +198,12 @@
     create_namespace: true
     wait: true
     kubeconfig: "{{ kubeconfig }}"
+    # Au demarrage l'operateur relance une dizaine de scans a la fois (charge 35-45 sur
+    # 4 coeurs) : les sondes de Strimzi echouent et les brokers Kafka sont tues. Voir
+    # k8s/RUNBOOK-ressources.md. Deux scans en parallele suffisent, ils prennent juste plus de temps.
+    values:
+      operator:
+        scanJobsConcurrentLimit: 2
 
 - name: Gitea
   kubernetes.core.helm:
