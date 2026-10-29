@@ -66,6 +66,32 @@ kube_prometheus_values:
         org_role: Viewer
       security:
         allow_embedding: true
+  # 174 000 series actives le 2026-10-29, dont 39 000 d'histogrammes de l'API Kubernetes
+  # qu'aucune regle ni aucun tableau de bord de la vitrine n'utilise : le volume de 15 Gio
+  # etait plein (retentionSize atteint). On garde les deux familles lues par les regles
+  # kube-apiserver (apiserver_request_duration/sli). Le premier element reprend la valeur
+  # par defaut du chart, qu'une liste personnalisee remplace.
+  kubeApiServer:
+    serviceMonitor:
+      metricRelabelings:
+        - action: drop
+          sourceLabels: [__name__, le]
+          regex: "(etcd_request|apiserver_request_slo|apiserver_request_sli|apiserver_request)_duration_seconds_bucket;(0\\.15|0\\.2|0\\.3|0\\.35|0\\.4|0\\.45|0\\.6|0\\.7|0\\.8|0\\.9|1\\.25|1\\.5|1\\.75|2|3|3\\.5|4|4\\.5|6|7|8|9|15|20|40|45|50)(\\.0)?"
+        - action: drop
+          sourceLabels: [__name__]
+          regex: "(etcd_request_duration_seconds_bucket|apiserver_watch_list_duration_seconds_bucket|apiserver_request_body_size_bytes_bucket|apiserver_response_sizes_bucket|apiserver_watch_cache_read_wait_seconds_bucket|apiserver_watch_events_sizes_bucket)"
+  # Sur k3s, le kubelet expose aussi le registre de l'API Kubernetes (tout tourne dans un seul
+  # processus) : ces memes histogrammes y sont scrutes une seconde fois, ~60 000 series qui
+  # doublent celles du job apiserver. Le premier element est la valeur par defaut du chart.
+  kubelet:
+    serviceMonitor:
+      metricRelabelings:
+        - action: drop
+          sourceLabels: [__name__, le]
+          regex: "(csi_operations|storage_operation_duration)_seconds_bucket;(0.25|2.5|15|25|120|600)(\\.0)?"
+        - action: drop
+          sourceLabels: [__name__]
+          regex: "(apiserver_request_duration_seconds_bucket|apiserver_request_sli_duration_seconds_bucket|etcd_request_duration_seconds_bucket|apiserver_request_body_size_bytes_bucket|apiserver_watch_list_duration_seconds_bucket|apiserver_response_sizes_bucket|apiserver_watch_cache_read_wait_seconds_bucket|apiserver_watch_events_sizes_bucket|workqueue_work_duration_seconds_bucket|workqueue_queue_duration_seconds_bucket)"
   prometheus:
     prometheusSpec:
       # Jusqu'ici sans storageSpec : le chart fait alors tourner Prometheus sur
