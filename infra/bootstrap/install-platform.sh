@@ -91,9 +91,17 @@ helm upgrade --install trivy-operator aqua/trivy-operator \
   --set operator.scanJobsConcurrentLimit=1 --set operator.scannerReportTTL=24h \
   --set serviceMonitor.enabled=true --set serviceMonitor.labels.release=kube-prometheus --wait
 
+step "PostgreSQL de Gitea (image officielle, hors du sous-chart Bitnami)"
+kubectl create ns gitea --dry-run=client -o yaml | kubectl apply -f -
+kubectl -n gitea get secret gitea-pg-credentials >/dev/null 2>&1 || \
+  kubectl -n gitea create secret generic gitea-pg-credentials --from-literal=password="$(openssl rand -hex 24)"
+kubectl apply -f /opt/showroom/k8s/gitea/postgres.yaml
+kubectl -n gitea rollout status statefulset/gitea-pg --timeout=300s
+
 step "Gitea ${GITEA}"
 helm upgrade --install gitea gitea-charts/gitea \
   -n gitea --create-namespace --version "${GITEA}" \
+  -f /opt/showroom/k8s/gitea/values.yaml \
   --set gitea.config.server.ROOT_URL="https://git.${DOMAIN}/" \
   --wait --timeout 15m
 

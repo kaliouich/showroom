@@ -31,12 +31,22 @@ gitea:
   # le limite).
   podAnnotations:
     config.linkerd.io/skip-outbound-ports: "5432"
+  # Le mot de passe ne passe pas par ce fichier : il vient du secret gitea-pg-credentials.
+  additionalConfigFromEnvs:
+    - name: GITEA__DATABASE__PASSWD
+      valueFrom:
+        secretKeyRef: { name: gitea-pg-credentials, key: password }
   admin:
     # Le mot de passe n'est pas ici : il vit dans le secret
     # gitea-admin-credentials, hors du depot. Sans cette reference, le chart
     # reinitialiserait le compte a chaque upgrade.
     existingSecret: gitea-admin-credentials
   config:
+    database:
+      DB_TYPE: postgres
+      HOST: gitea-pg.gitea.svc.cluster.local:5432
+      NAME: gitea
+      USER: gitea
     server:
       DOMAIN: git.khalilaliouich.com
       ROOT_URL: https://git.khalilaliouich.com/
@@ -57,16 +67,10 @@ gitea:
     queue:
       TYPE: level
 
+# Le sous-chart Bitnami est desactive : son image (bitnamilegacy) n'est plus mise a jour.
+# La base est un StatefulSet a part, avec l'image officielle (k8s/gitea/postgres.yaml).
 postgresql:
-  enabled: true
-  primary:
-    persistence:
-      storageClass: local-path
-    # Mesure sur 7 jours : p95 de 7 m de CPU et 87 Mio de memoire. 100 m
-    # reserves pour rien ; les limites restent celles du chart.
-    resources:
-      requests: { cpu: 25m, memory: 128Mi, ephemeral-storage: 50Mi }
-      limits: { cpu: 150m, memory: 192Mi, ephemeral-storage: 2Gi }
+  enabled: false
 postgresql-ha:
   enabled: false
 

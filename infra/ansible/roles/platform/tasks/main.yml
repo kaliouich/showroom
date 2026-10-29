@@ -181,6 +181,32 @@
         labels:
           release: kube-prometheus
 
+# PostgreSQL de Gitea : image officielle (le sous-chart Bitnami est desactive, son image n'est
+# plus mise a jour). Le mot de passe est genere une fois, hors du depot.
+- name: Namespace et mot de passe PostgreSQL de Gitea
+  ansible.builtin.shell: |
+    set -eo pipefail
+    kubectl create ns gitea --dry-run=client -o yaml | kubectl apply -f -
+    kubectl -n gitea get secret gitea-pg-credentials >/dev/null 2>&1 || \
+      kubectl -n gitea create secret generic gitea-pg-credentials --from-literal=password="$(openssl rand -hex 24)"
+  args:
+    executable: /bin/bash
+  environment:
+    KUBECONFIG: "{{ kubeconfig }}"
+  changed_when: false
+
+- name: PostgreSQL de Gitea
+  kubernetes.core.k8s:
+    src: "{{ repo_root }}/k8s/gitea/postgres.yaml"
+    state: present
+    kubeconfig: "{{ kubeconfig }}"
+
+- name: Attendre PostgreSQL de Gitea
+  ansible.builtin.command: kubectl -n gitea rollout status statefulset/gitea-pg --timeout=300s
+  environment:
+    KUBECONFIG: "{{ kubeconfig }}"
+  changed_when: false
+
 - name: Gitea
   kubernetes.core.helm:
     name: gitea

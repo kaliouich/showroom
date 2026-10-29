@@ -49,7 +49,7 @@ kubectl scale deploy,statefulset --all --replicas=1 -n tamagotchi 2>/dev/null ||
 kubectl scale deploy --all --replicas=1 -n default 2>/dev/null || true
 
 echo "=== attente des bases ==="
-kubectl -n gitea rollout status statefulset/gitea-postgresql --timeout=600s || true
+kubectl -n gitea rollout status statefulset/gitea-pg --timeout=600s || true
 sleep 15
 
 echo "=== bases PostgreSQL ==="
@@ -60,7 +60,7 @@ restore_db() { # <ns> <pod> <conteneur> <user> <db> <fichier>
      psql -U $4 -d $5" < "$WORK/postgres/$6.sql" >/dev/null 2>&1 \
     && echo "  $6 restauree" || echo "  !! $6 en echec"
 }
-restore_db gitea gitea-postgresql-0 postgresql gitea gitea gitea
+restore_db gitea gitea-pg-0 postgres gitea gitea gitea
 restore_db tamagotchi "$(kubectl get pod -n tamagotchi -l app=postgres -o name | head -1 | cut -d/ -f2)" \
            postgres tamagotchi tamagotchi tamagotchi
 restore_db default "$(kubectl get pod -n default -l app=habit-postgres -o name | head -1 | cut -d/ -f2)" \

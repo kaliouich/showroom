@@ -34,8 +34,8 @@ fi
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 umask 077
 mkdir -p "$backup_dir"
-kubectl -n gitea exec gitea-postgresql-0 -c postgresql -- sh -c \
-  'PGPASSWORD="$(cat "$POSTGRES_PASSWORD_FILE")" pg_dump -U "$POSTGRES_USER" "$POSTGRES_DATABASE"' \
+kubectl -n gitea exec gitea-pg-0 -c postgres -- sh -c \
+  'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' \
   | gzip > "$backup_dir/gitea-db-$stamp.sql.gz"
 kubectl -n gitea exec deploy/gitea -c gitea -- tar czf - -C /data git \
   > "$backup_dir/gitea-repos-$stamp.tar.gz"

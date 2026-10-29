@@ -50,7 +50,7 @@ dump() { # <ns> <pod> <conteneur> <user> <db> <fichier>
     && echo "  $6.sql ($(du -h "$WORK/postgres/$6.sql" | cut -f1))" \
     || { echo "  !! dump $6 echoue"; rm -f "$WORK/postgres/$6.sql"; }
 }
-dump gitea      gitea-postgresql-0 postgresql gitea      gitea      gitea
+dump gitea      gitea-pg-0 postgres gitea      gitea      gitea
 dump tamagotchi "$(kubectl get pod -n tamagotchi -l app=postgres -o name 2>/dev/null | head -1 | cut -d/ -f2)" \
                 postgres tamagotchi tamagotchi tamagotchi
 dump default    "$(kubectl get pod -n default -l app=habit-postgres -o name 2>/dev/null | head -1 | cut -d/ -f2)" \
