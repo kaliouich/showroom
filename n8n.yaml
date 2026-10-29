@@ -5,6 +5,9 @@ metadata:
   namespace: showcase
 spec:
   replicas: 1
+  # Recreate : la base SQLite est sur un hostPath, deux pods ne doivent jamais l'ouvrir ensemble.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: n8n
@@ -15,7 +18,14 @@ spec:
     spec:
       containers:
       - name: n8n
-        image: n8nio/n8n:latest
+        # Version figee : avec :latest, un simple redemarrage a deja fait passer n8n de 2.39.8 a 2.44.7
+        # avec des migrations de base. On monte de version volontairement, apres une copie de n8n-data.
+        image: n8nio/n8n:2.45.5
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: 10m
+            memory: 640Mi
         ports:
         - containerPort: 5678
         env:
