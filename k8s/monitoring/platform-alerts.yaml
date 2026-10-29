@@ -115,3 +115,47 @@ spec:
           annotations:
             summary: "Un build attend depuis 10 min ({{ $labels.pod }})"
             description: "Probablement faute de CPU reservable sur le noeud."
+---
+# Resultats des scans Trivy (trivy-operator, un passage par jour). Le tableau de bord
+# « Security — Trivy Scan Results » (k8s/monitoring/trivy-dashboard.yaml) sert a les lire.
+# Pas d'alerte sur le nombre brut de CVE : 150 critiques existent deja dans des images tierces
+# et une alerte permanente ne servirait a rien. On alerte sur ce qui releve d'un incident.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: security-scans
+  namespace: monitoring
+  labels:
+    release: kube-prometheus
+spec:
+  groups:
+    - name: security.scans
+      interval: 1m
+      rules:
+        - alert: TrivyExposedSecrets
+          expr: sum by (namespace, resource_name, image_repository) (trivy_image_exposedsecrets{severity=~"Critical|High"}) > 0
+          for: 1h
+          labels:
+            severity: warning
+            product: security
+          annotations:
+            summary: "Secret expose dans l'image {{ $labels.image_repository }} ({{ $labels.namespace }}/{{ $labels.resource_name }})"
+            description: "Trivy a trouve {{ $value }} secret(s) dans une couche de l'image. Considerer le secret comme compromis : le renouveler, puis reconstruire l'image. Detail : kubectl get exposedsecretreports -n {{ $labels.namespace }} -o wide."
+        - alert: TrivyCriticalMisconfiguration
+          expr: sum by (namespace, resource_kind, resource_name) (trivy_resource_configaudits{severity="Critical"}) > 0
+          for: 1h
+          labels:
+            severity: warning
+            product: security
+          annotations:
+            summary: "Configuration critique sur {{ $labels.resource_kind }} {{ $labels.namespace }}/{{ $labels.resource_name }}"
+            description: "Detail : kubectl get configauditreports -n {{ $labels.namespace }} -o yaml."
+        - alert: TrivyOperatorDown
+          expr: absent(up{job="trivy-operator"} == 1)
+          for: 30m
+          labels:
+            severity: warning
+            product: security
+          annotations:
+            summary: "Le trivy-operator ne repond plus : plus aucun scan de securite"
+            description: "Les rapports ne sont plus renouveles. kubectl -n trivy-system get pods."

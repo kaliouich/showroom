@@ -59,6 +59,7 @@
     - "{{ repo_root }}/k8s/monitoring/loki-dashboard-cm.yaml"
     - "{{ repo_root }}/k8s/tamagotchi/tamagotchi-dashboard.yaml"
     - "{{ repo_root }}/k8s/tamagotchi/slo-dashboard.yaml"
+    - "{{ repo_root }}/k8s/monitoring/trivy-dashboard.yaml"
 
 # ---------------------------------------------------------------------------
 # Kafka : l'operateur Strimzi est installe par le role platform. Ici, le

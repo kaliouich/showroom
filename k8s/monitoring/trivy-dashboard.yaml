@@ -1,0 +1,891 @@
+# Dashboard Grafana des rapports Trivy (vulnerabilites, mauvaises configurations, secrets
+# exposes, RBAC, conformite). Memes mecanismes que les autres : le sidecar de
+# kube-prometheus-stack decouvre tout ConfigMap portant grafana_dashboard: "1".
+# Les series viennent du ServiceMonitor du trivy-operator (infra/ansible, role platform).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trivy-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  trivy-security.json: |
+    {
+      "uid": "trivy-security",
+      "title": "🛡️ Security — Trivy Scan Results",
+      "tags": [
+        "trivy",
+        "security",
+        "devsecops"
+      ],
+      "timezone": "browser",
+      "schemaVersion": 30,
+      "version": 1,
+      "refresh": "5m",
+      "time": {
+        "from": "now-7d",
+        "to": "now"
+      },
+      "panels": [
+        {
+          "type": "text",
+          "title": "How to read this board",
+          "gridPos": {
+            "h": 6,
+            "w": 24,
+            "x": 0,
+            "y": 0
+          },
+          "options": {
+            "mode": "markdown",
+            "content": "**What it is.** The Trivy operator rescans every workload once every 24 h (one scan at a time) and publishes the results as metrics.\n\n- **Vulnerabilities**: known CVEs in the image packages that have a fix available (unfixed ones are ignored). *Critical/High on a public-facing image* come first; the same CVE repeated in 10 pods of one image counts 10 times, so read the **image table** to know what to upgrade, not the grand total.\n- **Misconfigurations**: Kubernetes manifest weaknesses (no `readOnlyRootFilesystem`, root user, missing limits...). Most are expected on third-party charts; fix the ones on your own workloads.\n- **Exposed secrets**: credentials found inside an image layer. Anything above 0 is an incident: the alert `TrivyExposedSecrets` fires after 1 h.\n- **RBAC**: roles granting more than needed. **Compliance**: pass/fail count against CIS, NSA and Pod Security Standards.\n\nReports in raw form: `kubectl get vulnerabilityreports,configauditreports -A`. Summary script: `scripts/trivy-summary.sh`."
+          },
+          "id": 1
+        },
+        {
+          "type": "stat",
+          "title": "🔴 Critical CVEs",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 0,
+            "y": 6
+          },
+          "targets": [
+            {
+              "expr": "sum(trivy_image_vulnerabilities{severity=\"Critical\"})",
+              "format": "time_series",
+              "instant": true
+            }
+          ],
+          "options": {
+            "graphMode": "none",
+            "colorMode": "value",
+            "textMode": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 50
+                  }
+                ]
+              },
+              "noValue": "0"
+            }
+          },
+          "id": 2
+        },
+        {
+          "type": "stat",
+          "title": "🟠 High CVEs",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 4,
+            "y": 6
+          },
+          "targets": [
+            {
+              "expr": "sum(trivy_image_vulnerabilities{severity=\"High\"})",
+              "format": "time_series",
+              "instant": true
+            }
+          ],
+          "options": {
+            "graphMode": "none",
+            "colorMode": "value",
+            "textMode": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 50
+                  }
+                ]
+              },
+              "noValue": "0"
+            }
+          },
+          "id": 3
+        },
+        {
+          "type": "stat",
+          "title": "🔑 Exposed secrets (High+)",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 8,
+            "y": 6
+          },
+          "targets": [
+            {
+              "expr": "sum(trivy_image_exposedsecrets{severity=~\"Critical|High\"})",
+              "format": "time_series",
+              "instant": true
+            }
+          ],
+          "options": {
+            "graphMode": "none",
+            "colorMode": "value",
+            "textMode": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 1
+                  }
+                ]
+              },
+              "noValue": "0"
+            }
+          },
+          "id": 4
+        },
+        {
+          "type": "stat",
+          "title": "⚙️ Misconfigs High+",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 12,
+            "y": 6
+          },
+          "targets": [
+            {
+              "expr": "sum(trivy_resource_configaudits{severity=~\"Critical|High\"})",
+              "format": "time_series",
+              "instant": true
+            }
+          ],
+          "options": {
+            "graphMode": "none",
+            "colorMode": "value",
+            "textMode": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 50
+                  }
+                ]
+              },
+              "noValue": "0"
+            }
+          },
+          "id": 5
+        },
+        {
+          "type": "stat",
+          "title": "🛡️ RBAC High+",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 16,
+            "y": 6
+          },
+          "targets": [
+            {
+              "expr": "sum(trivy_role_rbacassessments{severity=~\"Critical|High\"}) + sum(trivy_clusterrole_clusterrbacassessments{severity=~\"Critical|High\"})",
+              "format": "time_series",
+              "instant": true
+            }
+          ],
+          "options": {
+            "graphMode": "none",
+            "colorMode": "value",
+            "textMode": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 50
+                  }
+                ]
+              },
+              "noValue": "0"
+            }
+          },
+          "id": 6
+        },
+        {
+          "type": "stat",
+          "title": "📋 Compliance checks failed",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 20,
+            "y": 6
+          },
+          "targets": [
+            {
+              "expr": "sum(trivy_cluster_compliance{status=\"Fail\"})",
+              "format": "time_series",
+              "instant": true
+            }
+          ],
+          "options": {
+            "graphMode": "none",
+            "colorMode": "value",
+            "textMode": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 50
+                  }
+                ]
+              },
+              "noValue": "0"
+            }
+          },
+          "id": 7
+        },
+        {
+          "type": "bargauge",
+          "title": "CVEs by severity",
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 0,
+            "y": 10
+          },
+          "targets": [
+            {
+              "expr": "sum by (severity)(trivy_image_vulnerabilities)",
+              "legendFormat": "{{severity}}",
+              "instant": true,
+              "format": "time_series"
+            }
+          ],
+          "options": {
+            "orientation": "horizontal",
+            "displayMode": "gradient",
+            "showUnfilled": true,
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "continuous-GrYlRd"
+              },
+              "min": 0,
+              "noValue": "0"
+            }
+          },
+          "id": 8
+        },
+        {
+          "type": "bargauge",
+          "title": "Critical + High CVEs by namespace",
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 8,
+            "y": 10
+          },
+          "targets": [
+            {
+              "expr": "sum by (namespace)(trivy_image_vulnerabilities{severity=~\"Critical|High\"})",
+              "legendFormat": "{{namespace}}",
+              "instant": true,
+              "format": "time_series"
+            }
+          ],
+          "options": {
+            "orientation": "horizontal",
+            "displayMode": "gradient",
+            "showUnfilled": true,
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "continuous-GrYlRd"
+              },
+              "min": 0,
+              "noValue": "0"
+            }
+          },
+          "id": 9
+        },
+        {
+          "type": "bargauge",
+          "title": "Compliance failures by benchmark",
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 10
+          },
+          "targets": [
+            {
+              "expr": "sum by (title)(trivy_cluster_compliance{status=\"Fail\"})",
+              "legendFormat": "{{title}}",
+              "instant": true,
+              "format": "time_series"
+            }
+          ],
+          "options": {
+            "orientation": "horizontal",
+            "displayMode": "gradient",
+            "showUnfilled": true,
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "continuous-GrYlRd"
+              },
+              "min": 0,
+              "noValue": "0"
+            }
+          },
+          "id": 10
+        },
+        {
+          "type": "table",
+          "title": "🔴 Images to upgrade first: Critical CVEs per image",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 18
+          },
+          "targets": [
+            {
+              "expr": "sort_desc(topk(15, sum by (namespace, image_repository, image_tag)(trivy_image_vulnerabilities{severity=\"Critical\"}) > 0))",
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true
+                },
+                "renameByName": {
+                  "image_repository": "Image",
+                  "image_tag": "Tag",
+                  "namespace": "Namespace",
+                  "Value": "Count"
+                }
+              }
+            }
+          ],
+          "options": {
+            "showHeader": true
+          },
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto"
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Count"
+                },
+                "properties": [
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-background"
+                    }
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "continuous-GrYlRd"
+                    }
+                  },
+                  {
+                    "id": "min",
+                    "value": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "description": "Each row is one image version. Upgrading its tag is the fix; the count is the number of Critical CVEs that have a patch available.",
+          "id": 11
+        },
+        {
+          "type": "table",
+          "title": "🟠 Images with the most High CVEs",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 18
+          },
+          "targets": [
+            {
+              "expr": "sort_desc(topk(15, sum by (namespace, image_repository, image_tag)(trivy_image_vulnerabilities{severity=\"High\"}) > 0))",
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true
+                },
+                "renameByName": {
+                  "image_repository": "Image",
+                  "image_tag": "Tag",
+                  "namespace": "Namespace",
+                  "Value": "Count"
+                }
+              }
+            }
+          ],
+          "options": {
+            "showHeader": true
+          },
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto"
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Count"
+                },
+                "properties": [
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-background"
+                    }
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "continuous-GrYlRd"
+                    }
+                  },
+                  {
+                    "id": "min",
+                    "value": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "id": 12
+        },
+        {
+          "type": "table",
+          "title": "⚙️ Workloads with High/Critical misconfigurations",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 28
+          },
+          "targets": [
+            {
+              "expr": "sort_desc(topk(15, sum by (namespace, resource_kind, resource_name)(trivy_resource_configaudits{severity=~\"Critical|High\"}) > 0))",
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true
+                },
+                "renameByName": {
+                  "namespace": "Namespace",
+                  "resource_kind": "Kind",
+                  "resource_name": "Workload",
+                  "Value": "Count"
+                }
+              }
+            }
+          ],
+          "options": {
+            "showHeader": true
+          },
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto"
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Count"
+                },
+                "properties": [
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-background"
+                    }
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "continuous-GrYlRd"
+                    }
+                  },
+                  {
+                    "id": "min",
+                    "value": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "id": 13
+        },
+        {
+          "type": "table",
+          "title": "🔑 Exposed secrets found in images",
+          "gridPos": {
+            "h": 10,
+            "w": 6,
+            "x": 12,
+            "y": 28
+          },
+          "targets": [
+            {
+              "expr": "sort_desc(sum by (namespace, resource_name, image_repository, severity)(trivy_image_exposedsecrets) > 0)",
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true
+                },
+                "renameByName": {
+                  "namespace": "Namespace",
+                  "resource_name": "Workload",
+                  "image_repository": "Image",
+                  "severity": "Severity",
+                  "Value": "Count"
+                }
+              }
+            }
+          ],
+          "options": {
+            "showHeader": true
+          },
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto"
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Count"
+                },
+                "properties": [
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-background"
+                    }
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "continuous-GrYlRd"
+                    }
+                  },
+                  {
+                    "id": "min",
+                    "value": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "description": "Empty means nothing was found, which is the expected state.",
+          "id": 14
+        },
+        {
+          "type": "table",
+          "title": "🛡️ RBAC roles flagged High/Critical",
+          "gridPos": {
+            "h": 10,
+            "w": 6,
+            "x": 18,
+            "y": 28
+          },
+          "targets": [
+            {
+              "expr": "sort_desc(topk(10, sum by (namespace, name)(trivy_role_rbacassessments{severity=~\"Critical|High\"}) > 0))",
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true
+                },
+                "renameByName": {
+                  "namespace": "Namespace",
+                  "name": "Role",
+                  "Value": "Count"
+                }
+              }
+            }
+          ],
+          "options": {
+            "showHeader": true
+          },
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto"
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Count"
+                },
+                "properties": [
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-background"
+                    }
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "continuous-GrYlRd"
+                    }
+                  },
+                  {
+                    "id": "min",
+                    "value": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "id": 15
+        },
+        {
+          "type": "timeseries",
+          "title": "Trend: Critical CVEs",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 38
+          },
+          "targets": [
+            {
+              "expr": "sum by (namespace)(trivy_image_vulnerabilities{severity=\"Critical\"})",
+              "legendFormat": "{{namespace}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "lineWidth": 2,
+                "fillOpacity": 10
+              },
+              "min": 0
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom"
+            }
+          },
+          "id": 16
+        },
+        {
+          "type": "timeseries",
+          "title": "Trend: High misconfigurations",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 38
+          },
+          "targets": [
+            {
+              "expr": "sum by (namespace)(trivy_resource_configaudits{severity=~\"Critical|High\"})",
+              "legendFormat": "{{namespace}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "lineWidth": 2,
+                "fillOpacity": 10
+              },
+              "min": 0
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom"
+            }
+          },
+          "id": 17
+        }
+      ]
+    }

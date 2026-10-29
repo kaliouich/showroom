@@ -88,7 +88,8 @@ helm upgrade --install loki grafana/loki-stack \
 step "Trivy Operator ${TRIVY}"
 helm upgrade --install trivy-operator aqua/trivy-operator \
   -n trivy-system --create-namespace --version "${TRIVY}" \
-  --set operator.scanJobsConcurrentLimit=2 --wait
+  --set operator.scanJobsConcurrentLimit=1 --set operator.scannerReportTTL=24h \
+  --set serviceMonitor.enabled=true --set serviceMonitor.labels.release=kube-prometheus --wait
 
 step "Gitea ${GITEA}"
 helm upgrade --install gitea gitea-charts/gitea \
