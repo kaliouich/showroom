@@ -875,10 +875,10 @@ if (adminBtn && adminModal && adminForm) {
       isAdmin = true;
       adminModal.classList.remove('active');
       adminBtn.textContent = '🔓 Admin (ON)';
-      adminBtn.style.color = '#00ff88';
-      adminBtn.style.borderColor = '#00ff88';
+      adminBtn.style.color = '#7dff9a';
+      adminBtn.style.borderColor = '#7dff9a';
     } else {
-      secretInput.style.borderColor = '#ff4466';
+      secretInput.style.borderColor = '#ff6b5e';
       setTimeout(() => { secretInput.style.borderColor = ''; }, 1500);
     }
   });

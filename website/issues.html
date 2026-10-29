@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Deep Dive: Technical Issues | DevOps Showcase</title>
   
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=20" />
   <style>
     /* Specific styles for the issues page */
     .issues-hero {
@@ -37,7 +37,7 @@
     }
 
     .accordion-item:hover {
-      border-color: rgba(0, 240, 255, 0.4);
+      border-color: rgba(125,255,154, 0.4);
     }
 
     .accordion-header {
@@ -127,29 +127,29 @@
     }
 
     code {
-      font-family: 'Courier New', Courier, monospace;
+      font-family: var(--font-mono);
       color: #e6edf3;
       font-size: 0.9rem;
     }
 
     .badge-success {
-      background: rgba(0, 255, 136, 0.1);
-      color: #00ff88;
+      background: rgba(125,255,154, 0.1);
+      color: #7dff9a;
       padding: 0.3rem 0.8rem;
       border-radius: 20px;
       font-size: 0.8rem;
       font-weight: 600;
-      border: 1px solid rgba(0, 255, 136, 0.2);
+      border: 1px solid rgba(125,255,154, 0.2);
     }
 
     .badge-error {
-      background: rgba(255, 0, 85, 0.1);
-      color: #ff0055;
+      background: rgba(230,196,106, 0.1);
+      color: #e6c46a;
       padding: 0.3rem 0.8rem;
       border-radius: 20px;
       font-size: 0.8rem;
       font-weight: 600;
-      border: 1px solid rgba(255, 0, 85, 0.2);
+      border: 1px solid rgba(230,196,106, 0.2);
     }
 
     /* Format post-mortem complet : Symptome (badge-error) -> Hypotheses
@@ -167,23 +167,23 @@
     }
 
     .badge-cause {
-      background: rgba(138, 43, 226, 0.12);
+      background: rgba(127,184,164, 0.12);
       color: #b57bff;
       padding: 0.3rem 0.8rem;
       border-radius: 20px;
       font-size: 0.8rem;
       font-weight: 600;
-      border: 1px solid rgba(138, 43, 226, 0.25);
+      border: 1px solid rgba(127,184,164, 0.25);
     }
 
     .badge-lesson {
-      background: rgba(0, 240, 255, 0.1);
-      color: #00f0ff;
+      background: rgba(125,255,154, 0.1);
+      color: #7dff9a;
       padding: 0.3rem 0.8rem;
       border-radius: 20px;
       font-size: 0.8rem;
       font-weight: 600;
-      border: 1px solid rgba(0, 240, 255, 0.2);
+      border: 1px solid rgba(125,255,154, 0.2);
     }
 
     .issue-section--lesson {
@@ -196,10 +196,6 @@
 <body>
 
   <!-- Animated Background -->
-  <div id="particles-js"></div>
-  <div class="blob blob-1"></div>
-  <div class="blob blob-2"></div>
-  <div class="blob blob-3"></div>
 
   <!-- Navigation -->
   <nav class="nav">
@@ -685,9 +681,6 @@ curl -X POST https://git.khalilaliouich.com/api/internal/x       # 404</code></p
     </div>
 
   </main>
-
-  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
-  <script src="js/particles.js"></script>
   <script>
     // Accordion Logic
     document.querySelectorAll('.accordion-header').forEach(header => {
