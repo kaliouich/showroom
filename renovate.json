@@ -14,7 +14,8 @@
   "kubernetes": {
     "managerFilePatterns": [
       "/^k8s/.+\\.ya?ml$/",
-      "/^ci/.+\\.ya?ml$/"
+      "/^ci/.+\\.ya?ml$/",
+      "/^n8n\\.yaml$/"
     ]
   },
   "customManagers": [
