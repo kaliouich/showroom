@@ -58,8 +58,17 @@ dump default    "$(kubectl get pod -n default -l app=habit-postgres -o name 2>/d
 
 log "3/5 volumes"
 mkdir -p "$WORK/volumes"
-[ -d /data/oci-bv-100gb ] && tar -C /data -cf "$WORK/volumes/local-path.tar" oci-bv-100gb
-[ -d /var/lib/showcase ] && tar -C /var/lib -cf "$WORK/volumes/showcase.tar" showcase
+# tar sort 1 quand un fichier change pendant la lecture (journaux de Prometheus,
+# Loki, Kafka...) : l'archive est complete, ce n'est pas un echec. Seul un code
+# >= 2 (erreur reelle) arrete la sauvegarde. Les donnees Kafka sont exclues : le
+# fil d'evenements de la demo se reconstruit, et ses segments changent sans cesse.
+archive_dir() { # <base> <dossier> <fichier> [options tar]
+  local rc=0
+  tar -C "$1" "${@:4}" -cf "$3" "$2" || rc=$?
+  [ "$rc" -le 1 ]
+}
+[ -d /data/oci-bv-100gb ] && archive_dir /data oci-bv-100gb "$WORK/volumes/local-path.tar" --exclude='*_kafka_data-*'
+[ -d /var/lib/showcase ] && archive_dir /var/lib showcase "$WORK/volumes/showcase.tar"
 
 log "4/5 manifestes"
 mkdir -p "$WORK/manifests"
