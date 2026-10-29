@@ -27,7 +27,7 @@ cliquant, plutôt que de croire un CV.
 
 ## Composants
 
-**Plateforme** — ArgoCD `v3.4.4` (GitOps), Gitea `1.26.1` (forge Git et
+**Plateforme** — ArgoCD `v3.4.12` (GitOps), Gitea `1.26.1` (forge Git et
 registre), Linkerd `edge-26.6.3` (service mesh), Trivy Operator (analyse de vulnérabilités).
 
 **Observabilité** — kube-prometheus-stack `87.10.1` (Prometheus, Grafana,

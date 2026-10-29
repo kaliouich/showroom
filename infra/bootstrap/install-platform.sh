@@ -21,7 +21,7 @@ KUBE_PROM=87.10.1
 LOKI=2.10.3
 TRIVY=0.33.2
 # Composants installes par manifeste
-ARGOCD=v3.4.4
+ARGOCD=v3.4.12
 LINKERD_EDGE=edge-26.6.3
 
 step() { echo; echo "=== $* ==="; }

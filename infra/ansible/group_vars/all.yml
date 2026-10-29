@@ -21,7 +21,7 @@ versions:
   # k8s/gitea/values.yaml. Voir TECHNICAL_ISSUES_RESOLVED.md, incident 12.
   # renovate: datasource=helm depName=gitea registryUrl=https://dl.gitea.com/charts/
   gitea: 12.7.0
-  argocd: v3.4.4
+  argocd: v3.4.12
   # renovate: datasource=helm depName=strimzi-kafka-operator registryUrl=https://strimzi.io/charts/
   strimzi: 1.3.0
   linkerd_edge: edge-26.6.3
