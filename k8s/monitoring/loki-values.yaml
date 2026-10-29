@@ -13,6 +13,10 @@ promtail:
   enabled: true
 
 loki:
+  # Le chart declare la source Loki comme source par defaut de Grafana ; Prometheus l'est
+  # deja, et Grafana refuse de demarrer avec deux sources par defaut. Le defaut (true) est
+  # revenu avec la mise a jour du 2026-10-26 et n'a casse Grafana qu'au redemarrage du noeud.
+  isDefault: false
   persistence:
     enabled: true
     accessModes: [ReadWriteOnce]
