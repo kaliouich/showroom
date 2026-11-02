@@ -13,7 +13,7 @@
 image:
   registry: docker.io
   repository: gitea/gitea
-  tag: "28.2.0"
+  tag: "28.3.0"
 
 global:
   storageClass: local-path
