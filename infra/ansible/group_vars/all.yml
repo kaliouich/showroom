@@ -12,23 +12,23 @@ versions:
   gateway_api: v1.2.1
   # renovate: datasource=helm depName=cert-manager registryUrl=https://charts.jetstack.io
   # renovate: datasource=helm depName=cert-manager registryUrl=https://charts.jetstack.io
-  cert_manager: v1.20.3
+  cert_manager: v1.21.3
   # renovate: datasource=docker depName=docker.io/envoyproxy/gateway-helm
-  envoy_gateway: 1.8.2
+  envoy_gateway: 1.10.0
   # renovate: datasource=helm depName=kube-prometheus-stack registryUrl=https://prometheus-community.github.io/helm-charts
-  kube_prom: 87.10.1
+  kube_prom: 87.21.0
   # renovate: datasource=helm depName=loki-stack registryUrl=https://grafana.github.io/helm-charts
   loki: 2.10.3
   # renovate: datasource=helm depName=trivy-operator registryUrl=https://aquasecurity.github.io/helm-charts/
-  trivy: 0.33.2
+  trivy: 0.38.1
   # Chart 12.7.0 (appVersion 1.27.0) ; l'image est forcee a 28.2.0 dans
   # k8s/gitea/values.yaml. Voir TECHNICAL_ISSUES_RESOLVED.md, incident 12.
   # renovate: datasource=helm depName=gitea registryUrl=https://dl.gitea.com/charts/
   gitea: 12.7.0
   # renovate: datasource=github-releases depName=argoproj/argo-cd
-  argocd: v3.4.12
+  argocd: v3.6.1
   # renovate: datasource=helm depName=strimzi-kafka-operator registryUrl=https://strimzi.io/charts/
-  strimzi: 1.3.0
+  strimzi: 1.3.1
   linkerd_edge: edge-26.6.3
 
 # ---------------------------------------------------------------------------
