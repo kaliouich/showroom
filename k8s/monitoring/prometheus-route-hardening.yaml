@@ -1,0 +1,18 @@
+# Prometheus est public en lecture (requetes PromQL) : c'est voulu, c'est la demo.
+# Mais l'operateur demarre toujours Prometheus avec --web.enable-lifecycle, ce qui
+# ouvre en ecriture /-/quit (arret du processus) et /-/reload (rechargement de la
+# configuration) a quiconque atteint le port. La passerelle repond 404 avant que la
+# requete n'arrive : les sondes /-/healthy et /-/ready, elles, restent joignables.
+# Meme principe que k8s/gitea/httproute-hardening.yaml.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: HTTPRouteFilter
+metadata:
+  name: deny-lifecycle
+  namespace: monitoring
+spec:
+  directResponse:
+    contentType: text/plain
+    statusCode: 404
+    body:
+      type: Inline
+      inline: not found

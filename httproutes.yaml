@@ -104,6 +104,20 @@ spec:
   hostnames:
   - "prometheus.khalilaliouich.com"
   rules:
+  # Ni arret ni rechargement depuis Internet (voir k8s/monitoring/prometheus-route-hardening.yaml).
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /-/quit
+    - path:
+        type: PathPrefix
+        value: /-/reload
+    filters:
+    - type: ExtensionRef
+      extensionRef:
+        group: gateway.envoyproxy.io
+        kind: HTTPRouteFilter
+        name: deny-lifecycle
   - matches:
     - path:
         type: PathPrefix
