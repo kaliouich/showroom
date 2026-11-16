@@ -7,8 +7,10 @@
 # l'ancienne installation, et pourquoi :
 #   - image 28.2.0 : le chart 12.7.0 embarque 1.27.0, encore vulnerable
 #     (correctif en 1.27.1) et en retard sur la branche 28.x ;
-#   - connexion obligatoire pour tout voir, depots prives par defaut : plus
-#     rien n'est accessible sans compte, c'est ce qui rendait l'attaque possible ;
+#   - depots prives par defaut, inscriptions fermees. Le 2026-11-16 la lecture
+#     anonyme a ete rouverte pour le depot de demo (voir service plus bas) :
+#     le correctif et le 404 sur /api/internal portent la protection, plus la
+#     connexion obligatoire ;
 #   - pas de miroirs ni de Swagger : surface en moins.
 image:
   registry: docker.io
