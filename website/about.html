@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>About the Engineer | Freelance DevOps &amp; Platform Engineer</title>
-  <meta name="description" content="Khalil Aliouich — freelance DevOps &amp; Platform Engineer, 12+ years from ARM firmware to Kubernetes. Available for your platform, GitOps, and observability projects.">
+  <title>About the Engineer | Senior DevOps &amp; Cloud Engineer</title>
+  <meta name="description" content="Khalil Aliouich — senior DevOps &amp; Cloud engineer, 13 years from ARM firmware to Kubernetes. CKA certified. Available for your platform, GitOps, and observability projects.">
 
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css?v=20" />
@@ -186,6 +186,84 @@
       line-height: 1.6;
     }
 
+    .bullets {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+      margin: 0.6rem 0 0;
+      padding: 0;
+    }
+
+    .bullets li {
+      position: relative;
+      padding-left: 1.4rem;
+      font-size: 0.92rem;
+      line-height: 1.65;
+      color: var(--text-secondary);
+    }
+
+    .bullets li::before {
+      content: '>';
+      position: absolute;
+      left: 0;
+      color: var(--cyan);
+      font-weight: 700;
+    }
+
+    .bullets li strong { color: var(--text-primary); }
+    .bullets li code { font-size: 0.85em; color: var(--cyan); }
+
+    .timeline-company a { color: var(--cyan); }
+
+    .skill-group { margin-bottom: 1.4rem; }
+    .skill-group:last-child { margin-bottom: 0; }
+    .skill-group__title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 0.6rem;
+    }
+    .skill-group__tags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .skill-group__tags .skill-tag { padding: 0.35rem 0.7rem; font-size: 0.8rem; }
+
+    .lab-table { display: flex; flex-direction: column; gap: 1rem; }
+    .lab-row {
+      display: grid;
+      grid-template-columns: 11rem 1fr;
+      gap: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .lab-row:first-child { border-top: 0; padding-top: 0; }
+    .lab-row__name { font-weight: 700; color: var(--cyan); font-size: 0.9rem; }
+    .lab-row__body { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.65; }
+    @media (max-width: 640px) { .lab-row { grid-template-columns: 1fr; gap: 0.3rem; } }
+
+    .side-block {
+      margin-top: 2rem;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding-top: 2rem;
+    }
+    .side-block__title { font-weight: 700; margin-bottom: 0.6rem; }
+    .side-block__note { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.3rem; line-height: 1.5; }
+
+    .about-container > * { min-width: 0; }
+    .bullets li, .timeline-company, .lab-row__body, .skill-group__tags { overflow-wrap: anywhere; }
+
+    @media (max-width: 900px) {
+      .about-container { grid-template-columns: minmax(0, 1fr); padding: 1rem; gap: 1.5rem; }
+      .about-hero { padding: 6rem 1rem 1.5rem; }
+    }
+
+    @media (max-width: 640px) {
+      .card, .profile-sidebar { padding: 1.4rem; }
+      .timeline-item { padding-left: 1rem; }
+      .bullets li { padding-left: 1.1rem; }
+    }
+
   </style>
 </head>
 <body>
@@ -223,13 +301,13 @@
     <!-- Sidebar -->
     <aside class="profile-sidebar">
       <h2>Khalil Aliouich</h2>
-      <h3>Senior DevOps & Platform Engineer</h3>
+      <h3 data-i18n="about_role">Senior DevOps &amp; Cloud Engineer</h3>
       <div class="hire-availability" style="margin: 0 auto 1.5rem;">
         <span class="hire-availability__dot"></span>
         <span data-i18n="about_freelance_pill">Freelance — available</span>
       </div>
       <p style="color: var(--text-secondary); line-height: 1.6; font-size: 0.95rem;" data-i18n="about_desc">
-        12+ years of experience across Telecom, IoT, Cloud-Native, and Edge Computing. Specializing in highly resilient hybrid-cloud platforms.
+        13 years of experience · Linux system administration · Remote / Hybrid — Rennes, France
       </p>
 
       <div class="social-links">
@@ -239,15 +317,28 @@
         <a href="https://github.com/kaliouich" target="_blank" class="social-btn">
           <span data-i18n="about_github">🐙 GitHub Repositories</span>
         </a>
+        <a href="https://github.com/kaliouich/showroom" target="_blank" rel="noopener" class="social-btn">
+          <span>📂 showroom — infra &amp; manifests</span>
+        </a>
         <a href="mailto:khalil.aliouich@gmail.com?subject=Freelance%20mission%20—%20DevOps%20%2F%20Platform%20Engineering" class="social-btn" style="background: rgba(230,196,106,0.08); border-color: rgba(230,196,106,0.25);">
           <span data-i18n="about_hire_btn">✉️ Hire me for your project</span>
         </a>
       </div>
       
-      <div style="margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 2rem;">
+      <div class="side-block">
         <div style="font-size: 1.8rem; margin-bottom: 0.5rem;">🏆</div>
-        <div style="font-weight: 600;">CKA Certified</div>
-        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.3rem;" data-i18n="about_cert_cka">Score 85/100 | CNCF / Linux Foundation</div>
+        <div class="side-block__title" data-i18n="ab_certs">Certifications</div>
+        <div style="font-weight: 600;">CKA — Certified Kubernetes Administrator</div>
+        <div class="side-block__note" data-i18n="about_cert_cka">Score 85/100 | CNCF / Linux Foundation</div>
+        <div style="font-weight: 600; margin-top: 1rem;">AWS Solutions Architect Associate</div>
+        <div class="side-block__note" data-i18n="ab_cert_aws"></div>
+      </div>
+
+      <div class="side-block">
+        <div style="font-size: 1.8rem; margin-bottom: 0.5rem;">🎓</div>
+        <div class="side-block__title" data-i18n="ab_edu_title">Education &amp; languages</div>
+        <div class="side-block__note" data-i18n="ab_edu"></div>
+        <div class="side-block__note" data-i18n="ab_langs"></div>
       </div>
     </aside>
 
@@ -272,62 +363,163 @@
         </div>
       </div>
 
-      <!-- Summary Card -->
+      <!-- Profile Card -->
       <div class="card">
-        <h2><span class="icon">🚀</span> <span data-i18n="about_summary_title">Professional Summary</span></h2>
-        <p data-i18n="about_summary_1">
-          I am a Senior DevOps & Platform Engineer with a unique profile: I am capable of tracing incidents all the way from an ARM Cortex firmware level up to a Kubernetes Pod. This full-stack mastery serves as a decisive differentiator in on-call and Edge/Hybrid architectures.
-        </p>
-        <p data-i18n="about_summary_2">
-          Currently, I lead Platform Engineering for product teams of 50+ developers, designing Internal Developer Platforms (IDP), Golden Paths, and end-to-end GitOps/DevSecOps pipelines on multi-cloud Kubernetes clusters (AWS, Azure, OpenStack).
-        </p>
+        <h2><span class="icon">🚀</span> <span data-i18n="about_summary_title">Profile</span></h2>
+        <p data-i18n="about_summary_1"></p>
+        <p data-i18n="ab_profile_2" style="margin-bottom: 0;"></p>
       </div>
 
       <!-- Experience Card -->
       <div class="card">
-        <h2><span class="icon">💼</span> <span data-i18n="about_exp_title">Key Experience</span></h2>
-        
+        <h2><span class="icon">💼</span> <span data-i18n="about_exp_title">Professional experience</span></h2>
+
         <div class="timeline-item">
-          <div class="timeline-title" data-i18n="about_exfo_title">Platform Engineer / Senior DevOps</div>
-          <div class="timeline-company">EXFO | 2021 – Present</div>
-          <div class="timeline-desc" data-i18n="about_exfo_desc">
-            Designed an IDP for 50+ developers across 11 K8s clusters. Reduced release cycles by 40% using ArgoCD App of Apps and GitLab CI. Implemented end-to-end DevSecOps pipelines with Trivy/SBOM security scans and automated smoke tests. Managed multi-cloud Infrastructure as Code via Terraform and Crossplane.
-          </div>
+          <div class="timeline-title" data-i18n="ab_exfo_role"></div>
+          <div class="timeline-company" data-i18n="ab_exfo_meta"></div>
+          <ul class="bullets">
+            <li data-i18n="ab_exfo_1"></li>
+            <li data-i18n="ab_exfo_2"></li>
+            <li data-i18n="ab_exfo_3"></li>
+            <li data-i18n="ab_exfo_4"></li>
+            <li data-i18n="ab_exfo_5"></li>
+            <li data-i18n="ab_exfo_6"></li>
+            <li data-i18n="ab_exfo_7"></li>
+            <li data-i18n="ab_exfo_8"></li>
+            <li data-i18n="ab_exfo_9"></li>
+            <li data-i18n="ab_exfo_10"></li>
+            <li data-i18n="ab_exfo_11"></li>
+          </ul>
         </div>
 
         <div class="timeline-item">
-          <div class="timeline-title" data-i18n="about_delta_title">Ingénieur DevOps / Cloud Tech Lead</div>
-          <div class="timeline-company">Delta Dore | 2016 – 2021</div>
-          <div class="timeline-desc" data-i18n="about_delta_desc">
-            Led DevOps and FinOps initiatives for Europe\'s IoT Smart Home leader. Managed Azure AKS topologies with Terraform, maintained 99.9% SLA for REST APIs, and mentored development teams on GitOps and DevSecOps best practices.
-          </div>
+          <div class="timeline-title" data-i18n="ab_delta_role"></div>
+          <div class="timeline-company" data-i18n="ab_delta_meta"></div>
+          <ul class="bullets">
+            <li data-i18n="ab_delta_1"></li>
+            <li data-i18n="ab_delta_2"></li>
+            <li data-i18n="ab_delta_3"></li>
+          </ul>
         </div>
 
         <div class="timeline-item">
-          <div class="timeline-title">Firmware & Embedded Systems Engineer</div>
-          <div class="timeline-company">R&D Multi-entreprises | 2011 – 2016</div>
-          <div class="timeline-desc" data-i18n="about_rd_desc">
-            Hardware-level programming and debugging for ARM Cortex/Linux systems at companies like NXP, Hill-Rom, Ekinops, and Itron. Pioneered early Edge architectures with Zigbee/WSN gateways.
-          </div>
+          <div class="timeline-title" data-i18n="ab_rd_role"></div>
+          <div class="timeline-company" data-i18n="ab_rd_meta"></div>
+          <div class="timeline-desc" data-i18n="ab_rd_desc"></div>
         </div>
       </div>
 
       <!-- Skills Card -->
       <div class="card">
-        <h2><span class="icon">🛠️</span> <span data-i18n="about_skills_title">Technical Stack</span></h2>
-        <div class="skills-grid">
-          <div class="skill-tag">Kubernetes / K3s / AKS</div>
-          <div class="skill-tag">ArgoCD / GitOps</div>
-          <div class="skill-tag">Terraform / Crossplane</div>
-          <div class="skill-tag">Ansible</div>
-          <div class="skill-tag">AWS / Azure / OpenStack</div>
-          <div class="skill-tag">DevSecOps (Trivy/Falco)</div>
-          <div class="skill-tag">Prometheus / Grafana</div>
-          <div class="skill-tag">Python / Bash / C++</div>
-          <div class="skill-tag">Cilium / Network Policies</div>
+        <h2><span class="icon">🛠️</span> <span data-i18n="about_skills_title">Technical skills</span></h2>
+        <div class="skill-group">
+          <div class="skill-group__title" data-i18n="sk_linux"></div>
+          <div class="skill-group__tags"><span class="skill-tag">Advanced Linux administration</span><span class="skill-tag">kernel</span><span class="skill-tag">systemd (units, timers)</span><span class="skill-tag">cgroups</span><span class="skill-tag">namespaces</span><span class="skill-tag">LVM</span><span class="skill-tag">package management</span><span class="skill-tag">TCP/IP</span><span class="skill-tag">iptables/nftables</span><span class="skill-tag">routing</span><span class="skill-tag">bridges</span><span class="skill-tag">VLAN</span><span class="skill-tag">DNS</span><span class="skill-tag">tcpdump</span><span class="skill-tag">ss</span><span class="skill-tag">ip</span><span class="skill-tag">SSH</span><span class="skill-tag">sudo</span><span class="skill-tag">PAM</span><span class="skill-tag">hardening</span></div>
+        </div>
+        <div class="skill-group">
+          <div class="skill-group__title" data-i18n="sk_containers"></div>
+          <div class="skill-group__tags"><span class="skill-tag">Multi-stage Dockerfiles</span><span class="skill-tag">Alpine images</span><span class="skill-tag">non-root runtime</span><span class="skill-tag">layer-cache optimization</span><span class="skill-tag">multi-architecture builds (amd64/arm64)</span><span class="skill-tag">immutable tags</span><span class="skill-tag">containerd</span><span class="skill-tag">Docker Compose</span><span class="skill-tag">OCI registries (GitLab Registry, GHCR, ECR)</span><span class="skill-tag">image scanning</span></div>
+        </div>
+        <div class="skill-group">
+          <div class="skill-group__title" data-i18n="sk_iac"></div>
+          <div class="skill-group__tags"><span class="skill-tag">Ansible (reusable roles, idempotent playbooks, Jinja2 templates, handlers, Vault, inventories)</span><span class="skill-tag">Terraform (modules, remote state, workspaces, multi-provider)</span><span class="skill-tag">CloudFormation</span><span class="skill-tag">IaC tests (ansible-lint, terraform validate/plan, helm lint)</span><span class="skill-tag">Bash</span><span class="skill-tag">Python</span></div>
+        </div>
+        <div class="skill-group">
+          <div class="skill-group__title" data-i18n="sk_aws"></div>
+          <div class="skill-group__tags"><span class="skill-tag">EC2, Auto Scaling, Spot Instances, ECS, EKS, Lambda</span><span class="skill-tag">VPC, subnets, NAT/Internet Gateway, Security Groups, ALB/NLB, Route 53, CloudFront</span><span class="skill-tag">S3, EBS, EFS, RDS Multi-AZ, ElastiCache</span><span class="skill-tag">SQS, SNS</span><span class="skill-tag">IAM least-privilege, KMS, Secrets Manager</span><span class="skill-tag">CodeBuild, CodePipeline, ECR</span><span class="skill-tag">CloudWatch, CloudTrail, Cost Explorer</span><span class="skill-tag">Well-Architected Framework</span></div>
+        </div>
+        <div class="skill-group">
+          <div class="skill-group__title" data-i18n="sk_azure"></div>
+          <div class="skill-group__tags"><span class="skill-tag">Azure: virtual machines, managed disks, images and snapshots, Availability Sets / Zones, AKS with Advanced Networking (Azure CNI), VNet, NSG, Private Endpoints, Azure Monitor, Log Analytics, Azure AD</span><span class="skill-tag">OpenStack: Nova, Neutron, Cinder, Keystone</span><span class="skill-tag">KVM</span><span class="skill-tag">on-premise bare metal</span></div>
+        </div>
+        <div class="skill-group">
+          <div class="skill-group__title" data-i18n="sk_k8s"></div>
+          <div class="skill-group__tags"><span class="skill-tag">Kubernetes (CKA)</span><span class="skill-tag">AKS</span><span class="skill-tag">EKS</span><span class="skill-tag">K3s</span><span class="skill-tag">kubeadm</span><span class="skill-tag">Helm (charts, sub-charts, values overlays)</span><span class="skill-tag">Operators &amp; CRDs</span><span class="skill-tag">RBAC</span><span class="skill-tag">ResourceQuota / LimitRange</span><span class="skill-tag">NetworkPolicies</span><span class="skill-tag">HPA / VPA</span></div>
+        </div>
+        <div class="skill-group">
+          <div class="skill-group__title" data-i18n="sk_cicd"></div>
+          <div class="skill-group__tags"><span class="skill-tag">GitLab CI self-hosted (runners, registry, HA)</span><span class="skill-tag">GitHub Actions</span><span class="skill-tag">Gitea Actions</span><span class="skill-tag">AWS CodePipeline</span><span class="skill-tag">CodeBuild</span><span class="skill-tag">ArgoCD (App of Apps, selfHeal, prune)</span><span class="skill-tag">Git</span><span class="skill-tag">SonarQube</span></div>
+        </div>
+        <div class="skill-group">
+          <div class="skill-group__title" data-i18n="sk_net"></div>
+          <div class="skill-group__tags"><span class="skill-tag">S3 / Minio (object)</span><span class="skill-tag">Ceph (CSI)</span><span class="skill-tag">Elasticsearch</span><span class="skill-tag">PostgreSQL</span><span class="skill-tag">MetalLB (L2)</span><span class="skill-tag">Calico (CNI, NetworkPolicies)</span><span class="skill-tag">Istio</span><span class="skill-tag">Envoy Gateway</span><span class="skill-tag">Gateway API (HTTPRoute, TLSRoute)</span><span class="skill-tag">mTLS</span></div>
+        </div>
+        <div class="skill-group">
+          <div class="skill-group__title" data-i18n="sk_obs"></div>
+          <div class="skill-group__tags"><span class="skill-tag">Prometheus (alerting rules, custom metrics)</span><span class="skill-tag">Grafana</span><span class="skill-tag">Loki / Promtail</span><span class="skill-tag">Alertmanager</span><span class="skill-tag">CloudWatch</span><span class="skill-tag">SLO / SLI / error budget</span><span class="skill-tag">on-call</span><span class="skill-tag">post-mortem</span></div>
+        </div>
+        <div class="skill-group">
+          <div class="skill-group__title" data-i18n="sk_sec"></div>
+          <div class="skill-group__tags"><span class="skill-tag">Vault</span><span class="skill-tag">AWS IAM, KMS &amp; Secrets Manager</span><span class="skill-tag">Trivy (image scan, SBOM)</span><span class="skill-tag">Kyverno (policy-as-code)</span><span class="skill-tag">Renovate</span></div>
+        </div>
+        <div class="skill-group">
+          <div class="skill-group__title" data-i18n="sk_method"></div>
+          <div class="skill-group__tags"><span class="skill-tag">Agile / Scrum</span><span class="skill-tag">Tech Lead</span><span class="skill-tag">mentoring</span><span class="skill-tag">documentation &amp; runbooks</span><span class="skill-tag">architecture review</span></div>
         </div>
       </div>
 
+      <!-- Lab Card -->
+      <div class="card">
+        <h2><span class="icon">🧪</span> <span data-i18n="ab_lab_title">DevOps lab</span></h2>
+        <p data-i18n="ab_lab_intro"></p>
+        <div class="lab-table">
+          <div class="lab-row">
+            <div class="lab-row__name" data-i18n="lab_infra"></div>
+            <div class="lab-row__body">K3s built from scratch (without Traefik) on Ubuntu 24.04 ARM64 · Envoy Gateway with the Gateway API (HTTPRoute, TLSRoute, GatewayClass) · Cert-Manager and automated TLS (Let's Encrypt) · iptables · Terraform (network and instance) and Ansible (system and cluster), rebuilding the whole platform from zero</div>
+          </div>
+          <div class="lab-row">
+            <div class="lab-row__name" data-i18n="lab_gitops"></div>
+            <div class="lab-row__body">Self-hosted Gitea with an internal OCI registry · ArgoCD with automated sync, selfHeal and prune · Gitea Actions (act-runner running non-root, Kaniko build jobs) · public read-only access to the repository and its pipeline runs</div>
+          </div>
+          <div class="lab-row">
+            <div class="lab-row__name" data-i18n="lab_sec"></div>
+            <div class="lab-row__body">Trivy Operator with a daily scan (vulnerabilities, misconfigurations, exposed secrets) and a Grafana dashboard · Linkerd (mTLS, sidecar, Viz) · read-only RBAC for visitors · Kube-Prometheus-Stack with custom metrics · Grafana · Loki / Promtail · Alertmanager to Telegram · Uptime Kuma public status page</div>
+          </div>
+          <div class="lab-row">
+            <div class="lab-row__name" data-i18n="lab_app"></div>
+            <div class="lab-row__body">Tamagotchi as a Service: 3-tier architecture (React, Node.js/Express API exposing Prometheus metrics, PostgreSQL), images built in containers through the K3s socket, real-time Kubernetes dashboard on a read-only API</div>
+          </div>
+          <div class="lab-row">
+            <div class="lab-row__name" data-i18n="lab_kafka"></div>
+            <div class="lab-row__body">Kafka 4.3.1 in KRaft mode (no ZooKeeper), 3 broker/controller nodes operated by Strimzi · Kafka / KafkaTopic / KafkaUser CRDs synchronized by ArgoCD · replicated topic (replication x3, min.insync.replicas=2) · idempotent producer (acks=all, partition keyed by entity so ordering is guaranteed) · consumer relayed over SSE</div>
+          </div>
+          <div class="lab-row">
+            <div class="lab-row__name" data-i18n="lab_res"></div>
+            <div class="lab-row__body">Broker metrics through Prometheus/Grafana and alert rules (offline partitions, no leader, unclean election, production errors) notified through Telegram · broker kill test through the site's own Chaos Button, with an n8n workflow doing the remediation · node CPU requests brought down from 97% to about 53%</div>
+          </div>
+        </div>
+        <div class="hire-cta__actions" style="justify-content: flex-start; margin-top: 1.5rem;">
+          <a href="index.html#tools" class="btn btn--ghost btn--sm">🧰 Tools portal →</a>
+          <a href="https://github.com/kaliouich/showroom" target="_blank" rel="noopener" class="btn btn--ghost btn--sm">🐙 github.com/kaliouich/showroom →</a>
+        </div>
+      </div>
+
+      <!-- Projects Card -->
+      <div class="card">
+        <h2><span class="icon">📦</span> <span data-i18n="ab_proj_title">Personal projects</span></h2>
+
+        <div class="timeline-item">
+          <div class="timeline-title" data-i18n="ab_signalo_role"></div>
+          <div class="timeline-company" data-i18n="ab_signalo_meta"></div>
+          <ul class="bullets">
+            <li data-i18n="ab_sig_1"></li>
+            <li data-i18n="ab_sig_2"></li>
+            <li data-i18n="ab_sig_3"></li>
+            <li data-i18n="ab_sig_4"></li>
+          </ul>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-title" data-i18n="ab_habit_role"></div>
+          <div class="timeline-company"><a href="https://habitcade.com" target="_blank" rel="noopener">habitcade.com</a> · <a href="https://github.com/kaliouich/habit-game-saas" target="_blank" rel="noopener">github.com/kaliouich/habit-game-saas</a></div>
+          <ul class="bullets">
+            <li data-i18n="ab_hab_1"></li>
+            <li data-i18n="ab_hab_2"></li>
+            <li data-i18n="ab_hab_3"></li>
+            <li data-i18n="ab_hab_4"></li>
+          </ul>
+        </div>
+      </div>
     </div>
   </main>
   <script src="js/app.js"></script>
