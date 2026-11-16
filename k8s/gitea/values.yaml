@@ -52,10 +52,14 @@ gitea:
       ROOT_URL: https://git.khalilaliouich.com/
     service:
       DISABLE_REGISTRATION: true
-      REQUIRE_SIGNIN_VIEW: true
+      # Lecture anonyme voulue pour la demo : un visiteur ouvre le depot et voit
+      # les runs Actions sans compte. Les inscriptions restent fermees, les
+      # nouveaux depots restent prives par defaut, /api/internal reste a 404
+      # (httproute-hardening.yaml).
+      REQUIRE_SIGNIN_VIEW: false
     repository:
       DEFAULT_PRIVATE: private
-      FORCE_PRIVATE: true
+      FORCE_PRIVATE: false
     mirror:
       ENABLED: false
     api:
