@@ -1,3 +1,7 @@
+# HISTORIQUE (2026-11-23) : la base de donnees de ce fichier (Deployment/Service/PVC postgres)
+# n'est plus utilisee par l'API, qui lit tamagotchi-db-rw (CloudNativePG, k8s/cnpg/). Elle est
+# conservee comme retour arriere jusqu'au 2026-11-30, puis a retirer d'ici. Les Deployments de
+# l'API et du frontend vivent aujourd'hui dans le depot Gitea tamagotchi-service.
 # Le mot de passe de la base n'est plus dans ce fichier (il etait lisible dans un depot
 # public). Il vit dans le Secret tamagotchi-db-credentials, cle "password", cree hors du
 # depot :

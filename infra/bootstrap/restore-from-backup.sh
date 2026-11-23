@@ -61,8 +61,12 @@ restore_db() { # <ns> <pod> <conteneur> <user> <db> <fichier>
     && echo "  $6 restauree" || echo "  !! $6 en echec"
 }
 restore_db gitea gitea-pg-0 postgres gitea gitea gitea
-restore_db tamagotchi "$(kubectl get pod -n tamagotchi -l app=postgres -o name | head -1 | cut -d/ -f2)" \
-           postgres tamagotchi tamagotchi tamagotchi
+# Base CloudNativePG : on attend le cluster, puis on restaure dans le primaire sous le
+# superutilisateur postgres (connexion locale). Le Cluster doit avoir ete cree vide : son
+# amorcage par import (k8s/cnpg/tamagotchi-db.yaml) suppose l'ancien PostgreSQL, absent ici.
+kubectl -n tamagotchi wait --for=condition=Ready cluster/tamagotchi-db --timeout=600s || true
+restore_db tamagotchi "$(kubectl get pod -n tamagotchi -l cnpg.io/cluster=tamagotchi-db,cnpg.io/instanceRole=primary -o name | head -1 | cut -d/ -f2)" \
+           postgres postgres tamagotchi tamagotchi
 restore_db default "$(kubectl get pod -n default -l app=habit-postgres -o name | head -1 | cut -d/ -f2)" \
            postgres habit habitgame habit
 
