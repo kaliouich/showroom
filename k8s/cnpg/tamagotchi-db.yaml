@@ -1,0 +1,81 @@
+# Base PostgreSQL du Tamagotchi, geree par l'operateur CloudNativePG (installe par le role
+# Ansible platform, namespace cnpg-system) : 1 primaire + 2 replicas, bascule automatique.
+#
+# Amorcage : import logique (pg_dump / pg_restore) de l'ancien PostgreSQL du namespace, le
+# Deployment "postgres". Il n'est pas modifie : il reste la base de l'API tant que l'API n'a
+# pas ete repointee sur tamagotchi-db-rw, et sert de retour arriere.
+#
+# Identifiants : le role applicatif "tamagotchi" et son mot de passe sont generes par
+# l'operateur dans le Secret tamagotchi-db-app. Le Secret tamagotchi-db-credentials ne sert
+# qu'a lire l'ancienne base pendant l'import.
+#
+# Sans stockage objet : pas d'archivage de WAL, donc pas de restauration a un instant precis.
+# Les sauvegardes restent le pg_dump nocturne de scripts/backup-cluster.sh. Ajouter le plugin
+# Barman Cloud plus tard ne demande qu'un redemarrage progressif des pods.
+#
+# Prune=false : si ce fichier disparaissait de Git, ArgoCD supprimerait la base, et avec elle ses
+# volumes (la classe local-path a une reclaimPolicy Delete).
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: tamagotchi-db
+  namespace: tamagotchi
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+spec:
+  instances: 3
+  # Variante trixie (Debian 13) : le tag nu 17.11 reste sur bullseye, dont le projet a arrete le
+  # support. "standard" embarque les outils de sauvegarde ; arm64 disponible.
+  imageName: ghcr.io/cloudnative-pg/postgresql:17.11-standard-trixie
+
+  # Comme gitea-pg : le proxy Linkerd a deja reinitialise des connexions vers le 5432, et la
+  # replication ouvre ses propres connexions entre les pods.
+  inheritedMetadata:
+    annotations:
+      linkerd.io/inject: disabled
+
+  bootstrap:
+    initdb:
+      database: tamagotchi
+      owner: tamagotchi
+      import:
+        type: microservice
+        databases:
+          - tamagotchi
+        source:
+          externalCluster: legacy
+
+  externalClusters:
+    - name: legacy
+      connectionParameters:
+        host: postgres.tamagotchi.svc.cluster.local
+        user: tamagotchi
+        dbname: tamagotchi
+      password:
+        name: tamagotchi-db-credentials
+        key: password
+
+  postgresql:
+    # Un replica synchrone au moins : une ecriture validee existe sur deux pods.
+    synchronous:
+      method: any
+      number: 1
+      dataDurability: required
+
+  # local-path ne sait pas agrandir un volume : on voit large (la base fait 7 Mo).
+  storage:
+    storageClass: local-path
+    size: 5Gi
+  walStorage:
+    storageClass: local-path
+    size: 2Gi
+
+  # Memoire limitee = demandee : l'instance n'est jamais tuee par la pression du noeud
+  # avant les autres. Le CPU peut exploser jusqu'a un coeur.
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi

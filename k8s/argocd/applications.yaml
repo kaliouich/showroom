@@ -84,3 +84,29 @@ spec:
     automated:
       prune: true
       selfHeal: true
+---
+# Base PostgreSQL du Tamagotchi : le CR Cluster de CloudNativePG et son PodMonitor vivent dans
+# ce depot, sous k8s/cnpg/. L'operateur est installe par Helm (roles/platform). Application
+# separee de tamagotchi-app a dessein : celle-ci ne lit que la racine du depot Gitea de
+# l'application et elle purge ; le Cluster porte en plus Prune=false.
+# A appliquer (kubectl apply) une fois k8s/cnpg/ present sur la branche main de GitHub.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cnpg-tamagotchi
+  namespace: argocd
+spec:
+  destination:
+    namespace: tamagotchi
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: k8s/cnpg
+    repoURL: https://github.com/kaliouich/showroom.git
+    targetRevision: main
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - SkipDryRunOnMissingResource=true
