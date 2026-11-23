@@ -121,10 +121,28 @@ const pool = new Pool({
   database: process.env.DB_NAME || 'tamagotchi',
   user: process.env.DB_USER || 'tamagotchi',
   password: process.env.DB_PASSWORD || '<YOUR_DB_PASSWORD>',
+  max: parseInt(process.env.DB_POOL_MAX || '10'),
+  // Une base qui bascule (CloudNativePG) ou redemarre coupe les connexions sans
+  // toujours envoyer de RST : sans delais, une requete ou une connexion pendante
+  // bloquerait l'API pendant des minutes. Ces delais la font echouer en quelques
+  // secondes, et le client fautif est jete du pool.
+  connectionTimeoutMillis: parseInt(process.env.DB_CONNECT_TIMEOUT_MS || '3000'),
+  query_timeout: parseInt(process.env.DB_QUERY_TIMEOUT_MS || '8000'),
+  idleTimeoutMillis: 30000,
+  keepAlive: true,
+  keepAliveInitialDelayMillis: 10000,
+});
+
+// Une connexion inactive coupee par le serveur (bascule du primaire, redemarrage
+// de la base) emet 'error' sur le pool. Sans gestionnaire, Node leve une exception
+// non geree et tue le processus : le pod redemarre au lieu de se reconnecter.
+pool.on('error', (err) => {
+  console.error('Idle database client error (the pool will reconnect):', err.message);
 });
 
 async function initDB() {
   const client = await pool.connect();
+  let failure;
   try {
     await client.query(`
       CREATE TABLE IF NOT EXISTS creatures (
@@ -158,8 +176,11 @@ async function initDB() {
       }
       console.log('🐣 Seeded 5 default creatures');
     }
+  } catch (err) {
+    failure = err;
+    throw err;
   } finally {
-    client.release();
+    client.release(failure);
   }
 }
 
@@ -171,9 +192,14 @@ const HUNGER_DECAY = parseFloat(process.env.HUNGER_DECAY || '2');   // hunger in
 const HAPPINESS_DECAY = parseFloat(process.env.HAPPINESS_DECAY || '1.5'); // happiness decreases by 1.5
 const ENERGY_DECAY = parseFloat(process.env.ENERGY_DECAY || '1');   // energy decreases by 1
 
+let decayRunning = false;
 setInterval(async () => {
+  // Une base qui bascule peut laisser un tour bloque jusqu'a son delai : on n'en empile pas un autre.
+  if (decayRunning) return;
+  decayRunning = true;
   try {
     const client = await pool.connect();
+    let failure;
     try {
       // Increase hunger, decrease happiness and energy for alive creatures
       const decayed = await client.query(`
@@ -207,11 +233,17 @@ setInterval(async () => {
       }
       aliveGauge.set(alive);
       deadGauge.set(dead);
+    } catch (err) {
+      failure = err;
+      throw err;
     } finally {
-      client.release();
+      // Un client en erreur est detruit, pas rendu au pool.
+      client.release(failure);
     }
   } catch (err) {
     console.error('Decay loop error:', err.message);
+  } finally {
+    decayRunning = false;
   }
 }, DECAY_INTERVAL_MS);
 
@@ -222,6 +254,17 @@ setInterval(async () => {
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Readiness : la base repond-elle ? Distinct de /health (liveness) a dessein : une base qui
+// bascule doit retirer le pod du service, pas le faire redemarrer.
+app.get('/ready', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ status: 'ready' });
+  } catch (err) {
+    res.status(503).json({ status: 'database unavailable' });
+  }
 });
 
 // Prometheus metrics endpoint
@@ -433,12 +476,31 @@ const PORT = parseInt(process.env.PORT || '8080');
 
 events.start();
 
-initDB()
+// La base peut ne pas etre prete au demarrage du pod (bascule, redemarrage du cluster) :
+// on reessaie quelques fois avant d'abandonner, au lieu de mourir au premier refus.
+async function initDBWithRetry(attempts = 30, delayMs = 2000) {
+  for (let i = 1; ; i++) {
+    try {
+      return await initDB();
+    } catch (err) {
+      if (i >= attempts) throw err;
+      console.error(`Database not ready (attempt ${i}/${attempts}): ${err.message}`);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+}
+
+initDBWithRetry()
   .then(() => {
-    app.listen(PORT, '0.0.0.0', () => {
+    const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`🐣 Tamagotchi API running on port ${PORT}`);
       console.log(`📊 Metrics available at /metrics`);
       console.log(`⏱️  Decay interval: ${DECAY_INTERVAL_MS}ms`);
+    });
+    // Arret propre : on finit les requetes en cours et on ferme les connexions a la base.
+    process.on('SIGTERM', () => {
+      server.close(() => pool.end().finally(() => process.exit(0)));
+      setTimeout(() => process.exit(0), 10000).unref();
     });
   })
   .catch((err) => {
