@@ -395,7 +395,7 @@ a { color: inherit; text-decoration: none; }
 .terminal__body {
   padding: 1.5rem;
   font-family: var(--font-mono);
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   line-height: 1.8;
   min-height: 320px;
   max-height: 450px;
@@ -403,7 +403,7 @@ a { color: inherit; text-decoration: none; }
   color: #a0a8c0;
 }
 
-.terminal__line { white-space: pre-wrap; word-break: break-all; }
+.terminal__line { white-space: pre-wrap; overflow-wrap: anywhere; }
 .terminal__prompt { color: var(--magenta); font-weight: 700; text-shadow: none; }
 .terminal__cmd { color: var(--text-primary); }
 .terminal__output { color: var(--text-secondary); }

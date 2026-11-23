@@ -101,7 +101,7 @@ const i18n = {
     iac_tf_link: "📂 Read the Terraform →",
     iac_ans_scope: "everything inside the machine and the cluster",
     iac_ans_desc: "Packages, firewall, K3s, Helm releases, manifests, images, backup timer. Ansible is used where Terraform would only have <code>local-exec</code>: it is idempotent, replays on a live cluster to correct drift, and turns Helm values into versioned files instead of leaving them buried in a release's state.",
-    iac_ans_chips: "<span class=\"hire-chip\">K3s</span><span class=\"hire-chip\">cert-manager</span><span class=\"hire-chip\">Envoy Gateway</span><span class=\"hire-chip\">ArgoCD</span><span class=\"hire-chip\">Linkerd</span><span class=\"hire-chip\">Prometheus</span><span class=\"hire-chip\">Gitea</span><span class=\"hire-chip\">Kafka</span><span class=\"hire-chip\">Trivy</span><span class=\"hire-chip\">Backups</span>",
+    iac_ans_chips: "<span class=\"hire-chip\">K3s</span><span class=\"hire-chip\">cert-manager</span><span class=\"hire-chip\">Envoy Gateway</span><span class=\"hire-chip\">ArgoCD</span><span class=\"hire-chip\">Linkerd</span><span class=\"hire-chip\">Prometheus</span><span class=\"hire-chip\">Gitea</span><span class=\"hire-chip\">Kafka</span><span class=\"hire-chip\">CloudNativePG</span><span class=\"hire-chip\">Trivy</span><span class=\"hire-chip\">Backups</span>",
     iac_ans_link: "📂 Read the playbook →",
     iac_dr: "The full recovery procedure — including the three traps that cost me hours: the K3s cloud-provider flags that silently taint the node, Linkerd breaking ArgoCD's internal gRPC, and Oracle's Ubuntu image dropping ports 80 and 443 whatever the security list says.",
     iac_dr_link: "🚨 Disaster recovery runbook",
@@ -209,6 +209,14 @@ const i18n = {
     about_summary_1: "Senior DevOps &amp; Cloud Engineer with 13 years of experience. A solid base in Linux system administration (kernel, systemd, networking, firewall) built on a low-level development career, then a specialization in Cloud and Kubernetes. Full infrastructure automation with Ansible and Terraform, Docker containerization, end-to-end CI/CD and GitOps pipelines.",
     about_exp_title: "Professional experience",
     about_skills_title: "Technical skills",
+    lab_infra_b: "K3s built from scratch (without Traefik) on Ubuntu 24.04 ARM64 · Envoy Gateway with the Gateway API (HTTPRoute, TLSRoute, GatewayClass) · Cert-Manager and automated TLS (Let's Encrypt) · iptables · Terraform (network and instance) and Ansible (system and cluster), rebuilding the whole platform from zero",
+    lab_gitops_b: "Self-hosted Gitea with an internal OCI registry · ArgoCD with automated sync, selfHeal and prune · Gitea Actions (act-runner running non-root, Kaniko build jobs) · public read-only access to the repository and its pipeline runs",
+    lab_sec_b: "Trivy Operator with a daily scan (vulnerabilities, misconfigurations, exposed secrets) and a Grafana dashboard · Linkerd (mTLS, sidecar, Viz) · read-only RBAC for visitors · Kube-Prometheus-Stack with custom metrics · Grafana · Loki / Promtail · Alertmanager to Telegram · Uptime Kuma public status page",
+    lab_app_b: "Tamagotchi as a Service: 3-tier architecture (static HTML/JS frontend served by nginx, Node.js/Express API exposing Prometheus metrics, PostgreSQL), images built by Kaniko jobs inside the cluster, real-time Kubernetes dashboard on a read-only API",
+    lab_kafka_b: "Kafka 4.3.1 in KRaft mode (no ZooKeeper), 3 broker/controller nodes operated by Strimzi · Kafka / KafkaTopic / KafkaUser CRDs synchronized by ArgoCD · replicated topic (replication x3, min.insync.replicas=2) · idempotent producer (acks=all, partition keyed by entity so ordering is guaranteed) · consumer relayed over SSE",
+    lab_res_b: "Broker metrics through Prometheus/Grafana and alert rules (offline partitions, no leader, unclean election, production errors) notified through Telegram · broker kill test through the site's own Chaos Button, with an n8n workflow doing the remediation · node CPU requests brought down from 97% to about 53%",
+    lab_db: "PostgreSQL high availability",
+    lab_db_b: "CloudNativePG operator running a PostgreSQL 17 cluster of three instances: one primary and two replicas with synchronous replication, declared as a Cluster resource in Git and synced by ArgoCD. Migrated from a single Deployment by a logical import (data fingerprints compared), with the API cut over in about three minutes. Failover tested by killing the primary under continuous writes: writes back after 10 to 27 seconds, none of the 439 acknowledged writes lost. A single node, so this proves pod failover, not the loss of a machine. Backups: a nightly pg_dump sent to OCI Object Storage.",
     ab_certs: "Certifications",
     ab_cert_aws: "SAA-C03 — Cloud Architect training in progress (Jedha), exam planned",
     ab_edu_title: "Education &amp; languages",
@@ -391,7 +399,7 @@ const i18n = {
     iac_tf_link: "📂 Lire le Terraform →",
     iac_ans_scope: "tout ce qui se passe dans la machine et le cluster",
     iac_ans_desc: "Paquets, pare-feu, K3s, releases Helm, manifestes, images, timer de sauvegarde. Ansible intervient là où Terraform n'aurait que des <code>local-exec</code> : il est idempotent, se rejoue sur un cluster vivant pour corriger une dérive, et fait des valeurs Helm des fichiers versionnés au lieu de les laisser enfouies dans l'état d'une release.",
-    iac_ans_chips: "<span class=\"hire-chip\">K3s</span><span class=\"hire-chip\">cert-manager</span><span class=\"hire-chip\">Envoy Gateway</span><span class=\"hire-chip\">ArgoCD</span><span class=\"hire-chip\">Linkerd</span><span class=\"hire-chip\">Prometheus</span><span class=\"hire-chip\">Gitea</span><span class=\"hire-chip\">Kafka</span><span class=\"hire-chip\">Trivy</span><span class=\"hire-chip\">Sauvegardes</span>",
+    iac_ans_chips: "<span class=\"hire-chip\">K3s</span><span class=\"hire-chip\">cert-manager</span><span class=\"hire-chip\">Envoy Gateway</span><span class=\"hire-chip\">ArgoCD</span><span class=\"hire-chip\">Linkerd</span><span class=\"hire-chip\">Prometheus</span><span class=\"hire-chip\">Gitea</span><span class=\"hire-chip\">Kafka</span><span class=\"hire-chip\">CloudNativePG</span><span class=\"hire-chip\">Trivy</span><span class=\"hire-chip\">Sauvegardes</span>",
     iac_ans_link: "📂 Lire le playbook →",
     iac_dr: "La procédure de reprise complète — avec les trois pièges qui m'ont coûté des heures : les drapeaux cloud-provider de K3s qui marquent le nœud sans un mot, Linkerd qui casse le gRPC interne d'ArgoCD, et l'image Ubuntu d'Oracle qui ferme les ports 80 et 443 quoi qu'en dise la security list.",
     iac_dr_link: "🚨 Runbook de reprise après sinistre",
@@ -499,6 +507,14 @@ const i18n = {
     about_summary_1: "Ingénieur DevOps &amp; Cloud Senior, 13 ans d'expérience. Socle solide en administration système Linux (kernel, systemd, réseau, firewall) acquis par un parcours de développement bas niveau, puis spécialisation Cloud et Kubernetes. Automatisation complète de l'infrastructure avec Ansible et Terraform, conteneurisation Docker, chaînes CI/CD et GitOps de bout en bout.",
     about_exp_title: "Expériences professionnelles",
     about_skills_title: "Compétences techniques",
+    lab_infra_b: "K3s installé de zéro (sans Traefik) sur Ubuntu 24.04 ARM64 · Envoy Gateway avec la Gateway API (HTTPRoute, TLSRoute, GatewayClass) · Cert-Manager et TLS automatisé (Let's Encrypt) · iptables · Terraform (réseau et instance) et Ansible (système et cluster), qui reconstruisent toute la plateforme à partir de rien",
+    lab_gitops_b: "Gitea auto-hébergé avec registry OCI interne · ArgoCD avec synchronisation automatique, selfHeal et prune · Gitea Actions (act-runner non-root, jobs de build Kaniko) · accès public en lecture seule au dépôt et aux exécutions de la pipeline",
+    lab_sec_b: "Trivy Operator avec un scan quotidien (vulnérabilités, mauvaises configurations, secrets exposés) et un tableau de bord Grafana · Linkerd (mTLS, sidecar, Viz) · RBAC en lecture seule pour les visiteurs · Kube-Prometheus-Stack avec métriques personnalisées · Grafana · Loki / Promtail · Alertmanager vers Telegram · page de statut publique Uptime Kuma",
+    lab_app_b: "Tamagotchi as a Service : architecture 3-tiers (frontend HTML/JS statique servi par nginx, API Node.js/Express exposant des métriques Prometheus, PostgreSQL), images construites par des jobs Kaniko dans le cluster, tableau de bord Kubernetes temps réel sur une API en lecture seule",
+    lab_kafka_b: "Kafka 4.3.1 en mode KRaft (sans ZooKeeper), 3 nœuds broker/contrôleur opérés par Strimzi · CRD Kafka / KafkaTopic / KafkaUser synchronisés par ArgoCD · topic répliqué (réplication x3, min.insync.replicas=2) · producteur idempotent (acks=all, partition choisie par entité pour garantir l'ordre) · consommateur relayé en SSE",
+    lab_res_b: "Métriques des brokers via Prometheus/Grafana et règles d'alerte (partitions hors ligne, sans leader, élection non propre, erreurs de production) notifiées par Telegram · test de suppression de broker par le Chaos Button du site, avec un workflow n8n qui remédie · requests CPU du nœud ramenées de 97 % à environ 53 %",
+    lab_db: "PostgreSQL haute disponibilité",
+    lab_db_b: "Operator CloudNativePG pilotant un cluster PostgreSQL 17 de trois instances : un primaire et deux réplicas en réplication synchrone, déclaré en ressource Cluster dans Git et synchronisé par ArgoCD. Migré depuis un simple Deployment par import logique (empreintes des données comparées), avec la bascule de l'API en trois minutes environ. Bascule testée en tuant le primaire sous écritures continues : écritures de retour après 10 à 27 secondes, aucune des 439 écritures acquittées perdue. Un seul nœud : cela prouve la bascule de pod, pas la perte d'une machine. Sauvegardes : un pg_dump nocturne envoyé sur OCI Object Storage.",
     ab_certs: "Certifications",
     ab_cert_aws: "SAA-C03 — formation Cloud Architect en cours (Jedha), passage de l'examen prévu",
     ab_edu_title: "Formation &amp; langues",
@@ -674,17 +690,23 @@ function typewrite() {
 }
 
 // ---- Terminal Animation ----
+// Sorties relevees sur le cluster (kubectl / helm, 2026-11-23). L'age du noeud est calcule ;
+// les autres ages sont ceux du releve.
+const NODE_AGE_DAYS = Math.max(1, Math.floor((Date.now() - Date.UTC(2026, 6, 4)) / 86400000));
 const terminalCommands = [
   { cmd: 'kubectl get nodes', output: [
-    'NAME                STATUS   ROLES           AGE   VERSION',
-    'k3s-argocd-server   Ready    control-plane   1d    v1.36.2+k3s1',
+    'NAME                STATUS   ROLES           AGE    VERSION',
+    `k3s-argocd-server   Ready    control-plane   ${String(NODE_AGE_DAYS + 'd').padEnd(5)}  v1.36.2+k3s1`,
   ]},
-  { cmd: 'kubectl get pods -n tamagotchi', output: [
-    'NAME                                   READY   STATUS    RESTARTS   AGE',
-    'postgres-7c98c5b785-5nqhl              1/1     Running   0          1d',
-    'tamagotchi-api-fd8f8ddf9-b6cfj         1/1     Running   0          1d',
-    'tamagotchi-api-fd8f8ddf9-v6prj         1/1     Running   0          1d',
-    'tamagotchi-frontend-667d7c99cb-gqxg4   1/1     Running   0          1d',
+  { cmd: 'kubectl get pods -n tamagotchi -l cnpg.io/cluster=tamagotchi-db', output: [
+    'NAME              READY   STATUS    RESTARTS   AGE',
+    'tamagotchi-db-1   1/1     Running   0          12m',
+    'tamagotchi-db-2   1/1     Running   0          12m',
+    'tamagotchi-db-3   1/1     Running   0          11m',
+  ]},
+  { cmd: 'kubectl get cluster -n tamagotchi -o custom-columns=NAME:.metadata.name,READY:.status.readyInstances,PRIMARY:.status.currentPrimary', output: [
+    'NAME            READY   PRIMARY',
+    'tamagotchi-db   3       tamagotchi-db-1',
   ]},
   { cmd: 'kubectl get httproutes --all-namespaces', output: [
     'NAMESPACE    NAME               HOSTNAMES',
@@ -693,13 +715,16 @@ const terminalCommands = [
     'monitoring   grafana-route      ["grafana.khalilaliouich.com"]',
     'tamagotchi   demo-route         ["demo.khalilaliouich.com"]',
   ]},
-  { cmd: 'helm list --all-namespaces', output: [
-    'NAME            NAMESPACE       STATUS    CHART',
-    'envoy-gateway   envoy-gateway   deployed  envoy-gateway-1.0.1',
-    'cert-manager    cert-manager    deployed  cert-manager-v1.20.3',
-    'gitea           gitea           deployed  gitea-10.6.0',
-    'kube-prometheus monitoring      deployed  kube-prometheus-stack-68.4.5',
-    'loki            monitoring      deployed  loki-stack-2.10.2',
+  { cmd: 'helm list -A -o json | jq -r \'.[] | "\\(.name)  \\(.chart)"\'', output: [
+    'cert-manager  cert-manager-v1.20.3',
+    'cnpg  cloudnative-pg-0.29.2',
+    'eg  gateway-helm-1.8.2',
+    'gitea  gitea-12.7.0',
+    'habit-game  habit-game-0.1.0',
+    'kube-prometheus  kube-prometheus-stack-87.10.1',
+    'loki  loki-stack-2.10.3',
+    'strimzi  strimzi-kafka-operator-1.3.0',
+    'trivy-operator  trivy-operator-0.33.2',
   ]},
 ];
 
@@ -1131,15 +1156,15 @@ const ARCH_TOOLTIP_DATA = {
   },
   postgres: {
     icon: '🗄️', accent: 'green',
-    title: { en: 'PostgreSQL', fr: 'PostgreSQL' },
+    title: { en: 'PostgreSQL (CloudNativePG)', fr: 'PostgreSQL (CloudNativePG)' },
     badge: { en: 'Demo App · Database', fr: 'Demo App · Base de données' },
     def: {
-      en: 'A relational database — the persistence layer for the demo app.',
-      fr: "Une base de données relationnelle — la couche de persistance de l'app démo."
+      en: 'A PostgreSQL 17 cluster of three instances (one primary, two replicas) run by the CloudNativePG operator.',
+      fr: "Un cluster PostgreSQL 17 de trois instances (un primaire, deux réplicas) piloté par l'operator CloudNativePG."
     },
     role: {
-      en: 'It stores every creature\'s state (hunger, happiness, alive/dead) so the Tamagotchi app <b>survives pod restarts</b> instead of resetting on every redeploy.',
-      fr: "Il stocke l'état de chaque créature (faim, bonheur, vivant/mort) pour que l'app Tamagotchi <b>survive aux redémarrages de pods</b> au lieu de repartir à zéro à chaque déploiement."
+      en: 'It stores every creature\'s state (hunger, happiness, alive/dead) so the app <b>survives pod restarts</b>. If the primary dies, the operator promotes a replica on its own: in my tests writes came back after 10 to 27 seconds with no acknowledged write lost. One node only: this proves pod failover, not the loss of a machine.',
+      fr: "Il stocke l'état de chaque créature (faim, bonheur, vivant/mort) pour que l'app <b>survive aux redémarrages de pods</b>. Si le primaire meurt, l'operator promeut un réplica seul : lors de mes tests les écritures sont revenues après 10 à 27 secondes, sans aucune écriture acquittée perdue. Un seul nœud : cela prouve la bascule de pod, pas la perte d'une machine."
     }
   }
 };

@@ -7,7 +7,7 @@
   <meta name="description" content="Khalil Aliouich — senior DevOps &amp; Cloud engineer, 13 years from ARM firmware to Kubernetes. CKA certified. Available for your platform, GitOps, and observability projects.">
 
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=20" />
+  <link rel="stylesheet" href="css/style.css?v=21" />
   <style>
     .about-hero {
       padding: 8rem 2rem 3rem;
@@ -465,27 +465,31 @@
         <div class="lab-table">
           <div class="lab-row">
             <div class="lab-row__name" data-i18n="lab_infra"></div>
-            <div class="lab-row__body">K3s built from scratch (without Traefik) on Ubuntu 24.04 ARM64 · Envoy Gateway with the Gateway API (HTTPRoute, TLSRoute, GatewayClass) · Cert-Manager and automated TLS (Let's Encrypt) · iptables · Terraform (network and instance) and Ansible (system and cluster), rebuilding the whole platform from zero</div>
+            <div class="lab-row__body" data-i18n="lab_infra_b"></div>
           </div>
           <div class="lab-row">
             <div class="lab-row__name" data-i18n="lab_gitops"></div>
-            <div class="lab-row__body">Self-hosted Gitea with an internal OCI registry · ArgoCD with automated sync, selfHeal and prune · Gitea Actions (act-runner running non-root, Kaniko build jobs) · public read-only access to the repository and its pipeline runs</div>
+            <div class="lab-row__body" data-i18n="lab_gitops_b"></div>
           </div>
           <div class="lab-row">
             <div class="lab-row__name" data-i18n="lab_sec"></div>
-            <div class="lab-row__body">Trivy Operator with a daily scan (vulnerabilities, misconfigurations, exposed secrets) and a Grafana dashboard · Linkerd (mTLS, sidecar, Viz) · read-only RBAC for visitors · Kube-Prometheus-Stack with custom metrics · Grafana · Loki / Promtail · Alertmanager to Telegram · Uptime Kuma public status page</div>
+            <div class="lab-row__body" data-i18n="lab_sec_b"></div>
           </div>
           <div class="lab-row">
             <div class="lab-row__name" data-i18n="lab_app"></div>
-            <div class="lab-row__body">Tamagotchi as a Service: 3-tier architecture (React, Node.js/Express API exposing Prometheus metrics, PostgreSQL), images built in containers through the K3s socket, real-time Kubernetes dashboard on a read-only API</div>
+            <div class="lab-row__body" data-i18n="lab_app_b"></div>
+          </div>
+          <div class="lab-row">
+            <div class="lab-row__name" data-i18n="lab_db"></div>
+            <div class="lab-row__body" data-i18n="lab_db_b"></div>
           </div>
           <div class="lab-row">
             <div class="lab-row__name" data-i18n="lab_kafka"></div>
-            <div class="lab-row__body">Kafka 4.3.1 in KRaft mode (no ZooKeeper), 3 broker/controller nodes operated by Strimzi · Kafka / KafkaTopic / KafkaUser CRDs synchronized by ArgoCD · replicated topic (replication x3, min.insync.replicas=2) · idempotent producer (acks=all, partition keyed by entity so ordering is guaranteed) · consumer relayed over SSE</div>
+            <div class="lab-row__body" data-i18n="lab_kafka_b"></div>
           </div>
           <div class="lab-row">
             <div class="lab-row__name" data-i18n="lab_res"></div>
-            <div class="lab-row__body">Broker metrics through Prometheus/Grafana and alert rules (offline partitions, no leader, unclean election, production errors) notified through Telegram · broker kill test through the site's own Chaos Button, with an n8n workflow doing the remediation · node CPU requests brought down from 97% to about 53%</div>
+            <div class="lab-row__body" data-i18n="lab_res_b"></div>
           </div>
         </div>
         <div class="hire-cta__actions" style="justify-content: flex-start; margin-top: 1.5rem;">
