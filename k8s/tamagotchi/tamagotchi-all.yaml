@@ -1,97 +1,15 @@
-# HISTORIQUE (2026-11-23) : la base de donnees de ce fichier (Deployment/Service/PVC postgres)
-# n'est plus utilisee par l'API, qui lit tamagotchi-db-rw (CloudNativePG, k8s/cnpg/). Elle est
-# conservee comme retour arriere jusqu'au 2026-11-30, puis a retirer d'ici. Les Deployments de
-# l'API et du frontend vivent aujourd'hui dans le depot Gitea tamagotchi-service.
-# Le mot de passe de la base n'est plus dans ce fichier (il etait lisible dans un depot
-# public). Il vit dans le Secret tamagotchi-db-credentials, cle "password", cree hors du
-# depot :
-#   kubectl -n tamagotchi create secret generic tamagotchi-db-credentials \
-#     --from-literal=password="$(openssl rand -base64 48 | tr -dc A-Za-z0-9 | head -c 32)"
-# Sur une base neuve, POSTGRES_PASSWORD l'initialise ; sur une base existante, il faut aussi
-# ALTER ROLE tamagotchi PASSWORD '...'. Ce Secret disparaitra avec la migration vers
-# CloudNativePG, qui genere ses propres identifiants.
+# HISTORIQUE (2026-11-23) : la base PostgreSQL de ce fichier (Deployment, Service et PVC postgres) a ete
+# supprimee apres la bascule vers CloudNativePG (k8s/cnpg/). Le Service postgres existe toujours, comme
+# alias du primaire (k8s/cnpg/postgres-alias-service.yaml). Les Deployments de l'API et du frontend
+# vivent aujourd'hui dans le depot Gitea tamagotchi-service.
+# Identifiants de la base : l'operateur CloudNativePG les genere dans le Secret tamagotchi-db-app
+# (cles dbname, username, password), lu par l'API ci-dessous. Rien n'est ecrit dans ce fichier.
 ---
 # Namespace
 apiVersion: v1
 kind: Namespace
 metadata:
   name: tamagotchi
----
-# PostgreSQL PVC
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: postgres-pvc
-  namespace: tamagotchi
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 2Gi
----
-# PostgreSQL Deployment
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: postgres
-  namespace: tamagotchi
-  labels:
-    app: postgres
-    tier: database
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: postgres
-  template:
-    metadata:
-      labels:
-        app: postgres
-        tier: database
-    spec:
-      containers:
-        - name: postgres
-          image: postgres:16-alpine
-          ports:
-            - containerPort: 5432
-          env:
-            - name: POSTGRES_DB
-              value: tamagotchi
-            - name: POSTGRES_USER
-              value: tamagotchi
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: tamagotchi-db-credentials
-                  key: password
-          volumeMounts:
-            - name: postgres-storage
-              mountPath: /var/lib/postgresql/data
-          resources:
-            requests:
-              cpu: 100m
-              memory: 128Mi
-            limits:
-              cpu: 300m
-              memory: 256Mi
-      volumes:
-        - name: postgres-storage
-          persistentVolumeClaim:
-            claimName: postgres-pvc
----
-# PostgreSQL Service
-apiVersion: v1
-kind: Service
-metadata:
-  name: postgres
-  namespace: tamagotchi
-spec:
-  selector:
-    app: postgres
-  ports:
-    - port: 5432
-      targetPort: 5432
 ---
 # Tamagotchi API Deployment
 apiVersion: apps/v1
@@ -125,17 +43,23 @@ spec:
             - containerPort: 8080
           env:
             - name: DB_HOST
-              value: postgres
+              value: tamagotchi-db-rw
             - name: DB_PORT
               value: "5432"
             - name: DB_NAME
-              value: tamagotchi
+              valueFrom:
+                secretKeyRef:
+                  name: tamagotchi-db-app
+                  key: dbname
             - name: DB_USER
-              value: tamagotchi
+              valueFrom:
+                secretKeyRef:
+                  name: tamagotchi-db-app
+                  key: username
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: tamagotchi-db-credentials
+                  name: tamagotchi-db-app
                   key: password
             - name: DECAY_INTERVAL_MS
               value: "15000"

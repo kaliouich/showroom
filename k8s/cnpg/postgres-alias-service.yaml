@@ -1,0 +1,22 @@
+# Alias "postgres" -> primaire de tamagotchi-db.
+#
+# L'ancien PostgreSQL du Tamagotchi (Deployment postgres) a ete supprime le 2026-11-23, apres la
+# bascule vers CloudNativePG. Le Service garde son nom pour deux raisons : le moniteur Uptime Kuma
+# « PostgreSQL (DB) » fait un test TCP sur postgres.tamagotchi.svc.cluster.local:5432, et il surveille
+# ainsi la vraie base sans toucher a la configuration de Kuma. L'API, elle, passe par
+# tamagotchi-db-rw (service cree par l'operateur).
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: tamagotchi
+  labels:
+    app: postgres
+    tier: database
+spec:
+  selector:
+    cnpg.io/cluster: tamagotchi-db
+    cnpg.io/instanceRole: primary
+  ports:
+    - port: 5432
+      targetPort: 5432

@@ -1,0 +1,64 @@
+# Alertes de la base PostgreSQL du Tamagotchi (metriques cnpg_* exposees par chaque instance,
+# collectees par le PodMonitor de ce dossier). Elles partent vers Telegram par l'Alertmanager.
+#
+# Quand un pod disparait sa serie disparait aussi (elle ne passe pas a 0) : les regles comptent
+# donc les series presentes, et absent() detecte le cas ou il n'en reste plus aucune.
+# Une bascule voulue ou subie (voir la repetition du 2026-11-23, 10 a 27 s) declenche les
+# alertes a duree courte seulement si elle depasse leur delai « for ».
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: tamagotchi-db
+  namespace: tamagotchi
+  labels:
+    release: kube-prometheus
+spec:
+  groups:
+    - name: cnpg.tamagotchi-db
+      interval: 30s
+      rules:
+        - alert: TamagotchiDBNoPrimary
+          expr: absent(cnpg_pg_replication_in_recovery{namespace="tamagotchi"} == 0)
+          for: 1m
+          labels:
+            severity: critical
+            product: tamagotchi
+          annotations:
+            summary: "La base du Tamagotchi n'a plus de primaire"
+            description: "Aucune instance ne repond hors mode recovery depuis plus d'une minute : l'API ne peut plus ecrire. Une bascule dure normalement 10 a 30 s. Voir l'etat avec : kubectl -n tamagotchi get cluster tamagotchi-db ; kubectl -n cnpg-system logs deploy/cnpg-cloudnative-pg."
+        - alert: TamagotchiDBInstancesMissing
+          expr: count(cnpg_collector_up{namespace="tamagotchi"} == 1) < 3
+          for: 3m
+          labels:
+            severity: warning
+            product: tamagotchi
+          annotations:
+            summary: "{{ $value }} instance(s) PostgreSQL sur 3 repondent"
+            description: "La haute disponibilite est reduite : avec une seule instance restante une panne de plus coupe la base. Un pod qui redemarre ou rejoint le cluster (pg_rewind) peut prendre 1 a 2 minutes."
+        - alert: TamagotchiDBReplicasNotStreaming
+          expr: max(cnpg_pg_replication_streaming_replicas{namespace="tamagotchi"}) < 2
+          for: 5m
+          labels:
+            severity: warning
+            product: tamagotchi
+          annotations:
+            summary: "Moins de 2 replicas PostgreSQL en streaming"
+            description: "Avec la replication synchrone exigee (dataDurability: required), un primaire sans replica synchrone bloque les ecritures. Verifier les pods et l'etat de la replication."
+        - alert: TamagotchiDBReplicationLag
+          expr: max(cnpg_pg_replication_lag{namespace="tamagotchi"}) > 30
+          for: 5m
+          labels:
+            severity: warning
+            product: tamagotchi
+          annotations:
+            summary: "Retard de replication de {{ $value | humanizeDuration }}"
+            description: "Un replica qui retarde ne pourrait pas prendre la main sans perdre des ecritures si le primaire tombait."
+        - alert: TamagotchiDBConnectionsHigh
+          expr: sum(cnpg_backends_total{namespace="tamagotchi"}) / max(cnpg_pg_settings_setting{name="max_connections",namespace="tamagotchi"}) > 0.8
+          for: 5m
+          labels:
+            severity: warning
+            product: tamagotchi
+          annotations:
+            summary: "{{ $value | humanizePercentage }} des connexions PostgreSQL utilisees"
+            description: "Le pool de l'API est plafonne a 10 connexions par pod : un chiffre eleve indique une fuite de connexions ou un client inattendu."
