@@ -1,3 +1,11 @@
+# Le mot de passe de la base n'est plus dans ce fichier (il etait lisible dans un depot
+# public). Il vit dans le Secret tamagotchi-db-credentials, cle "password", cree hors du
+# depot :
+#   kubectl -n tamagotchi create secret generic tamagotchi-db-credentials \
+#     --from-literal=password="$(openssl rand -base64 48 | tr -dc A-Za-z0-9 | head -c 32)"
+# Sur une base neuve, POSTGRES_PASSWORD l'initialise ; sur une base existante, il faut aussi
+# ALTER ROLE tamagotchi PASSWORD '...'. Ce Secret disparaitra avec la migration vers
+# CloudNativePG, qui genere ses propres identifiants.
 ---
 # Namespace
 apiVersion: v1
@@ -49,7 +57,10 @@ spec:
             - name: POSTGRES_USER
               value: tamagotchi
             - name: POSTGRES_PASSWORD
-              value: <YOUR_DB_PASSWORD>
+              valueFrom:
+                secretKeyRef:
+                  name: tamagotchi-db-credentials
+                  key: password
           volumeMounts:
             - name: postgres-storage
               mountPath: /var/lib/postgresql/data
@@ -118,7 +129,10 @@ spec:
             - name: DB_USER
               value: tamagotchi
             - name: DB_PASSWORD
-              value: <YOUR_DB_PASSWORD>
+              valueFrom:
+                secretKeyRef:
+                  name: tamagotchi-db-credentials
+                  key: password
             - name: DECAY_INTERVAL_MS
               value: "15000"
             # Publication des evenements vers Kafka (voir tamagotchi/api/events.js).
