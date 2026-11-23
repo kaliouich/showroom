@@ -62,3 +62,21 @@ spec:
           annotations:
             summary: "{{ $value | humanizePercentage }} des connexions PostgreSQL utilisees"
             description: "Le pool de l'API est plafonne a 10 connexions par pod : un chiffre eleve indique une fuite de connexions ou un client inattendu."
+        - alert: TamagotchiDBWALLarge
+          expr: max(cnpg_collector_pg_wal{namespace="tamagotchi",value="size"}) > 1.5e9
+          for: 10m
+          labels:
+            severity: warning
+            product: tamagotchi
+          annotations:
+            summary: "Le WAL de PostgreSQL pese {{ $value | humanize1024 }}o"
+            description: "En marche normale il reste autour de 200 Mo (max_wal_size 1 Go). Au-dela, un replica en retard ou un archivage en echec retient du WAL sur le disque du noeud, que local-path ne borne pas. max_slot_wal_keep_size plafonne la retention a 1 Go pour les slots."
+        - alert: TamagotchiDBWALArchiveFailing
+          expr: increase(cnpg_pg_stat_archiver_failed_count{namespace="tamagotchi"}[15m]) > 0
+          for: 5m
+          labels:
+            severity: warning
+            product: tamagotchi
+          annotations:
+            summary: "L'archivage du WAL echoue sur {{ $labels.pod }}"
+            description: "Un WAL non archive n'est pas recycle : il s'accumule sur le disque. Aujourd'hui l'archivage est un no-op (pas de stockage objet) ; un echec indique un probleme de configuration apres l'ajout du plugin Barman."

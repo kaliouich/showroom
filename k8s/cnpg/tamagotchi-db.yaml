@@ -39,6 +39,13 @@ spec:
       owner: tamagotchi
 
   postgresql:
+    # local-path n'applique pas la taille des volumes : tout ce qu'ecrit PostgreSQL va sur le disque
+    # du noeud, partage avec tout le reste. Les slots de replication de haute disponibilite
+    # (CloudNativePG les cree par defaut) retiennent le WAL tant qu'un replica ne l'a pas lu ; sans
+    # plafond, un replica a l'arret ferait grossir le WAL du primaire jusqu'a remplir le disque.
+    # Au-dela de 1 Go de retard, le slot est invalide et le replica est reconstruit.
+    parameters:
+      max_slot_wal_keep_size: "1GB"
     # Un replica synchrone au moins : une ecriture validee existe sur deux pods.
     synchronous:
       method: any
