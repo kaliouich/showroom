@@ -680,6 +680,43 @@ curl -X POST https://git.khalilaliouich.com/api/internal/x       # 404</code></p
       </div>
     </div>
 
+    <!-- Issue 13 -->
+    <div class="accordion-item">
+      <div class="accordion-header">
+        <div class="accordion-header__title">
+          <div class="accordion-header__icon">🔁</div>
+          <h3 data-i18n="issue_13_title">A Database Failover the API Could Not Survive (PostgreSQL to CloudNativePG)</h3>
+        </div>
+        <div class="accordion-icon">▼</div>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-content">
+          <div class="issue-section">
+            <h4><span class="badge-error" data-i18n="badge_symptom">Symptom</span></h4>
+            <p data-i18n="issue_13_symptom">While moving the demo database from a single Deployment to a three-instance CloudNativePG cluster, I killed the primary under continuous writes. Writes were down for 10 to 27 seconds, and the API was not built for it: no handler on the connection pool's error event, no connection or query timeout, no health probe. A dead idle connection could crash the Node process, and a hung query could block it for minutes.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-discarded" data-i18n="badge_discarded">Discarded Hypotheses</span></h4>
+            <p data-i18n="issue_13_discarded">The service mesh adding the delay: with the API bypassing Linkerd for port 5432 it recovered no faster, and a plain <code>psql</code> loop outside the mesh took just as long (27 s in one run). Lost data: 439 acknowledged inserts across three primary kills, none missing. The first measurement being typical: the first run said 10 seconds, later ones were two to three times slower.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-cause" data-i18n="badge_cause">Root Cause</span></h4>
+            <p data-i18n="issue_13_cause">Two separate things. On the database side, the operator has to notice the failure, promote a replica and, since synchronous replication is required, wait for a standby to reconnect before writes resume: 10 to 27 seconds in my runs, not a constant. On the API side, the <code>pg</code> pool emits an <code>error</code> event when an idle client's connection dies, and without a listener Node throws and exits; connections and queries had no timeout, so a half-dead socket could hang a request. A side finding of the migration: the database password in both public repositories was the literal placeholder text <code>&lt;YOUR_DB_PASSWORD&gt;</code>, which is why a secret scan never flagged it.</p>
+          </div>
+          <div class="issue-section">
+            <h4><span class="badge-success" data-i18n="badge_fix">Fix</span></h4>
+            <p data-i18n="issue_13_fix">A pool error handler, 3 s connection and 8 s query timeouts, broken clients destroyed instead of returned to the pool, a retry loop at startup, and a <code>/ready</code> endpoint (checks the database) kept apart from <code>/health</code> (does not), so a database that is failing over removes the pod from the service instead of restarting it. Tested with a canary on the new cluster: zero restarts, readiness went to 503 and came back with the database. The password was rotated into a Secret, and the cutover took about three minutes with the data fingerprints compared before and after.</p>
+            <pre><code>kubectl -n tamagotchi delete pod tamagotchi-db-1 --grace-period=0 --force   # kill the primary
+# client side: writes down 10 to 27 s, then back; 0 of 439 acknowledged writes lost</code></pre>
+          </div>
+          <div class="issue-section issue-section--lesson">
+            <h4><span class="badge-lesson" data-i18n="badge_lesson">Lesson</span></h4>
+            <p data-i18n="issue_13_lesson">Measure a failover end to end, with the real client, and more than once: one good run proved nothing. Give every database client timeouts and an error handler before testing the database, keep liveness and readiness separate, and do not blame the mesh until a test without the mesh says so. On a single node this shows pod failover, not the loss of a machine.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
   <script>
     // Accordion Logic
