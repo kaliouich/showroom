@@ -1123,7 +1123,7 @@ a { color: inherit; text-decoration: none; }
 
 .footer__text { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6; }
 
-.footer__links { display: flex; justify-content: center; gap: 2rem; }
+.footer__links { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.8rem 2rem; }
 .footer__link {
   color: var(--text-secondary);
   font-size: 0.95rem;
@@ -1866,4 +1866,79 @@ a { color: inherit; text-decoration: none; }
   .nav__menu { margin-left: 0.8rem; }
   .nav__actions { gap: 0.4rem; }
   .nav__logo { font-size: 1.05rem; }
+}
+
+/* ---------- Operators & CRDs section ---------- */
+.ops-flow {
+  max-width: var(--max-w);
+  margin: 0 auto 2rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.5fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
+}
+.ops-stores { display: grid; gap: 1rem; min-width: 0; }
+.ops-node {
+  background: var(--bg-card);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.2rem;
+  min-width: 0;
+}
+.ops-node--db { border-left: 3px solid var(--cyan); }
+.ops-node--kafka { border-left: 3px solid var(--yellow); }
+.ops-node__icon { font-size: 1.6rem; margin-bottom: 0.4rem; }
+.ops-node__title { color: var(--cyan); font-weight: 700; font-size: 0.9rem; margin-bottom: 0.35rem; overflow-wrap: anywhere; }
+.ops-node__text { color: var(--text-secondary); font-size: 0.78rem; line-height: 1.55; }
+.ops-node__crd {
+  display: inline-block; margin-top: 0.6rem; padding: 0.15rem 0.5rem;
+  border: 1px dashed var(--glass-border-hover); color: var(--text-primary);
+  font-size: 0.72rem; overflow-wrap: anywhere;
+}
+.ops-arrows { display: grid; gap: 1.2rem; justify-items: center; }
+.ops-arrow { color: var(--text-muted); font-size: 0.72rem; text-align: center; max-width: 9rem; }
+.ops-arrow::after { content: '→'; display: block; color: var(--cyan); font-size: 1.4rem; line-height: 1.2; }
+
+.ops-code-grid {
+  max-width: var(--max-w); margin: 0 auto 2rem;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem;
+}
+.ops-code, .ops-term {
+  margin: 0; min-width: 0;
+  background: var(--bg-secondary); border: 1px solid var(--glass-border); border-radius: var(--radius);
+}
+.ops-code figcaption, .ops-term__head {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.3rem 1rem;
+  padding: 0.6rem 1rem; border-bottom: 1px solid var(--glass-border);
+  color: var(--text-muted); font-size: 0.72rem;
+}
+.ops-code figcaption em { color: var(--yellow); font-style: normal; }
+.ops-code pre, .ops-term pre { margin: 0; padding: 1rem; overflow-x: auto; }
+.ops-code code, .ops-term code { font-family: var(--font-mono); font-size: 0.74rem; line-height: 1.6; color: var(--text-secondary); white-space: pre; }
+.ops-code code b { color: var(--cyan); font-weight: 700; }
+.ops-p { color: var(--cyan); }
+.ops-term { max-width: var(--max-w); margin: 0 auto 2.5rem; }
+
+.ops-sub { max-width: var(--max-w); margin: 0 auto 1.2rem; color: var(--text-primary); font-size: 1.05rem; }
+.ops-cards {
+  max-width: var(--max-w); margin: 0 auto;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.2rem;
+}
+.ops-card { background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: var(--radius); padding: 1.2rem 1.3rem; min-width: 0; }
+.ops-card:hover { border-color: var(--glass-border-hover); background: var(--bg-card-hover); }
+.ops-card__t { color: var(--cyan); font-weight: 700; font-size: 0.88rem; margin-bottom: 0.5rem; }
+.ops-card p { margin: 0; color: var(--text-secondary); font-size: 0.78rem; line-height: 1.65; }
+.ops-card code { color: var(--text-primary); overflow-wrap: anywhere; }
+.ops-card a { color: var(--cyan); }
+
+@media (max-width: 1000px) {
+  .ops-flow { grid-template-columns: minmax(0, 1fr); }
+  .ops-arrows { gap: 0.6rem; }
+  .ops-arrow { max-width: none; }
+  .ops-code-grid { grid-template-columns: minmax(0, 1fr); }
+  .ops-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .ops-cards { grid-template-columns: minmax(0, 1fr); }
+  .ops-code code, .ops-term code { font-size: 0.68rem; }
 }

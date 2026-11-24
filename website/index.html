@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=21">
+  <link rel="stylesheet" href="css/style.css?v=23">
 </head>
 <body>
 
@@ -34,6 +34,7 @@
         <a href="#freelance" class="nav__link nav__link--hire" data-i18n="nav_freelance">💼 Hire Me</a>
         <a href="#selfhealing" class="nav__link" data-i18n="nav_heal">♻️ Self-healing</a>
         <a href="#events" class="nav__link" data-i18n="nav_events">📨 Events</a>
+        <a href="#operators" class="nav__link" data-i18n="nav_ops">🧩 Operators</a>
         <a href="#iac" class="nav__link" data-i18n="nav_iac">IaC</a>
         <a href="#tools" class="nav__link" data-i18n="nav_tools">Tools</a>
         <a href="about.html" class="nav__link" data-i18n="nav_about">👤 About</a>
@@ -467,6 +468,138 @@
 
     <p class="chaos-panel__note" style="max-width:860px;margin:1.5rem auto 0;" data-i18n="events_explainer">Each event is keyed by creature id, so one creature's story stays ordered inside a single partition. The topic, its ACLs and both service accounts are declared as <code>KafkaTopic</code> / <code>KafkaUser</code> custom resources in Git; the listener is TLS with SCRAM-SHA-512. Metrics and consumer lag are on the <a href="https://grafana.khalilaliouich.com/d/kafka-showroom" target="_blank">Kafka dashboard</a>.</p>
     <p class="chaos-panel__note" style="max-width:860px;margin:1rem auto 0;" data-i18n="events_honest">Honest limits: the three brokers share one VM, so this survives the loss of a broker process (replication factor 3, min.insync.replicas 2, rolling restarts by the operator), not the loss of the machine. The self-healing chain above does not depend on Kafka — the stream observes it, it does not drive it.</p>
+  </section>
+
+  <section class="section section--dark" id="operators">
+    <div class="section__header">
+      <span class="section__badge" data-i18n="ops_badge">Operators &amp; CRDs</span>
+      <h2 class="section__title" data-i18n="ops_title">Two YAML files. <span class="gradient-text">A replicated database and a replicated event stream.</span></h2>
+      <p class="section__subtitle" data-i18n="ops_subtitle">Kubernetes does not know what a PostgreSQL cluster or a Kafka topic is. Two operators teach it, by adding custom resource definitions (CRDs): I declare the result I want, the operator does the work and keeps doing it. Below, the real use case of this showroom, then the real manifests.</p>
+    </div>
+
+    <div class="ops-flow" role="img" aria-label="Browser to API, API writes to PostgreSQL then publishes to Kafka, Kafka feeds the live event stream">
+      <div class="ops-node">
+        <div class="ops-node__icon">🐣</div>
+        <div class="ops-node__title" data-i18n="ops_flow_api_t">Tamagotchi API</div>
+        <div class="ops-node__text" data-i18n="ops_flow_api_b">You feed, play with or adopt a creature in the demo app.</div>
+      </div>
+      <div class="ops-arrows">
+        <div class="ops-arrow"><span data-i18n="ops_flow_step1">① write the state</span></div>
+        <div class="ops-arrow"><span data-i18n="ops_flow_step2">② then publish the event</span></div>
+      </div>
+      <div class="ops-stores">
+        <div class="ops-node ops-node--db">
+          <div class="ops-node__icon">🐘</div>
+          <div class="ops-node__title">PostgreSQL · CloudNativePG</div>
+          <div class="ops-node__text" data-i18n="ops_flow_db_b">1 primary + 2 replicas, synchronous replication. The state of every creature.</div>
+          <code class="ops-node__crd">kind: Cluster</code>
+        </div>
+        <div class="ops-node ops-node--kafka">
+          <div class="ops-node__icon">📨</div>
+          <div class="ops-node__title">Kafka · Strimzi</div>
+          <div class="ops-node__text" data-i18n="ops_flow_kafka_b">3 brokers, topic <code>tamagotchi.events</code> keyed by creature. The story of every creature.</div>
+          <code class="ops-node__crd">kind: Kafka · KafkaTopic · KafkaUser</code>
+        </div>
+      </div>
+      <div class="ops-arrows ops-arrows--out">
+        <div class="ops-arrow"><span data-i18n="ops_flow_step3">③ a consumer relays it</span></div>
+      </div>
+      <div class="ops-node">
+        <div class="ops-node__icon">📡</div>
+        <div class="ops-node__title" data-i18n="ops_flow_feed_t">Live feed</div>
+        <div class="ops-node__text" data-i18n="ops_flow_feed_b">The feed above, over server-sent events. What you see was really stored on three brokers.</div>
+      </div>
+    </div>
+
+    <div class="ops-code-grid">
+      <figure class="ops-code">
+        <figcaption><span>k8s/cnpg/tamagotchi-db.yaml</span><em>kind: Cluster</em></figcaption>
+<pre><code>apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: tamagotchi-db
+  namespace: tamagotchi
+spec:
+  <b>instances: 3</b>
+  imageName: ghcr.io/cloudnative-pg/postgresql:17.11-standard-trixie
+  bootstrap:
+    initdb:
+      database: tamagotchi
+      owner: tamagotchi
+  postgresql:
+    parameters:
+      max_slot_wal_keep_size: "1GB"
+    <b>synchronous:
+      method: any
+      number: 1
+      dataDurability: required</b>
+  storage:
+    storageClass: local-path
+    size: 5Gi
+  walStorage:
+    storageClass: local-path
+    size: 2Gi</code></pre>
+      </figure>
+      <figure class="ops-code">
+        <figcaption><span>k8s/kafka/kafka-cluster.yaml · kafka-topics-users.yaml</span><em>kind: Kafka · KafkaTopic</em></figcaption>
+<pre><code>apiVersion: kafka.strimzi.io/v1
+kind: Kafka
+metadata:
+  name: showroom
+  namespace: kafka
+spec:
+  kafka:
+    version: 4.3.1
+    listeners:
+      - name: tls
+        port: 9093
+        type: internal
+        tls: true
+        authentication:
+          type: scram-sha-512
+    config:
+      <b>default.replication.factor: 3
+      min.insync.replicas: 2</b>
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: tamagotchi.events
+  labels:
+    strimzi.io/cluster: showroom
+spec:
+  partitions: 3
+  <b>replicas: 3</b>
+  config:
+    retention.ms: 604800000   # 7 days</code></pre>
+      </figure>
+    </div>
+
+    <div class="ops-term" aria-label="Real output of kubectl">
+      <div class="ops-term__head" data-i18n="ops_term_title">Real output, taken on the cluster</div>
+<pre><code><span class="ops-p">$</span> kubectl get crd | grep -cE 'cnpg.io|strimzi.io'
+21
+<span class="ops-p">$</span> kubectl -n tamagotchi get cluster
+NAME            AGE   INSTANCES   READY   STATUS                     PRIMARY
+tamagotchi-db   18h   3           3       Cluster in healthy state   tamagotchi-db-1
+<span class="ops-p">$</span> kubectl -n kafka get kafka,kafkatopic,kafkauser
+kafka.kafka.strimzi.io/showroom                 True   4.3.1
+kafkatopic.kafka.strimzi.io/tamagotchi.events   showroom   3 partitions   RF 3   True
+kafkauser.kafka.strimzi.io/tamagotchi-consumer  scram-sha-512   simple         True
+kafkauser.kafka.strimzi.io/tamagotchi-producer  scram-sha-512   simple         True</code></pre>
+    </div>
+
+    <h3 class="ops-sub" data-i18n="ops_does_title">What the operators do that I did not script</h3>
+    <div class="ops-cards">
+      <div class="ops-card"><div class="ops-card__t" data-i18n="ops_c1_t">🔁 Database failover</div><p data-i18n="ops_c1_b">Kill the primary and an operator promotes a replica and repoints the <code>-rw</code> Service. Measured end to end: 10 to 27 seconds of write outage, depending on the run.</p></div>
+      <div class="ops-card"><div class="ops-card__t" data-i18n="ops_c2_t">🧾 No acknowledged write lost</div><p data-i18n="ops_c2_b">With <code>dataDurability: required</code>, a write is confirmed only once a second pod has it. Over three induced failures: 439 acknowledged writes, 0 lost.</p></div>
+      <div class="ops-card"><div class="ops-card__t" data-i18n="ops_c3_t">💥 Broker loss</div><p data-i18n="ops_c3_b">Replication 3 and <code>min.insync.replicas=2</code>: the stream keeps accepting writes with a broker down, and Strimzi brings it back. The button above does it for real.</p></div>
+      <div class="ops-card"><div class="ops-card__t" data-i18n="ops_c4_t">🔄 Rolling updates</div><p data-i18n="ops_c4_b">Change the image or a parameter in Git: the operator restarts replicas one at a time, then switches the primary over. The PostgreSQL image change took 83 seconds.</p></div>
+      <div class="ops-card"><div class="ops-card__t" data-i18n="ops_c5_t">🔑 Users, ACLs, credentials</div><p data-i18n="ops_c5_b">A <code>KafkaUser</code> becomes a SCRAM account with its ACLs; the database role and its password are generated into a Secret the API reads. Nothing is typed by hand.</p></div>
+      <div class="ops-card"><div class="ops-card__t" data-i18n="ops_c6_t">📈 Observability as code</div><p data-i18n="ops_c6_b">Both ship metrics. Alerts, dashboards and the pod monitors live in the same repository, synchronized by ArgoCD: <a href="https://grafana.khalilaliouich.com/d/cloudnative-pg" target="_blank">PostgreSQL dashboard</a> · <a href="https://grafana.khalilaliouich.com/d/kafka-showroom" target="_blank">Kafka dashboard</a>.</p></div>
+    </div>
+
+    <p class="chaos-panel__note" style="max-width:860px;margin:2rem auto 0;" data-i18n="ops_honest">Honest limits: three PostgreSQL pods and three brokers share one VM, so this survives the loss of a process, not of the machine. There is no object storage yet, hence no point-in-time recovery: the safety net is a nightly <code>pg_dump</code>. Both operators are installed by Ansible, their custom resources are applied by ArgoCD from <a href="https://github.com/kaliouich/showroom/tree/main/k8s" target="_blank">Git</a>.</p>
   </section>
 
   <section class="section" id="freelance">
