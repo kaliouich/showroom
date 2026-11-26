@@ -1,7 +1,7 @@
 # HISTORIQUE (2026-11-23) : la base PostgreSQL de ce fichier (Deployment, Service et PVC postgres) a ete
-# supprimee apres la bascule vers CloudNativePG (k8s/cnpg/). Le Service postgres existe toujours, comme
-# alias du primaire (k8s/cnpg/postgres-alias-service.yaml). Les Deployments de l'API et du frontend
-# vivent aujourd'hui dans le depot Gitea tamagotchi-service.
+# supprimee apres la bascule vers CloudNativePG (k8s/cnpg/). L'ancien nom de Service postgres, garde
+# un temps comme alias, a ete retire le 2026-11-26 : la base se joint par tamagotchi-db-rw. Les
+# Deployments de l'API et du frontend vivent aujourd'hui dans le depot Gitea tamagotchi-service.
 # Identifiants de la base : l'operateur CloudNativePG les genere dans le Secret tamagotchi-db-app
 # (cles dbname, username, password), lu par l'API ci-dessous. Rien n'est ecrit dans ce fichier.
 ---

@@ -35,6 +35,10 @@ spec:
         app: uptime-kuma
       annotations:
         linkerd.io/inject: enabled
+        # Le moniteur TCP de PostgreSQL doit joindre la base en direct : a travers le proxy
+        # Linkerd, la connexion est acceptee meme quand rien ne repond, et le moniteur reste
+        # vert. La base n'est pas maillee, aucun chiffrement mTLS n'est donc perdu.
+        config.linkerd.io/skip-outbound-ports: "5432"
     spec:
       containers:
         - name: uptime-kuma
