@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=23">
+  <link rel="stylesheet" href="css/style.css?v=24">
 </head>
 <body>
 
@@ -119,6 +119,11 @@
             <span class="arch-node__label">Gateway</span>
             <span class="arch-node__detail">Envoy</span>
           </div>
+          <div class="arch-node" data-node="certmanager" data-accent="cyan" tabindex="0">
+            <span class="arch-node__icon">🔐</span>
+            <span class="arch-node__label">cert-manager</span>
+            <span class="arch-node__detail">TLS</span>
+          </div>
         </div>
       </div>
       <div class="arch-arrow">▼</div>
@@ -150,6 +155,26 @@
             <span class="arch-node__label">Loki</span>
             <span class="arch-node__detail">Logs</span>
           </div>
+          <div class="arch-node" data-node="linkerd" data-accent="purple" tabindex="0">
+            <span class="arch-node__icon">🕸️</span>
+            <span class="arch-node__label">Linkerd</span>
+            <span class="arch-node__detail">Service mesh</span>
+          </div>
+          <div class="arch-node" data-node="operators" data-accent="purple" tabindex="0">
+            <span class="arch-node__icon">🧩</span>
+            <span class="arch-node__label">Operators</span>
+            <span class="arch-node__detail">CNPG · Strimzi</span>
+          </div>
+          <div class="arch-node" data-node="trivy" data-accent="purple" tabindex="0">
+            <span class="arch-node__icon">🛡️</span>
+            <span class="arch-node__label">Trivy</span>
+            <span class="arch-node__detail">Security scan</span>
+          </div>
+          <div class="arch-node" data-node="n8n" data-accent="purple" tabindex="0">
+            <span class="arch-node__icon">🤖</span>
+            <span class="arch-node__label">n8n</span>
+            <span class="arch-node__detail">Remediation</span>
+          </div>
         </div>
       </div>
       <div class="arch-arrow">▼</div>
@@ -170,6 +195,11 @@
             <span class="arch-node__icon">🗄️</span>
             <span class="arch-node__label">PostgreSQL</span>
             <span class="arch-node__detail">CloudNativePG</span>
+          </div>
+          <div class="arch-node" data-node="kafka" data-accent="green" tabindex="0">
+            <span class="arch-node__icon">📨</span>
+            <span class="arch-node__label">Kafka</span>
+            <span class="arch-node__detail">Strimzi</span>
           </div>
         </div>
       </div>
@@ -821,6 +851,24 @@ kafkauser.kafka.strimzi.io/tamagotchi-producer  scram-sha-512   simple         T
         <div class="tool-card__icon-wrap tool-card__icon-wrap--trivy">🛡️</div>
         <h3 class="tool-card__name">Trivy</h3>
         <p class="tool-card__desc" data-i18n="tool_trivy">Daily vulnerability, misconfiguration and exposed-secret scan of every image in the cluster, read through a Grafana dashboard.</p>
+        <div class="tool-card__creds">
+          <code data-i18n="tool_noauth">No authentication</code>
+        </div>
+        <span class="tool-card__badge" data-i18n="tool_readonly">Read Only</span>
+      </a>
+      <a href="https://grafana.khalilaliouich.com/d/kafka-showroom" target="_blank" class="tool-card">
+        <div class="tool-card__icon-wrap tool-card__icon-wrap--kafka">📨</div>
+        <h3 class="tool-card__name">Kafka</h3>
+        <p class="tool-card__desc" data-i18n="tool_kafka">Strimzi-run Kafka: brokers, under-replicated partitions, throughput and consumer lag on a Grafana dashboard.</p>
+        <div class="tool-card__creds">
+          <code data-i18n="tool_noauth">No authentication</code>
+        </div>
+        <span class="tool-card__badge" data-i18n="tool_readonly">Read Only</span>
+      </a>
+      <a href="https://grafana.khalilaliouich.com/d/cloudnative-pg" target="_blank" class="tool-card">
+        <div class="tool-card__icon-wrap tool-card__icon-wrap--cnpg">🐘</div>
+        <h3 class="tool-card__name">CloudNativePG</h3>
+        <p class="tool-card__desc" data-i18n="tool_cnpg">PostgreSQL cluster health: primary, replicas, replication lag, WAL and connections on the official dashboard.</p>
         <div class="tool-card__creds">
           <code data-i18n="tool_noauth">No authentication</code>
         </div>

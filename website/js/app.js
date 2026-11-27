@@ -109,6 +109,7 @@ const i18n = {
     tool_n8n_creds: "Private instance — workflow on GitHub",
     tool_uptime: 'Public status page: availability of the showcase services, checked every minute from inside the cluster.',
     tool_trivy: 'Daily vulnerability, misconfiguration and exposed-secret scan of every image in the cluster, read through a Grafana dashboard.',
+    tool_kafka: 'Strimzi-run Kafka: brokers, under-replicated partitions, throughput and consumer lag on a Grafana dashboard.', tool_cnpg: 'PostgreSQL cluster health: primary, replicas, replication lag, WAL and connections on the official dashboard.',
     nav_iac: "⚙️ IaC",
     iac_badge: "Infrastructure as Code",
     iac_title: "This cluster is <span class=\"gradient-text\">rebuildable from zero</span>",
@@ -252,7 +253,7 @@ const i18n = {
     ab_exfo_1: "<strong>System administration &amp; Ansible automation:</strong> provisioning and operation of Linux servers on bare metal, OpenStack VMs and public cloud. Reusable roles (OS hardening, package management, users and SSH keys, sshd from Jinja2 templates, sysctl, filtering rules, Kubernetes node bootstrap), per-site variables, secrets encrypted with Ansible Vault. Quality enforced in CI with ansible-lint on every merge request and a <code>--check --diff</code> run before production.",
     ab_exfo_2: "<strong>Docker containerization &amp; image industrialization:</strong> multi-stage Dockerfiles separating build and runtime, Alpine base, non-root execution with reduced capabilities, layer ordering to maximize the build cache, a strict .dockerignore. Immutable tags based on the commit SHA, registry retention policy, multi-architecture builds (amd64 / arm64).",
     ab_exfo_3: "<strong>Docker Compose to Helm &amp; Kubernetes migration:</strong> complete migration of the telecom applications. Reusable Helm charts, per-environment values overlays, sub-charts versioned in an OCI registry, JSON-schema validation, ResourceQuota and LimitRange built in.",
-    ab_exfo_4: "<strong>Operators &amp; CRDs — Kafka (Strimzi) platform:</strong> Kafka is the backbone that ingests network supervision data: probes publish measurements to dedicated topics, consumed in parallel by an Elasticsearch indexer for search and dashboards and by a persistence service to PostgreSQL for history and correlation. The decoupling lets the producer/consumer absorb traffic peaks and lets the consumers be slow or unavailable without affecting the probes. Declarative management through the Strimzi operator (Kafka, KafkaTopic, KafkaUser), topics and user rights versioned in Git and applied by ArgoCD. Partition and retention sizing per client, rolling updates with no flow interruption, JMX metrics to Prometheus. ZooKeeper cluster in production and preparation of the move to KRaft, ZooKeeper being removed since Kafka 4.0.",
+    ab_exfo_4: "<strong>Operators &amp; CRDs — Kafka (Strimzi) platform:</strong> Kafka is the backbone that ingests network supervision data: probes publish measurements to dedicated topics, consumed by an Elasticsearch indexer for search and dashboards. The producer/consumer decoupling absorbs traffic peaks: a slow or unavailable indexer has no impact on the probes. Declarative management through the Strimzi operator (Kafka, KafkaTopic, KafkaUser), topics and user rights versioned in Git and applied by ArgoCD. Partition and retention sizing per client, rolling updates with no flow interruption, JMX metrics to Prometheus. ZooKeeper cluster in production and preparation of the move to KRaft, ZooKeeper being removed since Kafka 4.0.",
     ab_exfo_5: "<strong>A fleet of 17 Kubernetes clusters:</strong> provisioning and full life cycle on three infrastructure tiers. Terraform for AKS with Azure CNI, VNet integration, Private Endpoints, internal Load Balancer and multi-AZ node pools; Ansible and kubeadm to bootstrap the on-premise bare-metal clusters dedicated to low-latency workloads, with Ceph CSI for storage. In-place upgrades with no interruption, deprecated-API handling and manifest migration, chart validation on every major version. 30+ microservices in production for 25+ developers.",
     ab_exfo_6: "<strong>The complete CI/CD chain:</strong> end-to-end ownership of the pipeline. Upstream infrastructure validation (terraform fmt, validate and plan, helm lint, ansible-lint), then Docker image analysis (Trivy / SBOM), security scan (SonarQube SAST), registry publication, Kubernetes deployment through ArgoCD, automated smoke tests and delivery to production. Self-hosted GitLab CI administered in-house (runners, registry, high availability, updates). 50+ deployments per week, zero configuration drift in 3 years.",
     ab_exfo_7: "<strong>Network &amp; service exposure:</strong> Calico as the CNI across the fleet, with NetworkPolicies isolating workloads between namespaces. MetalLB in L2 mode with NGINX Ingress on bare metal, then migration to Istio and the Gateway API: Ingress replaced by HTTPRoutes, native mTLS, certificates automated with Cert-Manager, configuration standardized across the whole fleet.",
@@ -432,6 +433,7 @@ const i18n = {
     tool_n8n_creds: "Instance privée — workflow sur GitHub",
     tool_uptime: "Page de statut publique : disponibilité des services de la vitrine, vérifiée chaque minute depuis l'intérieur du cluster.",
     tool_trivy: "Scan quotidien des vulnérabilités, des mauvaises configurations et des secrets exposés de chaque image du cluster, lu dans un tableau de bord Grafana.",
+    tool_kafka: "Kafka piloté par Strimzi : brokers, partitions sous-répliquées, débit et lag des consumers sur un dashboard Grafana.", tool_cnpg: "Santé du cluster PostgreSQL : primaire, réplicas, retard de réplication, WAL et connexions sur le dashboard officiel.",
     iac_badge: "Infrastructure as Code",
     iac_title: "Ce cluster est <span class=\"gradient-text\">reconstructible de zéro</span>",
     iac_subtitle: "Chaque couche est déclarée en code, et le code est public. Si ce serveur disparaissait cette nuit, un <code>terraform apply</code> et un <code>ansible-playbook</code> le ramèneraient en moins d'une heure — réseau, cluster, GitOps, observabilité, applications et données.",
@@ -574,7 +576,7 @@ const i18n = {
     ab_exfo_1: "<strong>Administration système &amp; automatisation Ansible :</strong> provisionnement et exploitation de serveurs Linux sur baremetal, VMs OpenStack et cloud public. Rôles réutilisables (hardening, gestion des paquets, utilisateurs et clés SSH, sshd par templates Jinja2, sysctl, règles de filtrage, bootstrap des nœuds Kubernetes), variables hiérarchisées par site, secrets chiffrés par Ansible Vault. Qualité assurée en CI : ansible-lint sur chaque merge request, exécution en <code>--check --diff</code> avant application en production.",
     ab_exfo_2: "<strong>Conteneurisation Docker &amp; industrialisation des images :</strong> Dockerfiles multi-stage séparant build et runtime, base Alpine, exécution non-root avec capabilities réduites, ordonnancement des layers pour maximiser le cache de build, .dockerignore rigoureux. Tags immuables basés sur le commit SHA, politique de rétention du registry, build multi-architecture (amd64 / arm64).",
     ab_exfo_3: "<strong>Migration Docker Compose vers Helm &amp; Kubernetes :</strong> migration complète des applications télécom. Factory de Helm charts réutilisables, overlays de values par environnement, sous-charts versionnés en registry OCI, validation par schéma JSON, ResourceQuota et LimitRange intégrés.",
-    ab_exfo_4: "<strong>Operators &amp; CRD — plateforme Kafka (Strimzi) :</strong> Kafka est la colonne vertébrale d'ingestion des données de supervision réseau : les sondes publient leurs mesures sur des topics dédiés, consommés en parallèle par un indexeur Elasticsearch pour la recherche et les tableaux de bord et par un service de persistance vers PostgreSQL pour l'historique et la corrélation. Le découplage producteur/consommateur absorbe les pics de trafic et rend les consommateurs lents ou indisponibles sans impact sur les sondes. Gestion déclarative par l'operator Strimzi (Kafka, KafkaTopic, KafkaUser), topics et droits utilisateurs versionnés en Git et appliqués par ArgoCD. Dimensionnement des partitions et de la rétention selon le volume par client, rolling updates sans interruption du flux, métriques JMX vers Prometheus. Cluster en production sous ZooKeeper et préparation de la bascule vers KRaft, ZooKeeper étant supprimé depuis Kafka 4.0.",
+    ab_exfo_4: "<strong>Operators &amp; CRD — plateforme Kafka (Strimzi) :</strong> Kafka est la colonne vertébrale d'ingestion des données de supervision réseau : les sondes publient leurs mesures sur des topics dédiés, consommés par un indexeur Elasticsearch pour la recherche et les tableaux de bord. Le découplage producteur/consommateur absorbe les pics de trafic : un indexeur lent ou indisponible reste sans impact sur les sondes. Gestion déclarative par l'operator Strimzi (Kafka, KafkaTopic, KafkaUser), topics et droits utilisateurs versionnés en Git et appliqués par ArgoCD. Dimensionnement des partitions et de la rétention selon le volume par client, rolling updates sans interruption du flux, métriques JMX vers Prometheus. Cluster en production sous ZooKeeper et préparation de la bascule vers KRaft, ZooKeeper étant supprimé depuis Kafka 4.0.",
     ab_exfo_5: "<strong>Création &amp; gestion d'une flotte de 17 clusters Kubernetes :</strong> provisionnement et cycle de vie complet sur trois niveaux d'infrastructure. Terraform pour AKS avec Azure CNI, intégration VNET, Private Endpoints, Internal Load Balancer et node pools multi-AZ ; Ansible et kubeadm pour le bootstrap des clusters baremetal on-premise dédiés aux charges à faible latence, avec Ceph CSI pour le stockage. Upgrades in-place sans interruption, gestion des API dépréciées, migration des manifestes et validation des charts à chaque version majeure. 30+ microservices en production pour 25+ développeurs.",
     ab_exfo_6: "<strong>Chaîne CI/CD complète :</strong> ownership de bout en bout du pipeline. Validation de l'infrastructure en amont (terraform fmt, validate et plan, helm lint, ansible-lint), puis analyse d'images Docker (Trivy / SBOM), scan sécurité SAST (SonarQube), publication registry, déploiement Kubernetes via ArgoCD, tests de fumée automatisés et livraison en production. GitLab CI Self-Hosted administré en propre (runners, registry, haute disponibilité, mises à jour). 50+ déploiements par semaine, zéro dérive de configuration depuis 3 ans.",
     ab_exfo_7: "<strong>Réseau &amp; exposition des services :</strong> Calico comme CNI sur l'ensemble de la flotte, avec NetworkPolicies pour l'isolation inter-namespaces. Sur baremetal, déploiement de MetalLB en mode L2 avec NGINX Ingress, puis migration vers Istio et la Gateway API — Ingress remplacés par des HTTPRoute, mTLS natif, certificats automatisés par Cert-Manager, configuration standardisée sur toute la flotte.",
@@ -1120,8 +1122,8 @@ const ARCH_TOOLTIP_DATA = {
       fr: "Un outil de livraison continue GitOps : il réconcilie en continu l'état réel du cluster avec les manifestes stockés dans Git."
     },
     role: {
-      en: 'It watches this project\'s <b>k8s/</b> folder on Gitea and applies changes automatically — <b>selfHeal</b> and <b>prune</b> are both enabled, so a manual kubectl edit gets reverted back to what is committed.',
-      fr: 'Il surveille le dossier <b>k8s/</b> de ce projet sur Gitea et applique les changements automatiquement — <b>selfHeal</b> et <b>prune</b> sont activés : une modification kubectl manuelle est annulée pour revenir à ce qui est commité.'
+      en: 'It runs <b>four Applications</b>: the Tamagotchi manifests from Gitea, and Kafka, the PostgreSQL cluster and the habit game from GitHub. <b>selfHeal</b> and <b>prune</b> are enabled, so a manual kubectl edit is reverted to what is committed. The database itself is protected by <b>Prune=false</b>.',
+      fr: 'Il gère <b>quatre Applications</b> : les manifestes du Tamagotchi depuis Gitea, et Kafka, le cluster PostgreSQL et le jeu d\'habitudes depuis GitHub. <b>selfHeal</b> et <b>prune</b> sont activés : une modification kubectl manuelle est annulée pour revenir à ce qui est commité. La base elle-même est protégée par <b>Prune=false</b>.'
     }
   },
   gitea: {
@@ -1133,8 +1135,8 @@ const ARCH_TOOLTIP_DATA = {
       fr: 'Un service Git léger et auto-hébergé — le même workflow de base que GitHub, dans un seul pod peu gourmand en mémoire.'
     },
     role: {
-      en: 'It hosts the source code for this website and the Tamagotchi app, and its <b>Gitea Actions</b> runner executes this project\'s CI/CD pipeline (build, scan, push image).',
-      fr: "Il héberge le code source de ce site et de l'app Tamagotchi, et son runner <b>Gitea Actions</b> exécute le pipeline CI/CD du projet (build, scan, push d'image)."
+      en: 'It hosts the source code of the Tamagotchi app, and its <b>Gitea Actions</b> runner executes the CI/CD pipeline (build, scan, push image). Read access is public, anonymous visitors included; only writing needs an account.',
+      fr: "Il héberge le code source de l'app Tamagotchi, et son runner <b>Gitea Actions</b> exécute le pipeline CI/CD (build, scan, push d'image). La lecture est publique, visiteurs anonymes compris ; seule l'écriture demande un compte."
     }
   },
   prometheus: {
@@ -1174,6 +1176,84 @@ const ARCH_TOOLTIP_DATA = {
     role: {
       en: 'Promtail ships every pod\'s stdout/stderr here. The <b>Live Dashboard</b> section further down embeds a Grafana panel querying Loki directly, so you can watch cluster logs stream in your browser.',
       fr: "Promtail y envoie les logs stdout/stderr de chaque pod. La section <b>Live Dashboard</b> plus bas embarque un panneau Grafana qui interroge Loki directement, pour suivre les logs du cluster en direct dans le navigateur."
+    }
+  },
+  certmanager: {
+    icon: '🔐', accent: 'cyan',
+    title: { en: 'cert-manager', fr: 'cert-manager' },
+    badge: { en: 'Infrastructure', fr: 'Infrastructure' },
+    def: {
+      en: 'A Kubernetes operator that requests, stores and renews TLS certificates automatically through the ACME protocol.',
+      fr: "Un operator Kubernetes qui demande, stocke et renouvelle automatiquement les certificats TLS via le protocole ACME."
+    },
+    role: {
+      en: 'It issues the certificate the <b>Gateway</b> presents for every hostname on this domain, so HTTPS needs no manual step and a certificate never silently expires.',
+      fr: "Il émet le certificat que la <b>Gateway</b> présente pour chaque sous-domaine, donc le HTTPS ne demande aucune étape manuelle et un certificat n'expire jamais en silence."
+    }
+  },
+  linkerd: {
+    icon: '🕸️', accent: 'purple',
+    title: { en: 'Linkerd', fr: 'Linkerd' },
+    badge: { en: 'Platform · Service mesh', fr: 'Platform · Service mesh' },
+    def: {
+      en: 'An ultralight service mesh: a small proxy next to each meshed pod encrypts service-to-service traffic (mTLS) and measures it.',
+      fr: "Un service mesh ultra léger : un petit proxy à côté de chaque pod maillé chiffre le trafic entre services (mTLS) et le mesure."
+    },
+    role: {
+      en: 'The API and the frontend are meshed (2/2 containers per pod), which gives encrypted calls and golden metrics for free. It is kept <b>out of</b> ArgoCD and out of the PostgreSQL pods on purpose: it broke ArgoCD\'s internal gRPC and disturbed replication connections.',
+      fr: "L'API et le frontend sont maillés (2/2 conteneurs par pod), ce qui donne des appels chiffrés et des métriques d'or sans effort. Il est volontairement <b>tenu à l'écart</b> d'ArgoCD et des pods PostgreSQL : il cassait le gRPC interne d'ArgoCD et perturbait les connexions de réplication."
+    }
+  },
+  operators: {
+    icon: '🧩', accent: 'purple',
+    title: { en: 'Operators (CloudNativePG, Strimzi)', fr: 'Operators (CloudNativePG, Strimzi)' },
+    badge: { en: 'Platform · Operators', fr: 'Platform · Operators' },
+    def: {
+      en: 'Controllers that add new resource types (CRDs) to Kubernetes and run a complex application for you: they watch what you declare and keep reality equal to it.',
+      fr: "Des contrôleurs qui ajoutent de nouveaux types de ressources (CRD) à Kubernetes et exploitent à votre place une application complexe : ils observent ce que vous déclarez et maintiennent la réalité identique."
+    },
+    role: {
+      en: 'CloudNativePG runs the PostgreSQL cluster and Strimzi runs Kafka: <b>21 CRDs</b> in total. Ansible installs the operators, ArgoCD applies the custom resources from Git. See the <b>Operators</b> section for the real manifests.',
+      fr: "CloudNativePG exploite le cluster PostgreSQL et Strimzi exploite Kafka : <b>21 CRD</b> au total. Ansible installe les operators, ArgoCD applique les ressources personnalisées depuis Git. Voir la section <b>Opérateurs</b> pour les vrais manifestes."
+    }
+  },
+  trivy: {
+    icon: '🛡️', accent: 'purple',
+    title: { en: 'Trivy Operator', fr: 'Trivy Operator' },
+    badge: { en: 'Platform · Security', fr: 'Platform · Sécurité' },
+    def: {
+      en: 'A scanner that looks for known vulnerabilities, misconfigurations and exposed secrets in container images and Kubernetes resources.',
+      fr: "Un scanner qui cherche les vulnérabilités connues, les mauvaises configurations et les secrets exposés dans les images et les ressources Kubernetes."
+    },
+    role: {
+      en: 'It rescans every workload once a day, one scan at a time (a burst of parallel scans once starved Kafka). Results are read in a Grafana dashboard and feed alerts. A scanner gives leads, not verdicts: it flags a public Debian test key in the PostgreSQL image, a false positive.',
+      fr: "Il rescanne chaque charge une fois par jour, un scan à la fois (une rafale de scans en parallèle a un jour étouffé Kafka). Les résultats se lisent dans un dashboard Grafana et alimentent des alertes. Un scanner donne des pistes, pas des verdicts : il signale une clé de test publique de Debian dans l'image PostgreSQL, un faux positif."
+    }
+  },
+  n8n: {
+    icon: '🤖', accent: 'purple',
+    title: { en: 'n8n', fr: 'n8n' },
+    badge: { en: 'Platform · Remediation', fr: 'Platform · Remédiation' },
+    def: {
+      en: 'A workflow automation tool: a workflow starts on a trigger (here a webhook) and chains actions.',
+      fr: "Un outil d'automatisation de workflows : un workflow démarre sur un déclencheur (ici un webhook) et enchaîne des actions."
+    },
+    role: {
+      en: 'It is the remediation step of the self-healing chain: Alertmanager sends a webhook when creatures die and an n8n workflow revives them. The workflow is in Git.',
+      fr: "C'est l'étape de remédiation de la chaîne d'auto-réparation : Alertmanager envoie un webhook quand des créatures meurent et un workflow n8n les ressuscite. Le workflow est dans Git."
+    }
+  },
+  kafka: {
+    icon: '📨', accent: 'green',
+    title: { en: 'Kafka (Strimzi)', fr: 'Kafka (Strimzi)' },
+    badge: { en: 'Demo App · Event stream', fr: 'Demo App · Flux d\'événements' },
+    def: {
+      en: 'Kafka 4.3.1 in KRaft mode: three brokers keeping a replicated, ordered log of events, run by the Strimzi operator.',
+      fr: "Kafka 4.3.1 en mode KRaft : trois brokers qui gardent un journal d'événements ordonné et répliqué, pilotés par l'operator Strimzi."
+    },
+    role: {
+      en: 'After each write to PostgreSQL the API publishes an event to the topic <b>tamagotchi.events</b> (replication 3, min.insync.replicas 2, keyed by creature). A consumer relays it to the live feed above. Publishing is best effort: the database stays the source of truth.',
+      fr: "Après chaque écriture dans PostgreSQL, l'API publie un événement dans le topic <b>tamagotchi.events</b> (réplication 3, min.insync.replicas 2, clé par créature). Un consumer le relaie vers le flux en direct plus haut. La publication est au mieux : la base reste la source de vérité."
     }
   },
   frontend: {

@@ -1942,3 +1942,6 @@ a { color: inherit; text-decoration: none; }
   .ops-cards { grid-template-columns: minmax(0, 1fr); }
   .ops-code code, .ops-term code { font-size: 0.68rem; }
 }
+
+.tool-card__icon-wrap--kafka { background: rgba(230,196,106,0.15); border-color: rgba(230,196,106,0.3); box-shadow: 0 0 20px rgba(230,196,106,0.2); }
+.tool-card__icon-wrap--cnpg  { background: rgba(125,255,154,0.15); border-color: rgba(125,255,154,0.3); box-shadow: 0 0 20px rgba(125,255,154,0.2); }
