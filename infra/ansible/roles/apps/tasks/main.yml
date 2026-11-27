@@ -46,7 +46,6 @@
     - "{{ repo_root }}/k8s/tamagotchi/prometheus-rules.yaml"
     - "{{ repo_root }}/k8s/tamagotchi/slo-rules.yaml"
     - "{{ repo_root }}/k8s/tamagotchi/alertmanager-n8n.yaml"
-    - "{{ repo_root }}/k8s/tamagotchi/keepalive-cronjob.yaml"
     - "{{ repo_root }}/k8s/uptime-kuma/uptime-kuma-all.yaml"
     - "{{ repo_root }}/n8n.yaml"
 

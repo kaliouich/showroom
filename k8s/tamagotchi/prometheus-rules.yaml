@@ -58,9 +58,8 @@ spec:
             summary: "La remediation automatique du Tamagotchi ne fonctionne plus"
             description: >-
               Des creatures sont mortes depuis plus de 10 minutes malgre le
-              webhook n8n et le CronJob de soins. Verifier dans l'ordre :
-              le workflow n8n, la joignabilite de l'API, puis le CronJob
-              tamagotchi-keepalive.
+              webhook n8n. Verifier dans l'ordre : le workflow n8n, puis la
+              joignabilite de l'API.
             runbook_url: https://khalilaliouich.com/issues.html
 
         # --- Signal de derive, pas de panne ------------------------------
@@ -73,9 +72,8 @@ spec:
           annotations:
             summary: "Faim moyenne a {{ $value | printf \"%.0f\" }}% depuis 15 min"
             description: >-
-              La population entiere a faim : le CronJob de soins ne tourne
-              probablement plus. Les creatures ne sont pas encore mortes,
-              c'est le moment d'intervenir.
+              La population entiere a faim depuis un quart d'heure : verifier
+              que l'API accepte les soins et que la ranimation n8n tourne.
 
         # --- Sante de l'API elle-meme ------------------------------------
         - alert: TamagotchiAPIDown
