@@ -59,11 +59,14 @@ kube_prometheus_values:
     persistence:
       enabled: true
       existingClaim: grafana-pvc
+    # A 512 Mio, Grafana 13 occupait toute sa limite : plus de place pour le cache de ses
+    # propres fichiers, relus en boucle sur le disque (90 Mo/s) jusqu'a faire echouer les
+    # sondes. Releve le 2026-11-27.
     resources:
       limits:
-        memory: 512Mi
+        memory: 1Gi
       requests:
-        memory: 256Mi
+        memory: 512Mi
     grafana.ini:
       server:
         root_url: https://grafana.khalilaliouich.com
