@@ -55,23 +55,24 @@ dump gitea      gitea-pg-0 postgres gitea      gitea      gitea
 # postgres (connexion locale, sans mot de passe). Le role applicatif n'est plus superuser.
 dump tamagotchi "$(kubectl get pod -n tamagotchi -l cnpg.io/cluster=tamagotchi-db,cnpg.io/instanceRole=primary -o name 2>/dev/null | head -1 | cut -d/ -f2)" \
                 postgres postgres tamagotchi tamagotchi
-dump default    "$(kubectl get pod -n default -l app=habit-postgres -o name 2>/dev/null | head -1 | cut -d/ -f2)" \
-                postgres habit habitgame habit
+# Base Habitcade, elle aussi sur CloudNativePG (chart du depot habit-game-saas) : meme methode.
+dump default    "$(kubectl get pod -n default -l cnpg.io/cluster=habit-db,cnpg.io/instanceRole=primary -o name 2>/dev/null | head -1 | cut -d/ -f2)" \
+                postgres postgres habitgame habit
 
 log "3/5 volumes"
 mkdir -p "$WORK/volumes"
 # tar sort 1 quand un fichier change pendant la lecture (journaux de Prometheus,
 # Loki, Kafka...) : l'archive est complete, ce n'est pas un echec. Seul un code
 # >= 2 (erreur reelle) arrete la sauvegarde. Les donnees Kafka sont exclues : le
-# fil d'evenements de la demo se reconstruit, et ses segments changent sans cesse. Les volumes de la base
-# Tamagotchi (CloudNativePG) sont exclus aussi : copie a chaud de 3 instances, sans valeur
-# face au pg_dump ci-dessus.
+# fil d'evenements de la demo se reconstruit, et ses segments changent sans cesse. Les volumes des bases
+# CloudNativePG (Tamagotchi et Habitcade) sont exclus aussi : copie a chaud de 3 instances, sans
+# valeur face au pg_dump ci-dessus.
 archive_dir() { # <base> <dossier> <fichier> [options tar]
   local rc=0
   tar -C "$1" "${@:4}" -cf "$3" "$2" || rc=$?
   [ "$rc" -le 1 ]
 }
-[ -d /data/oci-bv-100gb ] && archive_dir /data oci-bv-100gb "$WORK/volumes/local-path.tar" --exclude='*_kafka_data-*' --exclude='*_tamagotchi_tamagotchi-db-*'
+[ -d /data/oci-bv-100gb ] && archive_dir /data oci-bv-100gb "$WORK/volumes/local-path.tar" --exclude='*_kafka_data-*' --exclude='*_tamagotchi_tamagotchi-db-*' --exclude='*_default_habit-db-*'
 [ -d /var/lib/showcase ] && archive_dir /var/lib showcase "$WORK/volumes/showcase.tar"
 
 log "4/5 manifestes"

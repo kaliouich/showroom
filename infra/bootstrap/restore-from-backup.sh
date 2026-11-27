@@ -67,8 +67,10 @@ restore_db gitea gitea-pg-0 postgres gitea gitea gitea
 kubectl -n tamagotchi wait --for=condition=Ready cluster/tamagotchi-db --timeout=600s || true
 restore_db tamagotchi "$(kubectl get pod -n tamagotchi -l cnpg.io/cluster=tamagotchi-db,cnpg.io/instanceRole=primary -o name | head -1 | cut -d/ -f2)" \
            postgres postgres tamagotchi tamagotchi
-restore_db default "$(kubectl get pod -n default -l app=habit-postgres -o name | head -1 | cut -d/ -f2)" \
-           postgres habit habitgame habit
+# Habitcade : meme principe, le Cluster habit-db est cree vide par son chart (ArgoCD).
+kubectl -n default wait --for=condition=Ready cluster/habit-db --timeout=600s || true
+restore_db default "$(kubectl get pod -n default -l cnpg.io/cluster=habit-db,cnpg.io/instanceRole=primary -o name | head -1 | cut -d/ -f2)" \
+           postgres postgres habitgame habit
 
 echo "=== secrets ==="
 # Mots de passe ArgoCD et Gitea, cles de session, comptes visiteurs : sans eux
